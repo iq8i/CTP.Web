@@ -1,0 +1,266 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var __afTokens = Antiforgery.GetAndStoreTokens(Context);
+    // يمكنك لاحقاً ربط هذا المتغير بإعدادات النظام أو قاعدة البيانات
+    var systemName = "منصة التغيير والتحول";
+    var systemSubtitle = "برنامج التغيير والتحول المؤسسي";
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="@__afTokens.RequestToken" />
+    <meta name="csrf-header" content="@__afTokens.HeaderName" />
+    <link rel="icon" type="image/png" href="~/logo.png" />
+    <title>@ViewData["Title"] - @systemName</title>
+
+    <!-- الألوان المعتمدة للمنصة (الزيتي والذهبي) -->
+    <style>
+            :root {
+                --moda-section-accent: #C9A227; /* اللون الذهبي الخاص بالمنصة */
+                --ctp-primary-olive: #106981; /* اللون الزيتي الخاص بالمنصة */
+            }
+    </style>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.css" />
+
+    <!-- ملفات الـ CSS المستوردة من المشروع السابق -->
+    <link rel="stylesheet" href="~/css/moda-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/moda-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/moda-components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/moda-legacy.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="moda-sidebar-overlay"></div>
+
+    <div class="moda-page">
+        <!-- ===== FLOATING SIDEBAR ===== -->
+        <aside class="moda-sidebar">
+            <!-- Logo & Name -->
+            <div class="moda-sidebar-header">
+                <div class="moda-sidebar-logo">
+                    <img src="~/logo.png" alt="@systemName" />
+                </div>
+                <h3 class="moda-sidebar-title">@systemName</h3>
+                <p class="moda-sidebar-subtitle">@systemSubtitle</p>
+            </div>
+
+            <!-- Navigation - Dynamic based on user roles -->
+            <nav class="moda-sidebar-nav">
+                @await Component.InvokeAsync("SidebarNavigation")
+            </nav>
+
+            <div class="moda-sidebar-footer">
+                <div class="moda-sidebar-version">إصدار التدشين (UAT)</div>
+            </div>
+        </aside>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="moda-main">
+            <!-- Top Bar -->
+            <header class="moda-topbar">
+                <div class="moda-topbar-right">
+                    <button class="moda-sidebar-toggle" aria-label="فتح القائمة"><i class="bi bi-list"></i></button>
+                    @{
+                        var areaName = ViewContext.RouteData.Values["area"]?.ToString();
+                        var controllerName = ViewContext.RouteData.Values["controller"]?.ToString();
+                        var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+
+                        // قاموس محدث للمسارات يتناسب مع منصة التغيير والتحول
+                        var areaDisplayNames = new Dictionary<string, string>
+                        {
+                            { "Core", "الرئيسية" },
+                            { "Committee", "مركز الأعمال" },
+                            { "Reports", "التقارير الشهرية" },
+                            { "Dashboards", "لوحات القياس" },
+                            { "Knowledge", "المواد التعليمية" },
+                            { "Administration", "إدارة النظام" }
+                        };
+
+                        var areaDisplay = areaName != null && areaDisplayNames.ContainsKey(areaName)
+                            ? areaDisplayNames[areaName]
+                            : areaName ?? "الرئيسية";
+
+                        var pageTitle = ViewData["Title"]?.ToString() ?? "";
+                        var isHomePage = controllerName == "Home" && actionName == "Index";
+                    }
+                    <nav class="moda-breadcrumb" aria-label="مسار التنقل">
+                        <a href="@Url.Action("Index", "Home", new { area = "" })" class="moda-breadcrumb-item">
+                            <i class="bi bi-house-door-fill"></i>
+                            <span>الرئيسية</span>
+                        </a>
+                        @if (!isHomePage && !string.IsNullOrEmpty(areaName) && areaName != "Core")
+                        {
+                            <span class="moda-breadcrumb-sep"><i class="bi bi-chevron-left"></i></span>
+                            <span class="moda-breadcrumb-item">@areaDisplay</span>
+                        }
+                        @if (!isHomePage && !string.IsNullOrEmpty(pageTitle))
+                        {
+                            <span class="moda-breadcrumb-sep"><i class="bi bi-chevron-left"></i></span>
+                            <span class="moda-breadcrumb-item moda-breadcrumb-current">@pageTitle</span>
+                        }
+                    </nav>
+                </div>
+
+                <!-- Hijri / Gregorian Date -->
+                <div class="moda-topbar-date" id="topbarDate"></div>
+
+                <div class="moda-topbar-left">
+                    <a href="@Url.Action("Index", "Notifications", new { area = "Administration" })" class="moda-notification-bell">
+                        <i class="bi bi-bell-fill"></i>
+                        <span class="moda-notification-badge" id="notificationBadge" style="display:none;">0</span>
+                    </a>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="moda-user-dropdown dropdown">
+                            <button class="btn dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="moda-user-avatar"><i class="bi bi-person"></i></div>
+                                <div class="moda-user-info">
+                                    <span class="moda-user-name">@User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value</span>
+                                    <span class="moda-user-role">@(ViewData["UserRoleDisplay"] ?? "مستخدم النظام")</span>
+                                </div>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="@Url.Action("Profile", "Account", new { area = "" })"><i class="bi bi-person-circle"></i> الملف الشخصي</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" asp-antiforgery="true">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> تسجيل الخروج</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="moda-content">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+            // حماية CSRF: حقن رمز مكافحة التزوير في كل طلبات AJAX
+            (function() {
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                var hmeta = document.querySelector('meta[name="csrf-header"]');
+                if (!meta || !hmeta) return;
+                var token = meta.getAttribute('content');
+                var header = hmeta.getAttribute('content');
+                var safe = /^(GET|HEAD|OPTIONS|TRACE)$/i;
+                function sameOrigin(url) {
+                    try { return new URL(url, window.location.href).origin === window.location.origin; }
+                    catch (e) { return true; }
+                }
+                if (window.jQuery) {
+                    jQuery.ajaxSetup({
+                        beforeSend: function(xhr, settings) {
+                            if (!safe.test(settings.type || 'GET') && sameOrigin(settings.url)) {
+                                xhr.setRequestHeader(header, token);
+                            }
+                        }
+                    });
+                }
+                if (window.fetch) {
+                    var origFetch = window.fetch;
+                    window.fetch = function(input, init) {
+                        init = init || {};
+                        var method = (init.method || (typeof input !== 'string' && input && input.method) || 'GET');
+                        var url = (typeof input === 'string') ? input : (input && input.url) || '';
+                        if (!safe.test(method) && sameOrigin(url)) {
+                            var headers = new Headers(init.headers || (typeof input !== 'string' && input && input.headers) || {});
+                            if (!headers.has(header)) headers.set(header, token);
+                            init.headers = headers;
+                        }
+                        return origFetch(input, init);
+                    };
+                }
+            })();
+    </script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- مكتبات مساعدة (تأكد من وجودها في المجلدات) -->
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/js/moda-alerts.js" asp-append-version="true"></script>
+    <script src="~/js/swal-helpers.js" asp-append-version="true"></script>
+    <script src="~/js/moda-app.js" asp-append-version="true"></script>
+
+    @* TempData flash messages *@
+    @if (TempData["Success"] != null)
+    {
+        <div data-flash-success="@TempData["Success"]" style="display:none"></div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div data-flash-error="@TempData["Error"]" style="display:none"></div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div data-flash-warning="@TempData["Warning"]" style="display:none"></div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div data-flash-info="@TempData["Info"]" style="display:none"></div>
+    }
+
+    <script>
+            // دالة جلب الإشعارات
+            function loadUnreadCount() {
+                $.get('@Url.Action("GetUnread", "Notifications", new { area = "Administration" })', function(data) {
+                    if (data && data.count > 0) { $('#notificationBadge').text(data.count).show(); }
+                    else { $('#notificationBadge').hide(); }
+                }).fail(function() { });
+            }
+            $(document).ready(function() { loadUnreadCount(); setInterval(loadUnreadCount, 60000); });
+
+            // عرض التاريخ الهجري والميلادي
+            (function() {
+                var weekDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                var gMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+                var hMonths = ['محرم', 'صفر', 'ربيع الأول', 'ربيع الثاني', 'جمادى الأولى', 'جمادى الآخرة',
+                    'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'];
+
+                function toHijri(date) {
+                    try {
+                        var parts = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {
+                            day: 'numeric', month: 'numeric', year: 'numeric'
+                        }).formatToParts(date);
+                        var d = {};
+                        parts.forEach(function(p) {
+                            if (p.type === 'day') d.day = parseInt(p.value, 10);
+                            else if (p.type === 'month') d.month = parseInt(p.value, 10);
+                            else if (p.type === 'year') d.year = parseInt(p.value, 10);
+                        });
+                        return d;
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
+                function updateDate() {
+                    var now = new Date();
+                    var dayName = weekDays[now.getDay()];
+                    var gDate = now.getDate() + ' ' + gMonths[now.getMonth()] + ' ' + now.getFullYear() + ' م';
+                    var h = toHijri(now);
+                    var hDate = h ? (h.day + ' ' + hMonths[h.month - 1] + ' ' + h.year + ' هـ') : '';
+                    var el = document.getElementById('topbarDate');
+                    if (el) {
+                        el.innerHTML = '<i class="bi bi-calendar3"></i> ' +
+                            '<span class="moda-date-hijri">' + dayName + (hDate ? ' ' + hDate : '') + '</span>' +
+                            '<span class="moda-date-separator">—</span>' +
+                            '<span class="moda-date-gregorian">' + gDate + '</span>';
+                    }
+                }
+                updateDate();
+            })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

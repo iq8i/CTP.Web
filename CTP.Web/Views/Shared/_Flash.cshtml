@@ -1,0 +1,24 @@
+@*
+    يعرض رسائل TempData (Success/Error) كنافذة SweetAlert2 مركزية كبيرة في وسط الصفحة
+    (showSuccess/showError) بدلاً من إشعار toast الصغير أعلى الصفحة.
+    يستخدم معرّفات خاصة كي لا يلتقطها معالج toast العام في swal-helpers.js.
+*@
+@{
+    var flashSuccess = TempData["Success"] as string;
+    var flashError = TempData["Error"] as string;
+}
+@if (!string.IsNullOrEmpty(flashSuccess) || !string.IsNullOrEmpty(flashError))
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (!string.IsNullOrEmpty(flashSuccess))
+            {
+                @:if (typeof showSuccess === 'function') { showSuccess(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(flashSuccess))); }
+            }
+            @if (!string.IsNullOrEmpty(flashError))
+            {
+                @:if (typeof showError === 'function') { showError(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(flashError))); }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CTP.Application/CTP.Application.csproj" Id="df3b7072-da64-4ab2-a389-9292764d7124" />
+  <Project Path="CTP.Domain/CTP.Domain.csproj" Id="f0c9c431-1dd2-4dc7-94c8-6d3dd949db35" />
+  <Project Path="CTP.Infrastructure/CTP.Infrastructure.csproj" Id="0aa0d2ab-b713-4349-9b9e-71f3c490130a" />
+  <Project Path="CTP.Web/CTP.Web.csproj" />
+</Solution>

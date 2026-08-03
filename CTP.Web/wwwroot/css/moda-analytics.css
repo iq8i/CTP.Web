@@ -1,0 +1,117 @@
+/* ============================================= */
+/* MODA Analytics & Trends - Additional CSS      */
+/* التحليلات والاتجاهات                            */
+/* ============================================= */
+
+/* ============================================= */
+/* DANGER STAT CARD                               */
+/* ============================================= */
+.reports-page .rp-stat-card.danger::before { background: linear-gradient(90deg, #DC2626, #EF4444) !important; }
+.reports-page .rp-stat-card.danger::after { content: '\F087'; }
+.reports-page .rp-stat-card.danger .rp-stat-icon { background: rgba(239,68,68,0.1) !important; }
+.reports-page .rp-stat-card.danger .rp-stat-icon i { color: #EF4444 !important; }
+
+/* ============================================= */
+/* TIME RANGE FILTER                              */
+/* ============================================= */
+.analytics-page .an-time-filter {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 20px !important;
+    padding: 18px 22px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+    border-right: 4px solid #C9A84C !important;
+}
+
+.analytics-page .an-time-filter-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+}
+
+.analytics-page .an-time-filter-title {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+}
+
+.analytics-page .an-time-filter-title i {
+    color: #3B82F6 !important;
+}
+
+.analytics-page .an-time-buttons {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.analytics-page .an-time-btn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 8px 18px !important;
+    border-radius: 10px !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #F8FAFC !important;
+    color: #64748B !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.analytics-page .an-time-btn:hover {
+    border-color: #1A3D2D !important;
+    color: #1A3D2D !important;
+    background: rgba(26,61,45,0.04) !important;
+}
+
+.analytics-page .an-time-btn.active {
+    background: linear-gradient(135deg, #0B1F17, #1A3D2D) !important;
+    color: #FFFFFF !important;
+    border-color: #1A3D2D !important;
+    box-shadow: 0 4px 12px rgba(26,61,45,0.3) !important;
+}
+
+/* ============================================= */
+/* ICON COLORS                                    */
+/* ============================================= */
+.analytics-page .an-icon-amber { color: #F59E0B !important; }
+.analytics-page .an-icon-gold { color: #C9A84C !important; }
+
+/* ============================================= */
+/* FULL WIDTH CHART GRID                          */
+/* ============================================= */
+.analytics-page .an-full-width {
+    grid-template-columns: 1fr !important;
+}
+
+/* ============================================= */
+/* RESPONSIVE                                     */
+/* ============================================= */
+@media (max-width: 768px) {
+    .analytics-page .an-time-filter-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .analytics-page .an-time-buttons {
+        flex-wrap: wrap !important;
+    }
+
+    .analytics-page .an-time-btn {
+        padding: 6px 14px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* ============================================= */
+/* PRINT                                          */
+/* ============================================= */
+@media print {
+    .analytics-page .an-time-filter { display: none !important; }
+}

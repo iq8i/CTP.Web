@@ -1,0 +1,143 @@
+﻿@{
+    ViewData["Title"] = "تسجيل الدخول";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - منصة التغيير والتحول</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/moda-login.css" asp-append-version="true" />
+</head>
+<body>
+
+    <div class="lg-scene">
+        <div class="lg-bg-gradient"></div>
+        <div class="lg-bg-grid"></div>
+        <div class="lg-bg-glow lg-bg-glow-1"></div>
+        <div class="lg-bg-glow lg-bg-glow-2"></div>
+
+        <div class="lg-shapes" aria-hidden="true">
+            <i class="bi bi-shield-shaded lg-shape lg-shape-1"></i>
+            <i class="bi bi-star-fill lg-shape lg-shape-2"></i>
+            <i class="bi bi-diagram-3-fill lg-shape lg-shape-3"></i>
+            <i class="bi bi-bullseye lg-shape lg-shape-4"></i>
+            <i class="bi bi-award-fill lg-shape lg-shape-5"></i>
+            <i class="bi bi-lightning-charge-fill lg-shape lg-shape-6"></i>
+        </div>
+
+        <div class="lg-card">
+            <div class="lg-card-accent"></div>
+
+            <div class="lg-card-head">
+                <div class="lg-logo">
+                    <div class="lg-logo-ring">
+                        <img src="~/logo.png" alt="شعار المنصة" />
+                    </div>
+                </div>
+                <h1 class="lg-system">منصة التغيير والتحول</h1>
+                <p class="lg-org">برنامج التغيير والتحول المؤسسي</p>
+                <div class="lg-ornament">
+                    <span></span>
+                    <i class="bi bi-shield-fill-check"></i>
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="lg-card-body">
+                <div class="lg-form-intro">
+                    <span class="lg-badge">
+                        <i class="bi bi-lock-fill"></i>
+                        دخول آمن
+                    </span>
+                    <h2 class="lg-form-title">تسجيل الدخول</h2>
+                    <p class="lg-form-sub">أدخل بيانات الاعتماد للوصول إلى لوحة القياس</p>
+                </div>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="lg-alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span>@ViewBag.Error</span>
+                    </div>
+                }
+
+                <form method="post" asp-controller="Account" asp-action="Login" asp-antiforgery="true" id="loginForm" class="lg-form" novalidate>
+                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                    <div class="lg-field">
+                        <label for="username"><i class="bi bi-person-badge-fill"></i> اسم المستخدم</label>
+                        <div class="lg-input-wrap">
+                            <span class="lg-input-icon"><i class="bi bi-person-fill"></i></span>
+                            <input type="text" id="username" name="username" class="lg-input" placeholder="أدخل اسم المستخدم" autocomplete="username" required autofocus />
+                        </div>
+                    </div>
+
+                    <div class="lg-field">
+                        <label for="password"><i class="bi bi-key-fill"></i> كلمة المرور</label>
+                        <div class="lg-input-wrap">
+                            <span class="lg-input-icon"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" id="password" name="password" class="lg-input lg-input-action" placeholder="أدخل كلمة المرور" autocomplete="current-password" required />
+                            <button type="button" class="lg-eye-btn" id="togglePassword" tabindex="-1" title="إظهار/إخفاء كلمة المرور">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg-options">
+                        <label class="lg-checkbox">
+                            <input type="checkbox" name="rememberMe" value="true" />
+                            <span class="lg-checkbox-mark"><i class="bi bi-check-lg"></i></span>
+                            <span class="lg-checkbox-text">تذكرني على هذا الجهاز</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="lg-submit" id="submitBtn">
+                        <span class="lg-submit-text"><i class="bi bi-box-arrow-in-right"></i> تسجيل الدخول</span>
+                        <span class="lg-submit-loading" style="display:none;"><span class="lg-spinner"></span> جاري التحقق...</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="lg-card-foot">
+                <div class="lg-foot-row">
+                    <span class="lg-foot-tag lg-foot-tag-success"><i class="bi bi-shield-fill-check"></i> اتصال مشفر</span>
+                    <span class="lg-foot-tag"><i class="bi bi-c-circle"></i> @DateTime.Now.Year — جميع الحقوق محفوظة</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                var pw = document.getElementById('password');
+                var icon = document.getElementById('toggleIcon');
+                if (pw.type === 'password') {
+                    pw.type = 'text';
+                    icon.className = 'bi bi-eye-slash';
+                } else {
+                    pw.type = 'password';
+                    icon.className = 'bi bi-eye';
+                }
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', function() {
+                var btn = document.getElementById('submitBtn');
+                btn.querySelector('.lg-submit-text').style.display = 'none';
+                btn.querySelector('.lg-submit-loading').style.display = 'inline-flex';
+                btn.disabled = true;
+            });
+
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.form.submit();
+                }
+            });
+    </script>
+</body>
+</html>

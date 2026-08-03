@@ -1,0 +1,455 @@
+/* ============================================= */
+/* MODA Officer Search - CSS                      */
+/* البحث عن الضباط                                 */
+/* ============================================= */
+
+.officer-search-page {
+    --os-green-1: #0B1F17;
+    --os-green-2: #132E22;
+    --os-green-3: #1A3D2D;
+    --os-green-4: #224D38;
+    --os-gold: #C9A84C;
+    --os-blue: #3B82F6;
+    --os-emerald: #10B981;
+    --os-red: #EF4444;
+    --os-amber: #F59E0B;
+    --os-purple: #8B5CF6;
+    --os-radius: 20px;
+    --os-radius-sm: 14px;
+    --os-radius-xs: 10px;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* ============================================= */
+/* HEADER                                         */
+/* ============================================= */
+.officer-search-page .os-header {
+    background: linear-gradient(135deg, var(--os-green-1) 0%, var(--os-green-3) 50%, var(--os-green-2) 100%) !important;
+    border-radius: var(--os-radius) !important;
+    padding: 32px 36px !important;
+    margin-bottom: 20px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    color: white !important;
+    box-shadow: 0 8px 32px rgba(11,31,23,0.5) !important;
+}
+
+.officer-search-page .os-header::after {
+    content: '\F4DA';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    bottom: -20px;
+    left: 30px;
+    font-size: 140px;
+    opacity: 0.04;
+    color: white;
+    pointer-events: none;
+}
+
+.officer-search-page .os-header-content {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 20px !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.officer-search-page .os-header-title-section {
+    display: flex !important;
+    align-items: center !important;
+    gap: 18px !important;
+}
+
+.officer-search-page .os-header-emblem {
+    width: 60px !important;
+    height: 60px !important;
+    background: rgba(255,255,255,0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: var(--os-radius-sm) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+.officer-search-page .os-header-emblem i {
+    font-size: 28px !important;
+    color: var(--os-gold) !important;
+}
+
+.officer-search-page .os-header-title h1 {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: white !important;
+    margin: 0 !important;
+}
+
+.officer-search-page .os-header-subtitle {
+    font-size: 14px !important;
+    color: rgba(255,255,255,0.65) !important;
+    margin-top: 4px !important;
+}
+
+.officer-search-page .os-header-actions {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.officer-search-page .os-hbtn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    padding: 9px 18px !important;
+    border-radius: var(--os-radius-xs) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    background: rgba(255,255,255,0.08) !important;
+    color: white !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    text-decoration: none !important;
+    font-size: 13px !important;
+    backdrop-filter: blur(6px) !important;
+}
+
+.officer-search-page .os-hbtn:hover {
+    background: rgba(255,255,255,0.15) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ============================================= */
+/* SEARCH CARD                                    */
+/* ============================================= */
+.officer-search-page .os-search-card {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    border-radius: var(--os-radius) !important;
+    padding: 24px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+    border-right: 4px solid var(--os-gold) !important;
+}
+
+.officer-search-page .os-search-title {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+    margin-bottom: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.officer-search-page .os-search-title i { color: var(--os-gold) !important; }
+
+.officer-search-page .os-search-fields {
+    display: flex !important;
+    gap: 14px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 16px !important;
+}
+
+.officer-search-page .os-field {
+    flex: 1 !important;
+    min-width: 180px !important;
+}
+
+.officer-search-page .os-field-label {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #64748B !important;
+    margin-bottom: 6px !important;
+    display: block !important;
+}
+
+.officer-search-page .os-field-input {
+    width: 100% !important;
+    padding: 10px 14px !important;
+    background: #F8FAFC !important;
+    border: 2px solid #E2E8F0 !important;
+    border-radius: var(--os-radius-xs) !important;
+    font-family: inherit !important;
+    font-size: 13px !important;
+    color: #1E293B !important;
+    transition: all 0.3s ease !important;
+}
+
+.officer-search-page .os-field-input:focus {
+    outline: none !important;
+    border-color: var(--os-gold) !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15) !important;
+    background: #FFFFFF !important;
+}
+
+.officer-search-page .os-search-actions {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.officer-search-page .os-btn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    padding: 10px 22px !important;
+    border-radius: var(--os-radius-xs) !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+}
+
+.officer-search-page .os-btn.primary {
+    background: linear-gradient(135deg, var(--os-green-3), var(--os-green-4)) !important;
+    color: white !important;
+}
+
+.officer-search-page .os-btn.primary:hover {
+    box-shadow: 0 4px 12px rgba(26,61,45,0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+.officer-search-page .os-btn.secondary {
+    background: #F1F5F9 !important;
+    color: #64748B !important;
+    border: 1px solid #E2E8F0 !important;
+}
+
+.officer-search-page .os-btn.secondary:hover {
+    background: #E2E8F0 !important;
+}
+
+.officer-search-page .os-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+/* ============================================= */
+/* RESULTS TABLE                                  */
+/* ============================================= */
+.officer-search-page .os-results-card {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    border-radius: var(--os-radius) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+    overflow: hidden !important;
+    display: none !important;
+}
+
+.officer-search-page .os-results-card.show { display: block !important; }
+
+.officer-search-page .os-results-header {
+    padding: 16px 20px !important;
+    border-bottom: 2px solid #E2E8F0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    background: #FAFBFC !important;
+}
+
+.officer-search-page .os-results-title {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.officer-search-page .os-results-title i { color: var(--os-gold) !important; }
+
+.officer-search-page .os-results-count {
+    padding: 3px 12px !important;
+    background: rgba(26,61,45,0.08) !important;
+    border: 1px solid rgba(26,61,45,0.2) !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--os-green-3) !important;
+}
+
+.officer-search-page .os-export-actions {
+    display: flex !important;
+    gap: 6px !important;
+}
+
+.officer-search-page .os-export-btn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    padding: 6px 14px !important;
+    border-radius: 8px !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-size: 12px !important;
+}
+
+.officer-search-page .os-export-btn:hover {
+    border-color: var(--os-gold) !important;
+    background: rgba(201,168,76,0.04) !important;
+}
+
+.officer-search-page .os-export-btn.excel i { color: var(--os-emerald) !important; }
+.officer-search-page .os-export-btn.pdf i { color: var(--os-red) !important; }
+.officer-search-page .os-export-btn.csv i { color: var(--os-amber) !important; }
+
+/* Table */
+.officer-search-page .os-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+}
+
+.officer-search-page .os-table thead th {
+    padding: 14px 16px !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    color: #475569 !important;
+    background: #F8FAFC !important;
+    border-bottom: 2px solid #E2E8F0 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+}
+
+.officer-search-page .os-table tbody td {
+    padding: 14px 16px !important;
+    font-size: 13px !important;
+    color: #1E293B !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+    vertical-align: middle !important;
+}
+
+.officer-search-page .os-table tbody tr {
+    transition: all 0.2s ease !important;
+}
+
+.officer-search-page .os-table tbody tr:hover {
+    background: #FAFBFC !important;
+}
+
+.officer-search-page .os-serial-badge {
+    display: inline-block !important;
+    padding: 4px 10px !important;
+    background: rgba(26,61,45,0.06) !important;
+    color: var(--os-green-3) !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+}
+
+.officer-search-page .os-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 4px 10px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+}
+
+.officer-search-page .os-status-badge.active {
+    background: rgba(16,185,129,0.1) !important;
+    color: #059669 !important;
+}
+
+.officer-search-page .os-status-badge.inactive {
+    background: rgba(100,116,139,0.1) !important;
+    color: #64748B !important;
+}
+
+.officer-search-page .os-view-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 6px 14px !important;
+    background: rgba(26,61,45,0.06) !important;
+    color: var(--os-green-3) !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.officer-search-page .os-view-btn:hover {
+    background: var(--os-green-3) !important;
+    color: white !important;
+}
+
+/* No Results */
+.officer-search-page .os-no-results {
+    text-align: center !important;
+    padding: 50px 20px !important;
+    display: none !important;
+}
+
+.officer-search-page .os-no-results.show { display: block !important; }
+
+.officer-search-page .os-no-results i { font-size: 48px !important; color: #CBD5E1 !important; margin-bottom: 12px !important; display: block !important; }
+.officer-search-page .os-no-results p { color: #94A3B8 !important; font-size: 14px !important; margin: 0 !important; }
+
+/* ============================================= */
+/* INITIAL STATE                                  */
+/* ============================================= */
+.officer-search-page .os-initial {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    border-radius: var(--os-radius) !important;
+    text-align: center !important;
+    padding: 70px 20px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+}
+
+.officer-search-page .os-initial i { font-size: 64px !important; color: #CBD5E1 !important; margin-bottom: 16px !important; display: block !important; }
+.officer-search-page .os-initial h3 { color: #475569 !important; font-size: 18px !important; font-weight: 700 !important; margin: 0 0 8px !important; }
+.officer-search-page .os-initial p { color: #94A3B8 !important; font-size: 13px !important; margin: 0 !important; }
+
+/* ============================================= */
+/* LOADING SPINNER                                */
+/* ============================================= */
+.officer-search-page .os-spinner {
+    display: inline-block !important;
+    width: 16px !important;
+    height: 16px !important;
+    border: 2px solid rgba(255,255,255,0.3) !important;
+    border-top-color: white !important;
+    border-radius: 50% !important;
+    animation: osSpin 0.6s linear infinite !important;
+}
+
+@keyframes osSpin { to { transform: rotate(360deg); } }
+
+/* ============================================= */
+/* ANIMATIONS                                     */
+/* ============================================= */
+.officer-search-page .os-animate {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: osFadeIn 0.5s ease forwards;
+}
+
+.officer-search-page .os-delay-1 { animation-delay: 0.1s; }
+.officer-search-page .os-delay-2 { animation-delay: 0.2s; }
+
+@keyframes osFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .officer-search-page .os-header { padding: 20px !important; }
+    .officer-search-page .os-field { min-width: 100% !important; }
+}

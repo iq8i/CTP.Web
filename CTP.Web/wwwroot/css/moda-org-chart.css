@@ -1,0 +1,872 @@
+/* ============================================= */
+/* MODA Organization Chart - CSS                  */
+/* الهيكل التنظيمي - عرض شجري عمودي حديث          */
+/* ============================================= */
+
+.orgchart-page {
+    --oc-green-1: #0B1F17;
+    --oc-green-2: #132E22;
+    --oc-green-3: #1A3D2D;
+    --oc-green-4: #224D38;
+    --oc-gold: #C9A84C;
+    --oc-gold-light: #D4B85A;
+    --oc-blue: #3B82F6;
+    --oc-emerald: #10B981;
+    --oc-red: #EF4444;
+    --oc-amber: #F59E0B;
+    --oc-purple: #8B5CF6;
+    --oc-radius: 20px;
+    --oc-radius-sm: 14px;
+    --oc-radius-xs: 10px;
+    --oc-indent: 36px;
+    --oc-line-color: rgba(201,168,76,0.35);
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* ============================================= */
+/* HEADER                                         */
+/* ============================================= */
+.orgchart-page .oc-header {
+    background: linear-gradient(135deg, var(--oc-green-1) 0%, var(--oc-green-3) 50%, var(--oc-green-2) 100%) !important;
+    border-radius: var(--oc-radius) !important;
+    padding: 32px 36px !important;
+    margin-bottom: 20px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    color: white !important;
+    box-shadow: 0 8px 32px rgba(11,31,23,0.5) !important;
+}
+
+.orgchart-page .oc-header::after {
+    content: '\F5E2';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    bottom: -20px;
+    left: 30px;
+    font-size: 140px;
+    opacity: 0.04;
+    color: white;
+    pointer-events: none;
+}
+
+.orgchart-page .oc-header-content {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 20px !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.orgchart-page .oc-header-title-section {
+    display: flex !important;
+    align-items: center !important;
+    gap: 18px !important;
+}
+
+.orgchart-page .oc-header-emblem {
+    width: 60px !important;
+    height: 60px !important;
+    background: rgba(255,255,255,0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: var(--oc-radius-sm) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+.orgchart-page .oc-header-emblem i {
+    font-size: 28px !important;
+    color: var(--oc-gold) !important;
+}
+
+.orgchart-page .oc-header-title h1 {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: white !important;
+    margin: 0 !important;
+}
+
+.orgchart-page .oc-header-subtitle {
+    font-size: 14px !important;
+    color: rgba(255,255,255,0.65) !important;
+    margin-top: 4px !important;
+}
+
+.orgchart-page .oc-header-actions {
+    display: flex !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.orgchart-page .oc-hbtn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    padding: 9px 18px !important;
+    border-radius: var(--oc-radius-xs) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    background: rgba(255,255,255,0.08) !important;
+    color: white !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    text-decoration: none !important;
+    font-size: 13px !important;
+    backdrop-filter: blur(6px) !important;
+}
+
+.orgchart-page .oc-hbtn:hover {
+    background: rgba(255,255,255,0.15) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ============================================= */
+/* STATS BAR                                      */
+/* ============================================= */
+.orgchart-page .oc-stats-bar {
+    display: flex !important;
+    gap: 16px !important;
+    margin-bottom: 20px !important;
+    flex-wrap: wrap !important;
+}
+
+.orgchart-page .oc-stat-card {
+    flex: 1 !important;
+    min-width: 150px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    border-radius: 16px !important;
+    padding: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+    transition: all 0.3s ease !important;
+}
+
+.orgchart-page .oc-stat-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+}
+
+.orgchart-page .oc-stat-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+    flex-shrink: 0 !important;
+}
+
+.orgchart-page .oc-stat-icon.green { background: rgba(16,185,129,0.12) !important; color: #10B981 !important; }
+.orgchart-page .oc-stat-icon.gold { background: rgba(201,168,76,0.12) !important; color: #C9A84C !important; }
+.orgchart-page .oc-stat-icon.blue { background: rgba(59,130,246,0.12) !important; color: #3B82F6 !important; }
+.orgchart-page .oc-stat-icon.purple { background: rgba(139,92,246,0.12) !important; color: #8B5CF6 !important; }
+
+.orgchart-page .oc-stat-value {
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    color: #1E293B !important;
+}
+
+.orgchart-page .oc-stat-label {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+}
+
+/* ============================================= */
+/* MAIN CONTAINER                                 */
+/* ============================================= */
+.orgchart-page .oc-main {
+    background: #FFFFFF !important;
+    border: 1px solid #D1D5DB !important;
+    border-radius: var(--oc-radius) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+    overflow: hidden !important;
+}
+
+/* ============================================= */
+/* TOOLBAR                                        */
+/* ============================================= */
+.orgchart-page .oc-toolbar {
+    padding: 14px 20px !important;
+    border-bottom: 2px solid #E2E8F0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    background: #FAFBFC !important;
+}
+
+.orgchart-page .oc-toolbar-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+}
+
+.orgchart-page .oc-toolbar-title i {
+    color: var(--oc-gold) !important;
+    font-size: 18px !important;
+}
+
+.orgchart-page .oc-toolbar-actions {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+}
+
+.orgchart-page .oc-tbtn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    padding: 7px 14px !important;
+    border-radius: 8px !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+}
+
+.orgchart-page .oc-tbtn:hover {
+    border-color: var(--oc-gold) !important;
+    color: var(--oc-green-3) !important;
+    background: rgba(201,168,76,0.06) !important;
+}
+
+.orgchart-page .oc-tbtn.active {
+    background: var(--oc-green-3) !important;
+    color: white !important;
+    border-color: var(--oc-green-3) !important;
+}
+
+.orgchart-page .oc-tbtn-divider {
+    width: 1px !important;
+    height: 24px !important;
+    background: #E2E8F0 !important;
+    margin: 0 4px !important;
+}
+
+.orgchart-page .oc-search-box {
+    position: relative !important;
+    min-width: 220px !important;
+}
+
+.orgchart-page .oc-search-box i.bi-search {
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #94A3B8 !important;
+    font-size: 14px !important;
+    pointer-events: none !important;
+}
+
+.orgchart-page .oc-search-box input {
+    width: 100% !important;
+    padding: 8px 34px 8px 14px !important;
+    background: #F1F5F9 !important;
+    border: 2px solid #E2E8F0 !important;
+    border-radius: 8px !important;
+    font-family: inherit !important;
+    font-size: 13px !important;
+    color: #1E293B !important;
+    transition: all 0.3s ease !important;
+}
+
+.orgchart-page .oc-search-box input:focus {
+    outline: none !important;
+    border-color: var(--oc-gold) !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15) !important;
+}
+
+/* ============================================= */
+/* TREE BODY                                      */
+/* ============================================= */
+.orgchart-page .oc-tree-body {
+    padding: 20px !important;
+    max-height: 700px !important;
+    overflow-y: auto !important;
+    scroll-behavior: smooth !important;
+}
+
+.orgchart-page .oc-tree-body::-webkit-scrollbar { width: 8px !important; }
+.orgchart-page .oc-tree-body::-webkit-scrollbar-track { background: #F1F5F9 !important; border-radius: 4px !important; }
+.orgchart-page .oc-tree-body::-webkit-scrollbar-thumb { background: #CBD5E1 !important; border-radius: 4px !important; }
+.orgchart-page .oc-tree-body::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
+
+/* ============================================= */
+/* TREE NODE                                      */
+/* ============================================= */
+.orgchart-page .oc-tree-list {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.orgchart-page .oc-tree-item {
+    position: relative !important;
+}
+
+/* Indented children */
+.orgchart-page .oc-tree-children {
+    list-style: none !important;
+    margin: 0 !important;
+    padding-right: var(--oc-indent) !important;
+    padding-left: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: max-height 0.35s ease, opacity 0.25s ease !important;
+}
+
+/* Vertical connecting line for children container */
+.orgchart-page .oc-tree-children::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 17px !important;
+    width: 2px !important;
+    height: calc(100% - 20px) !important;
+    background: var(--oc-line-color) !important;
+    border-radius: 2px !important;
+}
+
+/* Horizontal connecting line for each child */
+.orgchart-page .oc-tree-children > .oc-tree-item::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 28px !important;
+    right: -19px !important;
+    width: 19px !important;
+    height: 2px !important;
+    background: var(--oc-line-color) !important;
+}
+
+/* Collapsed state */
+.orgchart-page .oc-tree-item.collapsed > .oc-tree-children {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+}
+
+.orgchart-page .oc-tree-item:not(.collapsed) > .oc-tree-children {
+    max-height: 50000px !important;
+    opacity: 1 !important;
+}
+
+/* ============================================= */
+/* NODE CARD                                      */
+/* ============================================= */
+.orgchart-page .oc-node {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+    background: #FFFFFF !important;
+    border: 2px solid #E8ECF0 !important;
+    border-right: 4px solid var(--oc-gold) !important;
+    border-radius: 14px !important;
+    margin-bottom: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    position: relative !important;
+}
+
+.orgchart-page .oc-node:hover {
+    border-color: var(--oc-gold) !important;
+    background: #FFFDF7 !important;
+    box-shadow: 0 4px 16px rgba(201,168,76,0.12) !important;
+    transform: translateX(-2px) !important;
+}
+
+.orgchart-page .oc-node.highlighted {
+    border-color: var(--oc-amber) !important;
+    background: #FFFBEB !important;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15), 0 4px 16px rgba(245,158,11,0.12) !important;
+}
+
+.orgchart-page .oc-node.selected {
+    border-color: var(--oc-green-3) !important;
+    background: rgba(26,61,45,0.03) !important;
+    box-shadow: 0 0 0 3px rgba(26,61,45,0.08) !important;
+}
+
+/* ---- Root Node (Level 0) ---- */
+.orgchart-page .oc-node.oc-root {
+    background: linear-gradient(135deg, var(--oc-green-1), var(--oc-green-3)) !important;
+    border: 2px solid var(--oc-green-3) !important;
+    border-right: 5px solid var(--oc-gold) !important;
+    padding: 16px 20px !important;
+    margin-bottom: 12px !important;
+}
+
+.orgchart-page .oc-node.oc-root:hover {
+    box-shadow: 0 8px 24px rgba(11,31,23,0.25) !important;
+    transform: translateX(-3px) !important;
+    background: linear-gradient(135deg, var(--oc-green-2), var(--oc-green-4)) !important;
+}
+
+.orgchart-page .oc-node.oc-root .oc-node-name { color: white !important; font-size: 15px !important; }
+.orgchart-page .oc-node.oc-root .oc-node-id { color: rgba(255,255,255,0.5) !important; }
+.orgchart-page .oc-node.oc-root .oc-node-meta { color: rgba(255,255,255,0.65) !important; }
+.orgchart-page .oc-node.oc-root .oc-node-meta i { color: rgba(255,255,255,0.45) !important; }
+
+.orgchart-page .oc-node.oc-root .oc-node-icon-wrap {
+    background: rgba(255,255,255,0.12) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+.orgchart-page .oc-node.oc-root .oc-node-icon-wrap i { color: var(--oc-gold) !important; }
+
+.orgchart-page .oc-node.oc-root .oc-badge {
+    background: rgba(255,255,255,0.12) !important;
+    color: rgba(255,255,255,0.85) !important;
+}
+
+/* ---- Level 1 Nodes ---- */
+.orgchart-page .oc-node.oc-level-1 {
+    background: #F8FAFC !important;
+    border-right-color: var(--oc-gold-light) !important;
+}
+
+/* ============================================= */
+/* NODE INTERNALS                                 */
+/* ============================================= */
+
+/* Toggle chevron */
+.orgchart-page .oc-node-toggle {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+    background: rgba(201,168,76,0.08) !important;
+    border: none !important;
+    color: var(--oc-gold) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    flex-shrink: 0 !important;
+    transition: all 0.25s ease !important;
+}
+
+.orgchart-page .oc-node-toggle:hover {
+    background: rgba(201,168,76,0.15) !important;
+}
+
+.orgchart-page .oc-node-toggle i {
+    transition: transform 0.25s ease !important;
+}
+
+.orgchart-page .oc-tree-item.collapsed .oc-node-toggle i {
+    transform: rotate(-90deg) !important;
+}
+
+.orgchart-page .oc-node.oc-root .oc-node-toggle {
+    background: rgba(255,255,255,0.1) !important;
+    color: var(--oc-gold) !important;
+}
+
+/* Placeholder when no children */
+.orgchart-page .oc-node-toggle-placeholder {
+    width: 28px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Icon */
+.orgchart-page .oc-node-icon-wrap {
+    width: 40px !important;
+    height: 40px !important;
+    background: rgba(26,61,45,0.06) !important;
+    border: 1px solid rgba(26,61,45,0.1) !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+.orgchart-page .oc-node-icon-wrap i {
+    font-size: 18px !important;
+    color: var(--oc-green-3) !important;
+}
+
+/* Info */
+.orgchart-page .oc-node-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.orgchart-page .oc-node-name {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+}
+
+.orgchart-page .oc-node-id {
+    font-size: 10px !important;
+    color: #94A3B8 !important;
+    margin-top: 1px !important;
+}
+
+.orgchart-page .oc-node-meta {
+    display: flex !important;
+    gap: 14px !important;
+    margin-top: 4px !important;
+    font-size: 11px !important;
+    color: #64748B !important;
+    flex-wrap: wrap !important;
+}
+
+.orgchart-page .oc-node-meta span {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.orgchart-page .oc-node-meta i {
+    font-size: 11px !important;
+    color: #94A3B8 !important;
+}
+
+/* Badges */
+.orgchart-page .oc-node-badges {
+    display: flex !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    align-items: center !important;
+}
+
+.orgchart-page .oc-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 4px 10px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+}
+
+.orgchart-page .oc-badge.personnel {
+    background: rgba(26,61,45,0.06) !important;
+    color: var(--oc-green-3) !important;
+}
+
+.orgchart-page .oc-badge.children-count {
+    background: rgba(59,130,246,0.06) !important;
+    color: var(--oc-blue) !important;
+}
+
+/* ============================================= */
+/* DETAIL PANEL (sidebar)                         */
+/* ============================================= */
+.orgchart-page .oc-detail-panel {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 360px !important;
+    height: 100vh !important;
+    background: #FFFFFF !important;
+    border-right: 1px solid #D1D5DB !important;
+    box-shadow: 8px 0 32px rgba(0,0,0,0.12) !important;
+    z-index: 1050 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.orgchart-page .oc-detail-panel.show {
+    transform: translateX(0) !important;
+}
+
+.orgchart-page .oc-detail-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0,0,0,0.3) !important;
+    z-index: 1049 !important;
+    display: none !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+.orgchart-page .oc-detail-overlay.show { display: block !important; }
+
+.orgchart-page .oc-detail-header {
+    padding: 20px !important;
+    background: linear-gradient(135deg, var(--oc-green-1), var(--oc-green-3)) !important;
+    color: white !important;
+    flex-shrink: 0 !important;
+}
+
+.orgchart-page .oc-detail-header-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 12px !important;
+}
+
+.orgchart-page .oc-detail-close {
+    background: rgba(255,255,255,0.1) !important;
+    border: none !important;
+    color: white !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.orgchart-page .oc-detail-close:hover { background: rgba(255,255,255,0.2) !important; }
+
+.orgchart-page .oc-detail-unit-name {
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+}
+
+.orgchart-page .oc-detail-unit-id {
+    font-size: 12px !important;
+    color: rgba(255,255,255,0.5) !important;
+    margin-top: 4px !important;
+}
+
+.orgchart-page .oc-detail-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+}
+
+.orgchart-page .oc-detail-section {
+    margin-bottom: 20px !important;
+}
+
+.orgchart-page .oc-detail-section-title {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #94A3B8 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 10px !important;
+    padding-bottom: 6px !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+}
+
+.orgchart-page .oc-detail-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 0 !important;
+    border-bottom: 1px solid #F8FAFC !important;
+    font-size: 13px !important;
+}
+
+.orgchart-page .oc-detail-row:last-child { border-bottom: none !important; }
+
+.orgchart-page .oc-detail-label {
+    color: #64748B !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.orgchart-page .oc-detail-label i { color: #94A3B8 !important; font-size: 14px !important; }
+
+.orgchart-page .oc-detail-value {
+    color: #1E293B !important;
+    font-weight: 700 !important;
+}
+
+.orgchart-page .oc-detail-children-list {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.orgchart-page .oc-detail-child {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E8ECF0 !important;
+    border-radius: 8px !important;
+    margin-bottom: 6px !important;
+    font-size: 12px !important;
+    color: #1E293B !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.orgchart-page .oc-detail-child:hover {
+    background: #F1F5F9 !important;
+    border-color: var(--oc-gold) !important;
+}
+
+.orgchart-page .oc-detail-child i { color: #94A3B8 !important; }
+.orgchart-page .oc-detail-child span { flex: 1 !important; }
+.orgchart-page .oc-detail-child small { color: #94A3B8 !important; font-size: 10px !important; }
+
+.orgchart-page .oc-detail-footer {
+    padding: 14px 20px !important;
+    border-top: 1px solid #E2E8F0 !important;
+    flex-shrink: 0 !important;
+}
+
+.orgchart-page .oc-detail-link {
+    display: block !important;
+    text-align: center !important;
+    padding: 10px 16px !important;
+    background: linear-gradient(135deg, var(--oc-green-3), var(--oc-green-4)) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    text-decoration: none !important;
+    border-radius: 10px !important;
+    transition: all 0.2s ease !important;
+}
+
+.orgchart-page .oc-detail-link:hover {
+    box-shadow: 0 4px 12px rgba(26,61,45,0.3) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ============================================= */
+/* BREADCRUMB PATH                                */
+/* ============================================= */
+.orgchart-page .oc-breadcrumb {
+    display: none !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 10px 20px !important;
+    background: #F8FAFC !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+    font-size: 12px !important;
+    color: #64748B !important;
+    flex-wrap: wrap !important;
+}
+
+.orgchart-page .oc-breadcrumb.show { display: flex !important; }
+
+.orgchart-page .oc-breadcrumb-item {
+    cursor: pointer !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+}
+
+.orgchart-page .oc-breadcrumb-item:hover {
+    background: rgba(201,168,76,0.1) !important;
+    color: var(--oc-green-3) !important;
+}
+
+.orgchart-page .oc-breadcrumb-sep {
+    color: #CBD5E1 !important;
+}
+
+/* ============================================= */
+/* LOADING & EMPTY                                */
+/* ============================================= */
+.orgchart-page .oc-loading {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 80px 20px !important;
+}
+
+.orgchart-page .oc-loading-spinner {
+    width: 44px !important;
+    height: 44px !important;
+    border: 4px solid #E2E8F0 !important;
+    border-top-color: var(--oc-gold) !important;
+    border-radius: 50% !important;
+    animation: ocSpin 0.8s linear infinite !important;
+}
+
+@keyframes ocSpin { to { transform: rotate(360deg); } }
+
+.orgchart-page .oc-loading p { color: #64748B !important; margin-top: 16px !important; font-size: 14px !important; }
+
+.orgchart-page .oc-empty {
+    text-align: center !important;
+    padding: 80px 20px !important;
+}
+
+.orgchart-page .oc-empty i { font-size: 56px !important; color: #CBD5E1 !important; margin-bottom: 16px !important; display: block !important; }
+.orgchart-page .oc-empty h4 { color: #64748B !important; font-size: 16px !important; margin: 0 !important; }
+.orgchart-page .oc-error i { color: var(--oc-red) !important; }
+
+/* ============================================= */
+/* SEARCH RESULTS COUNTER                         */
+/* ============================================= */
+.orgchart-page .oc-search-results {
+    padding: 8px 20px !important;
+    background: #FFFBEB !important;
+    border-bottom: 1px solid rgba(245,158,11,0.2) !important;
+    font-size: 12px !important;
+    color: #92400E !important;
+    font-weight: 600 !important;
+    display: none !important;
+}
+
+.orgchart-page .oc-search-results.show { display: block !important; }
+
+/* ============================================= */
+/* ANIMATIONS                                     */
+/* ============================================= */
+.orgchart-page .oc-animate {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: ocFadeIn 0.5s ease forwards;
+}
+
+.orgchart-page .oc-delay-1 { animation-delay: 0.1s; }
+.orgchart-page .oc-delay-2 { animation-delay: 0.2s; }
+
+@keyframes ocFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================= */
+/* RESPONSIVE                                     */
+/* ============================================= */
+@media (max-width: 768px) {
+    .orgchart-page .oc-header { padding: 20px !important; }
+    .orgchart-page .oc-header-title h1 { font-size: 20px !important; }
+    .orgchart-page .oc-stats-bar { gap: 10px !important; }
+    .orgchart-page .oc-stat-card { min-width: 120px !important; padding: 12px !important; }
+    .orgchart-page .oc-detail-panel { width: 300px !important; }
+    .orgchart-page .oc-node { padding: 10px 12px !important; }
+    .orgchart-page { --oc-indent: 28px !important; }
+}

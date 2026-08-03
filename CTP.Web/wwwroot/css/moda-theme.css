@@ -1,0 +1,141 @@
+/* ============================================= */
+/* MODA Theme v2 - Premium Floating Card Design  */
+/* نظام المودا - قوات الدفاع الجوي الملكي السعودي  */
+/* ============================================= */
+
+/* ---- Font Face Declarations ---- */
+@font-face {
+    font-family: 'Cairo';
+    src: url('../fonts/cairo/Cairo-Light.woff2') format('woff2'),
+         url('../fonts/cairo/Cairo-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Cairo';
+    src: url('../fonts/cairo/Cairo-Regular.woff2') format('woff2'),
+         url('../fonts/cairo/Cairo-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Cairo';
+    src: url('../fonts/cairo/Cairo-SemiBold.woff2') format('woff2'),
+         url('../fonts/cairo/Cairo-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Cairo';
+    src: url('../fonts/cairo/Cairo-Bold.woff2') format('woff2'),
+         url('../fonts/cairo/Cairo-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ---- CSS Variables ---- */
+:root {
+    /* Primary Colors */
+    --moda-green-dark: #1A2E28;
+    --moda-green: #243B33;
+    --moda-green-light: #2D4A40;
+    --moda-gold: #C9A84C;
+    --moda-gold-light: #D4B862;
+    --moda-gold-dark: #B8943A;
+    --moda-gold-muted: rgba(201, 168, 76, 0.15);
+
+    /* Card Dark Colors (for stat cards like reference) */
+    --card-dark-1: #1A3A2A;
+    --card-dark-2: #2C4A3A;
+    --card-dark-3: #1E3E30;
+    --card-gold: #C9A84C;
+
+    /* Sidebar */
+    --sidebar-bg: linear-gradient(180deg, #1E332B 0%, #15261F 50%, #0F1C16 100%);
+    --sidebar-width: 260px;
+    --sidebar-radius: 24px;
+    --sidebar-margin: 16px;
+
+    /* Body & Content */
+    --bg-body: #C8CFC5;
+    --bg-content: #D5DBD2;
+    --bg-card: #FFFFFF;
+
+    /* Text */
+    --text-primary: #1A1D21;
+    --text-secondary: #6B7280;
+    --text-muted: #9CA3AF;
+    --text-light: rgba(255, 255, 255, 0.7);
+    --text-white: #FFFFFF;
+
+    /* Status */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
+    --color-info: #3B82F6;
+
+    /* Shadows */
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --shadow-sidebar: 0 8px 40px rgba(0, 0, 0, 0.2);
+
+    /* Radius */
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+
+    /* Layout */
+    --header-height: 0px;
+    --content-padding: 24px;
+}
+
+/* ---- Global Reset ---- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Cairo', 'Segoe UI', 'Dubai', 'Arial', sans-serif;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: all var(--transition-fast);
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+::selection {
+    background: var(--moda-gold);
+    color: var(--moda-green-dark);
+}

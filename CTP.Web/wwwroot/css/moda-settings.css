@@ -1,0 +1,403 @@
+/* ====================================================================
+   moda-settings.css — صفحة "إعدادات النظام" (Settings Hub)
+   مستوحى من نمط النظام المرجعي (cfg-*) مع الحفاظ على لوحة MODA الخضراء/الذهبية.
+   ==================================================================== */
+
+:root {
+    --cfg-green-dark: #0B1F17;
+    --cfg-green-mid: #1A3D2D;
+    --cfg-green-light: #2D5A3F;
+    --cfg-gold: #C9A84C;
+    --cfg-gold-light: #E8D48B;
+    --cfg-gold-muted: rgba(201, 168, 76, 0.15);
+    --cfg-text: #1e293b;
+    --cfg-text-muted: #64748b;
+    --cfg-border: #e2e8f0;
+    --cfg-bg: #f8fafc;
+    --cfg-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --cfg-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.12);
+    --cfg-radius: 14px;
+}
+
+.cfg-page {
+    padding: 0;
+    animation: cfgFadeIn 0.4s ease;
+}
+
+@keyframes cfgFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Animation utilities ───────────────────────────────────────────── */
+.cfg-animate { animation: cfgFadeIn 0.5s ease both; }
+.cfg-delay-1 { animation-delay: 0.05s; }
+.cfg-delay-2 { animation-delay: 0.1s; }
+.cfg-delay-3 { animation-delay: 0.15s; }
+.cfg-delay-4 { animation-delay: 0.2s; }
+
+/* ── Header ────────────────────────────────────────────────────────── */
+.cfg-header {
+    background: linear-gradient(135deg, var(--cfg-green-dark) 0%, var(--cfg-green-mid) 60%, var(--cfg-green-light) 100%);
+    color: #fff;
+    padding: 28px 32px;
+    border-radius: var(--cfg-radius);
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--cfg-shadow);
+}
+
+.cfg-header::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    left: -40px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, var(--cfg-gold-muted) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.cfg-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+}
+
+.cfg-header-title-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cfg-header-emblem {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--cfg-gold), #b8943f);
+    color: var(--cfg-green-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 6px 18px rgba(201, 168, 76, 0.35);
+}
+
+.cfg-header-title h1 {
+    margin: 0 0 4px 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.cfg-header-subtitle {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+    max-width: 600px;
+    line-height: 1.6;
+}
+
+.cfg-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cfg-hbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+.cfg-hbtn:hover { transform: translateY(-2px); }
+
+.cfg-hbtn-gold {
+    background: linear-gradient(135deg, var(--cfg-gold), #b8943f);
+    color: var(--cfg-green-dark);
+}
+.cfg-hbtn-gold:hover {
+    box-shadow: 0 6px 16px rgba(201, 168, 76, 0.35);
+    color: var(--cfg-green-dark);
+}
+
+.cfg-hbtn-outline {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.cfg-hbtn-outline:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* ── Summary Strip (top metric cards) ──────────────────────────────── */
+.cfg-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.cfg-summary-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid var(--cfg-border);
+    box-shadow: var(--cfg-shadow);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    border-right: 4px solid var(--cfg-green-mid);
+}
+
+.cfg-summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--cfg-shadow-hover);
+    color: inherit;
+    border-right-color: var(--cfg-gold);
+}
+
+.cfg-summary-card.gold { border-right-color: var(--cfg-gold); }
+.cfg-summary-card.blue { border-right-color: #3b82f6; }
+.cfg-summary-card.purple { border-right-color: #a855f7; }
+.cfg-summary-card.green { border-right-color: #10b981; }
+
+.cfg-summary-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+.cfg-summary-card.green .cfg-summary-icon {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));
+    color: #10b981;
+}
+.cfg-summary-card.gold .cfg-summary-icon {
+    background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.05));
+    color: var(--cfg-gold);
+}
+.cfg-summary-card.blue .cfg-summary-icon {
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05));
+    color: #3b82f6;
+}
+.cfg-summary-card.purple .cfg-summary-icon {
+    background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(168,85,247,0.05));
+    color: #a855f7;
+}
+
+.cfg-summary-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--cfg-green-mid);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.cfg-summary-label {
+    font-size: 12px;
+    color: var(--cfg-text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.cfg-summary-sub {
+    font-size: 11px;
+    color: var(--cfg-text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--cfg-bg);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+/* ── Section group ─────────────────────────────────────────────────── */
+.cfg-section {
+    margin-bottom: 26px;
+}
+
+.cfg-section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.cfg-section-emblem {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--cfg-gold-muted);
+    color: var(--cfg-green-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+}
+
+.cfg-section-head h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--cfg-green-mid);
+}
+
+.cfg-section-count {
+    background: var(--cfg-green-mid);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.cfg-section-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--cfg-gold) 0%, var(--cfg-border) 100%);
+    margin-right: 6px;
+}
+
+/* ── Cards grid ────────────────────────────────────────────────────── */
+.cfg-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.cfg-card {
+    background: #fff;
+    border-radius: var(--cfg-radius);
+    border: 1px solid var(--cfg-border);
+    padding: 20px 18px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.25s ease;
+    border-top: 3px solid var(--cfg-green-mid);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+}
+
+.cfg-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--cfg-shadow-hover);
+    border-top-color: var(--cfg-gold);
+    color: inherit;
+}
+
+.cfg-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.cfg-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.cfg-icon-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.cfg-icon-success { background: linear-gradient(135deg, #10b981, #047857); }
+.cfg-icon-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.cfg-icon-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.cfg-icon-oracle { background: linear-gradient(135deg, #f97316, #c2410c); }
+.cfg-icon-ad { background: linear-gradient(135deg, #6366f1, #4338ca); }
+.cfg-icon-purple { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+.cfg-icon-cyan { background: linear-gradient(135deg, #06b6d4, #0e7490); }
+.cfg-icon-amber { background: linear-gradient(135deg, #d97706, #92400e); }
+.cfg-icon-gold { background: linear-gradient(135deg, var(--cfg-gold), #b8943f); color: var(--cfg-green-dark); }
+
+.cfg-card-title {
+    margin: 0 0 4px 0;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--cfg-text);
+}
+
+.cfg-card-desc {
+    margin: 0;
+    font-size: 12px;
+    color: var(--cfg-text-muted);
+    line-height: 1.5;
+}
+
+.cfg-card-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.cfg-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--cfg-bg);
+    color: var(--cfg-green-mid);
+}
+.cfg-pill i { font-size: 12px; }
+
+.cfg-pill-success { background: rgba(16,185,129,0.12); color: #047857; }
+.cfg-pill-warning { background: rgba(245,158,11,0.12); color: #b45309; }
+.cfg-pill-info { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+.cfg-pill-gold { background: var(--cfg-gold-muted); color: #8b6914; }
+
+.cfg-card-arrow {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    color: var(--cfg-text-muted);
+    font-size: 14px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.cfg-card:hover .cfg-card-arrow {
+    transform: translateX(-4px);
+    color: var(--cfg-gold);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+    .cfg-summary-strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .cfg-header { padding: 20px; }
+    .cfg-header-title h1 { font-size: 18px; }
+    .cfg-summary-strip { grid-template-columns: 1fr; }
+    .cfg-cards-grid { grid-template-columns: 1fr; }
+    .cfg-header-content { flex-direction: column; align-items: flex-start; }
+}

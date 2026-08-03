@@ -1,0 +1,27 @@
+﻿@{
+    ViewData["Title"] = "رفض الوصول";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow-sm" style="border-radius: 16px;">
+                <div class="card-header bg-danger text-white text-center" style="border-radius: 16px 16px 0 0;">
+                    <i class="bi bi-shield-exclamation" style="font-size: 48px;"></i>
+                    <h3 class="mt-3">رفض الوصول</h3>
+                </div>
+                <div class="card-body text-center p-5">
+                    <p class="lead" style="font-weight: 600;">ليس لديك صلاحية للوصول إلى هذه الشاشة.</p>
+                    <p class="text-muted">
+                        هذه الخاصية غير متاحة للدور الحالي المخصص لك. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع مسؤول برنامج التغيير والتحول.
+                    </p>
+                    <hr class="my-4" />
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-primary" style="background-color: #106981; border: none; border-radius: 8px;">
+                        <i class="bi bi-house-door ms-2"></i>
+                        العودة إلى لوحة القياس
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

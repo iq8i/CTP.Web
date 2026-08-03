@@ -1,0 +1,481 @@
+/* ============================================= */
+/* MODA Organizations - Shared styles for Org views */
+/* صفحات إدارة الجهات                              */
+/* ============================================= */
+
+/* ---- Dash-Welcome action buttons (used in mgmt page headers) ---- */
+.dash-welcome-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+@media (max-width: 1200px) {
+    .dash-welcome-actions {
+        justify-content: center;
+    }
+}
+
+/* ---- Organizations Grid (Index page) ---- */
+.org-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.org-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-top: 4px solid var(--moda-green);
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition-fast);
+}
+
+.org-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-top-color: var(--moda-gold);
+}
+
+.org-card.is-foundation { border-top-color: var(--color-warning); }
+.org-card.is-disabled { opacity: 0.6; border-top-color: var(--text-muted); }
+
+.org-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    gap: 10px;
+}
+
+.org-card-logo {
+    width: 72px;
+    height: 72px;
+    background: var(--bg-body);
+    border-radius: 50%;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.org-card-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.org-card-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-end;
+}
+
+.org-card-name {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.org-card-code {
+    display: inline-block;
+    background: rgba(36, 59, 51, 0.08);
+    color: var(--moda-green);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    align-self: flex-start;
+}
+
+.org-card-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0 0 14px;
+    min-height: 38px;
+}
+
+.org-card-stats {
+    display: flex;
+    gap: 14px;
+    padding: 12px 0;
+    border-top: 1px dashed #e5e7eb;
+    margin-bottom: 14px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
+
+.org-card-stats .stat-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.org-card-stats .stat-item i {
+    color: var(--moda-green);
+    font-size: 14px;
+}
+
+.org-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.org-card-actions .moda-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+    justify-content: center;
+}
+
+/* ---- Form Card ---- */
+.org-form-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    padding: 28px;
+    max-width: 900px;
+}
+
+.org-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.org-form-row.single { grid-template-columns: 1fr; }
+
+.org-required { color: var(--color-danger); }
+
+.org-form-hint {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+.org-form-error {
+    color: var(--color-danger);
+    font-size: 12.5px;
+    margin-top: 4px;
+    display: block;
+}
+
+.org-form-control-disabled {
+    background: #f3f4f6 !important;
+    color: var(--text-muted) !important;
+    cursor: not-allowed;
+}
+
+.org-color-input {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.org-color-picker {
+    width: 56px;
+    padding: 0;
+    border: 1.5px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: white;
+    flex-shrink: 0;
+}
+
+.org-color-input .moda-form-control { flex: 1; }
+
+.org-checkbox-label {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    padding: 12px 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.org-checkbox-label:hover {
+    background: var(--moda-gold-muted);
+    border-color: var(--moda-gold);
+}
+
+.org-checkbox-label input[type=checkbox] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--moda-green);
+}
+
+.org-form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 22px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
+
+.org-validation-summary {
+    color: #991B1B;
+    background: #FEE2E2;
+    border-right: 4px solid var(--color-danger);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 18px;
+    font-size: 13px;
+}
+
+.org-validation-summary ul { margin: 0; padding-right: 18px; }
+
+/* ASP.NET adds .validation-summary-valid عندما لا توجد أخطاء — لا تُعرض الخلفية الحمراء الفارغة */
+.org-validation-summary.validation-summary-valid { display: none; }
+
+/* ---- Details Grid ---- */
+.org-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.org-info-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.org-info-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px dashed #f0f0f0;
+}
+
+.org-info-row:last-child { border-bottom: none; }
+
+.org-info-row .label {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    min-width: 130px;
+    font-weight: 500;
+}
+
+.org-info-row .value {
+    color: var(--text-primary);
+    flex: 1;
+    font-size: 13.5px;
+}
+
+.org-info-row code {
+    background: rgba(36, 59, 51, 0.08);
+    color: var(--moda-green);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.org-color-swatch {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    vertical-align: middle;
+}
+
+.org-logo-preview {
+    background: var(--bg-body);
+    border-radius: var(--radius-md);
+    padding: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    min-height: 180px;
+}
+
+.org-logo-preview img {
+    max-width: 200px;
+    max-height: 160px;
+    object-fit: contain;
+}
+
+.org-logo-path {
+    display: block;
+    background: #f3f4f6;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-family: 'Courier New', monospace;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    word-break: break-all;
+}
+
+.org-upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.org-file-label {
+    background: var(--moda-green);
+    color: var(--text-white);
+    padding: 11px 16px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+}
+
+.org-file-label:hover {
+    background: var(--moda-green-light);
+    color: var(--text-white);
+}
+
+.org-file-label input[type=file] { display: none; }
+
+/* ---- Admin / User list (Details + ManageAdmins) ---- */
+.org-user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.org-user-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid #f3f4f6;
+    gap: 10px;
+}
+
+.org-user-list li:last-child { border-bottom: none; }
+
+.org-user-cell {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.org-user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--moda-green), var(--moda-green-light));
+    color: var(--text-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.org-user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13.5px;
+}
+
+.org-user-username {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-family: 'Courier New', monospace;
+    background: #f3f4f6;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 2px;
+}
+
+.org-text-muted { color: var(--text-muted); }
+
+/* ---- Stat grid inside details ---- */
+.org-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.org-stat-box {
+    background: var(--bg-body);
+    padding: 16px 14px;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.org-stat-box .stat-num {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--moda-green);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.org-stat-box .stat-label {
+    color: var(--text-secondary);
+    font-size: 11.5px;
+}
+
+/* ---- Permissions table cells ---- */
+.org-perm-count {
+    display: inline-block;
+    min-width: 34px;
+    text-align: center;
+    background: rgba(36, 59, 51, 0.08);
+    color: var(--moda-green);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+/* ---- ManageAdmins: row highlight ---- */
+.moda-table tbody tr.org-row-admin {
+    background: rgba(201, 168, 76, 0.08);
+}
+
+.moda-table tbody tr.org-row-admin:hover {
+    background: rgba(201, 168, 76, 0.15);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+    .org-form-row { grid-template-columns: 1fr; }
+    .org-card-actions { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+    .org-info-row { flex-wrap: wrap; }
+    .org-info-row .label { min-width: 100%; }
+    .org-form-actions { flex-direction: column; }
+    .org-form-actions .moda-btn { width: 100%; justify-content: center; }
+}

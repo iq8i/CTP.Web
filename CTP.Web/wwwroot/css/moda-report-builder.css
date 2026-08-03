@@ -1,0 +1,802 @@
+/* ============================================= */
+/* MODA Report Builder - CSS                     */
+/* منشئ التقارير المخصصة                          */
+/* ============================================= */
+
+.rb-page {
+    --rb-green-1: #0B1F17;
+    --rb-green-2: #132E22;
+    --rb-green-3: #1A3D2D;
+    --rb-green-4: #224D38;
+    --rb-green-5: #2A5D43;
+    --rb-gold: #C9A84C;
+    --rb-blue: #3B82F6;
+    --rb-emerald: #10B981;
+    --rb-red: #EF4444;
+    --rb-amber: #F59E0B;
+    --rb-purple: #8B5CF6;
+    --rb-cyan: #06B6D4;
+    --rb-radius: 20px;
+    --rb-radius-sm: 14px;
+    --rb-radius-xs: 10px;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* ============================================= */
+/* HEADER                                         */
+/* ============================================= */
+.rb-page .rb-header {
+    background: linear-gradient(135deg, var(--rb-green-1) 0%, var(--rb-green-3) 50%, var(--rb-green-2) 100%) !important;
+    border-radius: var(--rb-radius) !important;
+    padding: 32px 36px !important;
+    margin-bottom: 24px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    color: white !important;
+    box-shadow: 0 8px 32px rgba(11,31,23,0.5) !important;
+}
+
+.rb-page .rb-header::after {
+    content: '\F28A';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    bottom: -20px;
+    left: 30px;
+    font-size: 140px;
+    opacity: 0.04;
+    color: white;
+    pointer-events: none;
+}
+
+.rb-page .rb-header-content {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 20px !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.rb-page .rb-header-title-section {
+    display: flex !important;
+    align-items: center !important;
+    gap: 18px !important;
+}
+
+.rb-page .rb-header-emblem {
+    width: 60px !important;
+    height: 60px !important;
+    background: rgba(255,255,255,0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: var(--rb-radius-sm) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+.rb-page .rb-header-emblem i {
+    font-size: 28px !important;
+    color: var(--rb-gold) !important;
+}
+
+.rb-page .rb-header-title h1 {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: white !important;
+    margin: 0 !important;
+}
+
+.rb-page .rb-header-subtitle {
+    font-size: 14px !important;
+    color: rgba(255,255,255,0.65) !important;
+    margin-top: 4px !important;
+}
+
+.rb-page .rb-header-actions {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.rb-page .rb-hbtn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    padding: 9px 18px !important;
+    border-radius: var(--rb-radius-xs) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    background: rgba(255,255,255,0.08) !important;
+    color: white !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    text-decoration: none !important;
+    font-size: 13px !important;
+    backdrop-filter: blur(6px) !important;
+}
+
+.rb-page .rb-hbtn:hover {
+    background: rgba(255,255,255,0.15) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+.rb-page .rb-hbtn.rb-hbtn-gold {
+    background: rgba(201,168,76,0.2) !important;
+    border-color: rgba(201,168,76,0.4) !important;
+}
+
+.rb-page .rb-hbtn.rb-hbtn-gold:hover {
+    background: rgba(201,168,76,0.35) !important;
+}
+
+/* ============================================= */
+/* STAT CARDS                                     */
+/* ============================================= */
+.rb-page .rb-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 18px !important;
+    margin-bottom: 24px !important;
+}
+
+.rb-page .rb-stat-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: var(--rb-radius) !important;
+    padding: 24px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+}
+
+.rb-page .rb-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 4px;
+    border-radius: var(--rb-radius) var(--rb-radius) 0 0;
+}
+
+.rb-page .rb-stat-card.primary::before { background: linear-gradient(90deg, #0284C7, var(--rb-blue)) !important; }
+.rb-page .rb-stat-card.success::before { background: linear-gradient(90deg, #D97706, var(--rb-amber)) !important; }
+.rb-page .rb-stat-card.info::before { background: linear-gradient(90deg, #059669, var(--rb-emerald)) !important; }
+.rb-page .rb-stat-card.warning::before { background: linear-gradient(90deg, #6D28D9, var(--rb-purple)) !important; }
+
+.rb-page .rb-stat-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.1) !important;
+}
+
+.rb-page .rb-stat-card::after {
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    bottom: -10px;
+    left: 10px;
+    font-size: 80px;
+    opacity: 0.04;
+    pointer-events: none;
+}
+
+.rb-page .rb-stat-card.primary::after { content: '\F28A'; }
+.rb-page .rb-stat-card.success::after { content: '\F588'; }
+.rb-page .rb-stat-card.info::after { content: '\F3E2'; }
+.rb-page .rb-stat-card.warning::after { content: '\F47A'; }
+
+.rb-page .rb-stat-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+}
+
+.rb-page .rb-stat-icon {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.rb-page .rb-stat-icon i { font-size: 22px !important; }
+
+.rb-page .rb-stat-card.primary .rb-stat-icon { background: rgba(59,130,246,0.1) !important; }
+.rb-page .rb-stat-card.primary .rb-stat-icon i { color: var(--rb-blue) !important; }
+.rb-page .rb-stat-card.success .rb-stat-icon { background: rgba(245,158,11,0.1) !important; }
+.rb-page .rb-stat-card.success .rb-stat-icon i { color: var(--rb-amber) !important; }
+.rb-page .rb-stat-card.info .rb-stat-icon { background: rgba(16,185,129,0.1) !important; }
+.rb-page .rb-stat-card.info .rb-stat-icon i { color: var(--rb-emerald) !important; }
+.rb-page .rb-stat-card.warning .rb-stat-icon { background: rgba(139,92,246,0.1) !important; }
+.rb-page .rb-stat-card.warning .rb-stat-icon i { color: var(--rb-purple) !important; }
+
+.rb-page .rb-stat-number {
+    font-size: 36px !important;
+    font-weight: 800 !important;
+    color: #0F172A !important;
+    line-height: 1.1 !important;
+    margin-bottom: 4px !important;
+}
+
+.rb-page .rb-stat-label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+}
+
+/* ============================================= */
+/* FILTER TABS                                    */
+/* ============================================= */
+.rb-page .rb-filter-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: var(--rb-radius) !important;
+    padding: 14px 22px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+    border-right: 4px solid var(--rb-gold) !important;
+}
+
+.rb-page .rb-filter-tabs {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+
+.rb-page .rb-filter-btn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 8px 20px !important;
+    border-radius: var(--rb-radius-xs) !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #F8FAFC !important;
+    color: #64748B !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.rb-page .rb-filter-btn:hover {
+    border-color: var(--rb-green-3) !important;
+    color: var(--rb-green-3) !important;
+    background: rgba(26,61,45,0.04) !important;
+}
+
+.rb-page .rb-filter-btn.active {
+    background: linear-gradient(135deg, var(--rb-green-1), var(--rb-green-3)) !important;
+    color: #FFFFFF !important;
+    border-color: var(--rb-green-3) !important;
+    box-shadow: 0 4px 12px rgba(26,61,45,0.3) !important;
+}
+
+/* ============================================= */
+/* REPORT CARDS GRID                              */
+/* ============================================= */
+.rb-page .rb-reports-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+    margin-bottom: 24px !important;
+}
+
+.rb-page .rb-report-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: var(--rb-radius) !important;
+    padding: 24px !important;
+    position: relative !important;
+    overflow: visible !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+    border-right: 4px solid var(--rb-gold) !important;
+}
+
+.rb-page .rb-report-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.1) !important;
+}
+
+/* Favorite badge */
+.rb-page .rb-fav-badge {
+    position: absolute !important;
+    top: -10px !important;
+    right: -6px !important;
+    background: var(--rb-amber) !important;
+    color: white !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 10px rgba(245,158,11,0.35) !important;
+    font-size: 14px !important;
+}
+
+/* Report header */
+.rb-page .rb-report-head {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    margin-bottom: 14px !important;
+}
+
+.rb-page .rb-report-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    background: linear-gradient(135deg, var(--rb-green-1), var(--rb-green-3)) !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.rb-page .rb-report-icon i {
+    font-size: 22px !important;
+    color: var(--rb-gold) !important;
+}
+
+.rb-page .rb-report-name {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+    margin: 0 0 4px 0 !important;
+}
+
+.rb-page .rb-report-source {
+    font-size: 12px !important;
+    color: #94A3B8 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.rb-page .rb-report-desc {
+    font-size: 13px !important;
+    color: #64748B !important;
+    margin-bottom: 14px !important;
+    line-height: 1.5 !important;
+}
+
+/* Meta tags */
+.rb-page .rb-report-meta {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 16px !important;
+}
+
+.rb-page .rb-tag {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.rb-page .rb-tag-user { background: rgba(26,61,45,0.08) !important; color: var(--rb-green-3) !important; }
+.rb-page .rb-tag-date { background: rgba(100,116,139,0.1) !important; color: #64748B !important; }
+.rb-page .rb-tag-public { background: rgba(16,185,129,0.1) !important; color: var(--rb-emerald) !important; }
+.rb-page .rb-tag-private { background: rgba(139,92,246,0.1) !important; color: var(--rb-purple) !important; }
+
+/* Action buttons */
+.rb-page .rb-report-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+.rb-page .rb-actions-row {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.rb-page .rb-action-btn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    padding: 8px 0 !important;
+    border-radius: var(--rb-radius-xs) !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    flex: 1 !important;
+    text-decoration: none !important;
+}
+
+.rb-page .rb-action-btn:hover {
+    transform: translateY(-1px) !important;
+}
+
+.rb-page .rb-btn-run {
+    background: linear-gradient(135deg, var(--rb-green-1), var(--rb-green-3)) !important;
+    color: white !important;
+}
+.rb-page .rb-btn-run:hover { box-shadow: 0 4px 12px rgba(26,61,45,0.3) !important; }
+
+.rb-page .rb-btn-pdf {
+    background: rgba(239,68,68,0.1) !important;
+    color: var(--rb-red) !important;
+    border-color: rgba(239,68,68,0.2) !important;
+}
+.rb-page .rb-btn-pdf:hover { background: rgba(239,68,68,0.18) !important; }
+
+.rb-page .rb-btn-fav {
+    background: rgba(245,158,11,0.1) !important;
+    color: var(--rb-amber) !important;
+    border-color: rgba(245,158,11,0.2) !important;
+}
+.rb-page .rb-btn-fav:hover { background: rgba(245,158,11,0.18) !important; }
+
+.rb-page .rb-btn-edit {
+    background: rgba(100,116,139,0.08) !important;
+    color: #64748B !important;
+    border-color: rgba(100,116,139,0.15) !important;
+}
+.rb-page .rb-btn-edit:hover { background: rgba(100,116,139,0.15) !important; }
+
+.rb-page .rb-btn-delete {
+    background: rgba(239,68,68,0.08) !important;
+    color: var(--rb-red) !important;
+    border-color: rgba(239,68,68,0.15) !important;
+}
+.rb-page .rb-btn-delete:hover { background: rgba(239,68,68,0.15) !important; }
+
+/* ============================================= */
+/* EMPTY STATE                                    */
+/* ============================================= */
+.rb-page .rb-empty {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: var(--rb-radius) !important;
+    padding: 60px 20px !important;
+    text-align: center !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+}
+
+.rb-page .rb-empty-icon {
+    font-size: 64px !important;
+    color: #CBD5E1 !important;
+    margin-bottom: 16px !important;
+}
+
+.rb-page .rb-empty-title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #64748B !important;
+    margin: 0 0 8px 0 !important;
+}
+
+.rb-page .rb-empty-desc {
+    font-size: 14px !important;
+    color: #94A3B8 !important;
+    margin: 0 0 20px 0 !important;
+}
+
+.rb-page .rb-empty-btn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    padding: 10px 24px !important;
+    border-radius: var(--rb-radius-xs) !important;
+    border: none !important;
+    background: linear-gradient(135deg, var(--rb-green-1), var(--rb-green-3)) !important;
+    color: white !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    text-decoration: none !important;
+}
+
+.rb-page .rb-empty-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(26,61,45,0.35) !important;
+    color: white !important;
+}
+
+/* ============================================= */
+/* RESULTS MODAL                                  */
+/* ============================================= */
+.rb-page .rb-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.rb-page .rb-modal-overlay.show {
+    display: flex !important;
+}
+
+.rb-page .rb-modal {
+    background: #FFFFFF !important;
+    border-radius: var(--rb-radius) !important;
+    width: 85% !important;
+    max-width: 1100px !important;
+    max-height: 85vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.25) !important;
+    overflow: hidden !important;
+}
+
+.rb-page .rb-modal-header {
+    padding: 20px 24px !important;
+    background: linear-gradient(135deg, var(--rb-green-1), var(--rb-green-3)) !important;
+    color: white !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.rb-page .rb-modal-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.rb-page .rb-modal-close {
+    font-family: inherit !important;
+    background: rgba(255,255,255,0.15) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: white !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    transition: all 0.2s ease !important;
+}
+
+.rb-page .rb-modal-close:hover {
+    background: rgba(255,255,255,0.25) !important;
+}
+
+.rb-page .rb-modal-body {
+    padding: 20px 24px !important;
+    overflow-y: auto !important;
+    flex: 1 !important;
+}
+
+.rb-page .rb-modal-footer {
+    padding: 14px 24px !important;
+    border-top: 2px solid #F1F5F9 !important;
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
+}
+
+.rb-page .rb-modal-btn {
+    font-family: inherit !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 8px 20px !important;
+    border-radius: var(--rb-radius-xs) !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.rb-page .rb-modal-btn:hover {
+    border-color: var(--rb-gold) !important;
+    background: rgba(201,168,76,0.06) !important;
+}
+
+.rb-page .rb-modal-btn.rb-modal-btn-primary {
+    background: linear-gradient(135deg, var(--rb-green-1), var(--rb-green-3)) !important;
+    color: white !important;
+    border-color: var(--rb-green-3) !important;
+}
+
+.rb-page .rb-modal-btn.rb-modal-btn-primary:hover {
+    box-shadow: 0 4px 12px rgba(26,61,45,0.3) !important;
+}
+
+/* Results table */
+.rb-page .rb-results-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    font-size: 13px !important;
+}
+
+.rb-page .rb-results-table thead th {
+    background: #F8FAFC !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+    padding: 12px 14px !important;
+    text-align: right !important;
+    border-bottom: 2px solid #E2E8F0 !important;
+    white-space: nowrap !important;
+}
+
+.rb-page .rb-results-table tbody td {
+    padding: 10px 14px !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+}
+
+.rb-page .rb-results-table tbody tr:hover td {
+    background: rgba(26,61,45,0.02) !important;
+}
+
+/* ============================================= */
+/* LOADING OVERLAY                                */
+/* ============================================= */
+.rb-page .rb-loading {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.rb-page .rb-loading.show {
+    display: flex !important;
+}
+
+.rb-page .rb-loading-card {
+    background: #FFFFFF !important;
+    border-radius: var(--rb-radius) !important;
+    padding: 40px 50px !important;
+    text-align: center !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
+}
+
+.rb-page .rb-spinner {
+    display: inline-block !important;
+    width: 40px !important;
+    height: 40px !important;
+    border: 3px solid #E2E8F0 !important;
+    border-top-color: var(--rb-green-3) !important;
+    border-radius: 50% !important;
+    animation: rbSpin 0.7s linear infinite !important;
+}
+
+@keyframes rbSpin { to { transform: rotate(360deg); } }
+
+.rb-page .rb-loading-text {
+    margin-top: 16px !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+    font-size: 14px !important;
+}
+
+/* ============================================= */
+/* TOAST                                          */
+/* ============================================= */
+.rb-page .rb-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    z-index: 10001;
+    padding: 14px 28px;
+    border-radius: var(--rb-radius-sm);
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rb-page .rb-toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.rb-page .rb-toast.rb-toast-success {
+    background: var(--rb-green-3);
+    color: white;
+}
+
+.rb-page .rb-toast.rb-toast-error {
+    background: var(--rb-red);
+    color: white;
+}
+
+/* ============================================= */
+/* ANIMATIONS                                     */
+/* ============================================= */
+.rb-page .rb-animate {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: rbFadeIn 0.5s ease forwards;
+}
+
+.rb-page .rb-delay-1 { animation-delay: 0.1s; }
+.rb-page .rb-delay-2 { animation-delay: 0.2s; }
+.rb-page .rb-delay-3 { animation-delay: 0.3s; }
+
+@keyframes rbFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================= */
+/* PRINT                                          */
+/* ============================================= */
+@media print {
+    .rb-page .rb-header-actions,
+    .rb-page .rb-filter-card,
+    .rb-page .rb-report-actions,
+    .rb-page .rb-loading,
+    .rb-page .rb-modal-overlay,
+    .rb-page .rb-toast { display: none !important; }
+
+    .rb-page .rb-report-card {
+        page-break-inside: avoid !important;
+        border: 1px solid #ddd !important;
+    }
+}
+
+/* ============================================= */
+/* RESPONSIVE                                     */
+/* ============================================= */
+@media (max-width: 1200px) {
+    .rb-page .rb-reports-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .rb-page .rb-stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .rb-page .rb-header { padding: 20px !important; }
+
+    .rb-page .rb-stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .rb-page .rb-reports-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .rb-page .rb-modal {
+        width: 95% !important;
+    }
+}

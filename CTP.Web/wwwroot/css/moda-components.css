@@ -1,0 +1,750 @@
+/* ============================================= */
+/* MODA Components v2 - Premium Card Design      */
+/* ============================================= */
+
+/* ============================================= */
+/* DARK STAT CARDS (like reference image)         */
+/* ============================================= */
+.moda-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.moda-stat-card {
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.moda-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Dark themed cards */
+.moda-stat-card.card-dark {
+    background: var(--card-dark-1);
+    color: var(--text-white);
+}
+
+.moda-stat-card.card-dark-2 {
+    background: var(--card-dark-2);
+    color: var(--text-white);
+}
+
+.moda-stat-card.card-dark-3 {
+    background: var(--card-dark-3);
+    color: var(--text-white);
+}
+
+.moda-stat-card.card-gold {
+    background: var(--moda-gold);
+    color: var(--moda-green-dark);
+}
+
+.moda-stat-card.card-white {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+.moda-stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.moda-stat-label {
+    font-size: 12px;
+    opacity: 0.75;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.moda-stat-number {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.moda-stat-icon {
+    font-size: 28px;
+    opacity: 0.4;
+}
+
+.moda-stat-card.card-gold .moda-stat-icon {
+    opacity: 0.5;
+    color: var(--moda-green-dark);
+}
+
+.moda-stat-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 10px;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+    color: inherit;
+}
+
+.moda-stat-link:hover {
+    opacity: 1;
+    color: inherit;
+}
+
+.moda-stat-card.card-dark .moda-stat-link,
+.moda-stat-card.card-dark-2 .moda-stat-link,
+.moda-stat-card.card-dark-3 .moda-stat-link {
+    color: var(--moda-gold-light);
+    opacity: 0.85;
+}
+
+/* ============================================= */
+/* SECTION CARDS (white bg with rounded corners)  */
+/* ============================================= */
+/* موحّد مع تصميم OA: بطاقة بيضاء + حدّ ذهبي يمين + ظل ناعم */
+.moda-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid #E2E8F0;
+    border-right: 4px solid #C9A84C;
+}
+
+.moda-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px;
+    background: #FAFBFC;
+    border-bottom: 2px solid #F1F5F9;
+}
+
+.moda-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.moda-card-title i {
+    font-size: 18px;
+}
+
+.moda-card-body {
+    padding: 22px;
+}
+
+/* ============================================= */
+/* DETAIL STATS (colored bg boxes in cards)       */
+/* ============================================= */
+.moda-detail-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+}
+
+.moda-detail-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    transition: transform var(--transition-fast);
+}
+
+.moda-detail-box:hover {
+    transform: translateY(-2px);
+}
+
+.moda-detail-box i.detail-icon {
+    font-size: 26px;
+    flex-shrink: 0;
+}
+
+.moda-detail-box .detail-number {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.moda-detail-box .detail-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Detail box colors */
+.moda-detail-box.bg-gold { background: rgba(201, 168, 76, 0.12); }
+.moda-detail-box.bg-gold i, .moda-detail-box.bg-gold .detail-number { color: var(--moda-gold-dark); }
+
+.moda-detail-box.bg-green { background: rgba(36, 59, 51, 0.08); }
+.moda-detail-box.bg-green i, .moda-detail-box.bg-green .detail-number { color: var(--moda-green); }
+
+.moda-detail-box.bg-success { background: rgba(16, 185, 129, 0.1); }
+.moda-detail-box.bg-success i, .moda-detail-box.bg-success .detail-number { color: #059669; }
+
+.moda-detail-box.bg-danger { background: rgba(239, 68, 68, 0.1); }
+.moda-detail-box.bg-danger i, .moda-detail-box.bg-danger .detail-number { color: #DC2626; }
+
+.moda-detail-box.bg-info { background: rgba(59, 130, 246, 0.1); }
+.moda-detail-box.bg-info i, .moda-detail-box.bg-info .detail-number { color: #2563EB; }
+
+.moda-detail-box.bg-warning { background: rgba(245, 158, 11, 0.1); }
+.moda-detail-box.bg-warning i, .moda-detail-box.bg-warning .detail-number { color: #D97706; }
+
+/* ============================================= */
+/* MINI STAT BOXES                                */
+/* ============================================= */
+.moda-mini-stat {
+    text-align: center;
+    padding: 16px;
+    border-radius: var(--radius-md);
+}
+
+.moda-mini-stat .mini-number {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.moda-mini-stat .mini-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* ============================================= */
+/* BUTTONS                                        */
+/* ============================================= */
+.moda-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    line-height: 1.5;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.moda-btn i { font-size: 15px; }
+
+.moda-btn-green {
+    background: var(--moda-green);
+    color: var(--text-white);
+}
+.moda-btn-green:hover {
+    background: var(--moda-green-light);
+    color: var(--text-white);
+    transform: translateY(-1px);
+}
+
+.moda-btn-gold {
+    background: var(--moda-gold);
+    color: var(--moda-green-dark);
+}
+.moda-btn-gold:hover {
+    background: var(--moda-gold-light);
+    color: var(--moda-green-dark);
+    transform: translateY(-1px);
+}
+
+.moda-btn-danger { background: var(--color-danger); color: white; }
+.moda-btn-danger:hover { background: #DC2626; color: white; transform: translateY(-1px); }
+
+.moda-btn-info { background: var(--color-info); color: white; }
+.moda-btn-info:hover { background: #2563EB; color: white; transform: translateY(-1px); }
+
+.moda-btn-success { background: var(--color-success); color: white; }
+.moda-btn-success:hover { background: #059669; color: white; transform: translateY(-1px); }
+
+.moda-btn-sm { padding: 6px 14px; font-size: 12px; }
+.moda-btn-block { width: 100%; justify-content: center; }
+
+/* ============================================= */
+/* TABLES                                         */
+/* ============================================= */
+.moda-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.moda-table thead th {
+    background: #F8FAFC;
+    padding: 12px 18px;
+    text-align: right;
+    font-weight: 700;
+    color: #64748B;
+    border-bottom: 2px solid #E2E8F0;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.moda-table tbody td {
+    padding: 12px 18px;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 13px;
+    color: #1E293B;
+}
+
+.moda-table tbody tr:hover {
+    background: #F8FAFC;
+}
+
+/* ============================================= */
+/* FORMS                                          */
+/* ============================================= */
+.moda-form-group { margin-bottom: 18px; }
+
+.moda-form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: block;
+    font-size: 13px;
+}
+
+.moda-form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: white;
+    transition: all var(--transition-fast);
+    direction: rtl;
+}
+
+.moda-form-control:focus {
+    outline: none;
+    border-color: var(--moda-green);
+    box-shadow: 0 0 0 3px rgba(36, 59, 51, 0.08);
+}
+
+/* ============================================= */
+/* BADGES                                         */
+/* ============================================= */
+.moda-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.moda-badge-green { background: rgba(36,59,51,0.1); color: var(--moda-green); }
+.moda-badge-gold { background: var(--moda-gold-muted); color: var(--moda-gold-dark); }
+.moda-badge-success { background: rgba(16,185,129,0.1); color: #065F46; }
+.moda-badge-danger { background: rgba(239,68,68,0.1); color: #991B1B; }
+.moda-badge-info { background: rgba(59,130,246,0.12); color: #1D4ED8; }
+.moda-badge-secondary { background: rgba(107,114,128,0.12); color: #374151; }
+
+/* ============================================= */
+/* ALERTS                                         */
+/* ============================================= */
+.moda-alert {
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.moda-alert-success { background: #D1FAE5; color: #065F46; border-right: 4px solid var(--color-success); }
+.moda-alert-warning { background: #FEF3C7; color: #92400E; border-right: 4px solid var(--color-warning); }
+.moda-alert-danger { background: #FEE2E2; color: #991B1B; border-right: 4px solid var(--color-danger); }
+.moda-alert-info { background: #DBEAFE; color: #1E40AF; border-right: 4px solid var(--color-info); }
+
+/* ============================================= */
+/* QUICK ACTIONS                                  */
+/* ============================================= */
+.moda-quick-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ============================================= */
+/* RANK LIST                                      */
+/* ============================================= */
+.moda-rank-list { max-height: 220px; overflow-y: auto; }
+
+.moda-rank-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 13px;
+}
+
+.moda-rank-item:last-child { border-bottom: none; }
+
+.moda-rank-count {
+    background: var(--moda-green);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ============================================= */
+/* SYNC CARD                                      */
+/* ============================================= */
+.moda-sync-card {
+    background: linear-gradient(135deg, #FFF8E7, #FEF3CD);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    margin-bottom: 16px;
+}
+
+.moda-sync-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.moda-sync-card p {
+    font-size: 13px;
+    color: #92400E;
+    margin: 0 0 14px;
+}
+
+/* ============================================= */
+/* EMPTY STATE                                    */
+/* ============================================= */
+.moda-empty-state {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.moda-empty-state i { font-size: 50px; color: #d1d5db; margin-bottom: 14px; }
+.moda-empty-state h3 { color: var(--text-secondary); margin-bottom: 6px; font-size: 18px; }
+.moda-empty-state p { color: var(--text-muted); font-size: 13px; }
+
+/* ============================================= */
+/* ANIMATIONS                                     */
+/* ============================================= */
+@keyframes modaFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.moda-animate {
+    animation: modaFadeUp 0.35s ease forwards;
+}
+
+.moda-stats-row > *:nth-child(1) { animation-delay: 0s; }
+.moda-stats-row > *:nth-child(2) { animation-delay: 0.06s; }
+.moda-stats-row > *:nth-child(3) { animation-delay: 0.12s; }
+.moda-stats-row > *:nth-child(4) { animation-delay: 0.18s; }
+
+/* ============================================= */
+/* PAGE HERO (Dashboard headers)                  */
+/* ============================================= */
+.moda-page-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, var(--moda-green) 0%, var(--moda-green-dark) 100%);
+    color: var(--text-white);
+    padding: 26px 28px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-card);
+}
+
+.moda-page-hero .hero-content {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex: 1;
+}
+
+.moda-page-hero .hero-badge {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--moda-gold);
+    color: var(--moda-green-dark);
+    border-radius: 16px;
+    font-size: 28px;
+    flex-shrink: 0;
+    box-shadow: 0 6px 18px rgba(201, 168, 76, 0.35);
+}
+
+.moda-page-hero .hero-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--moda-gold);
+}
+
+.moda-page-hero .hero-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.moda-page-hero .hero-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ============================================= */
+/* BUTTONS                                        */
+/* ============================================= */
+.moda-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.moda-btn-gold {
+    background: var(--moda-gold);
+    color: var(--moda-green-dark);
+    border-color: var(--moda-gold);
+}
+
+.moda-btn-gold:hover {
+    background: var(--moda-gold-light);
+    color: var(--moda-green-dark);
+    box-shadow: 0 4px 12px rgba(201, 168, 76, 0.4);
+}
+
+/* خفيف على خلفية فاتحة (داخل البطاقات): نص أخضر وحدّ واضح.
+   الترويسات الداكنة لم تعد تستخدمه (تستخدم oa-hbtn)، لذا عُدّل ليظهر على الأبيض. */
+.moda-btn-outline {
+    background: var(--bg-card);
+    color: var(--moda-green);
+    border-color: rgba(36, 59, 51, 0.25);
+}
+
+.moda-btn-outline:hover {
+    background: var(--moda-gold-muted);
+    color: var(--moda-gold-dark);
+    border-color: var(--moda-gold);
+}
+
+.moda-btn-green {
+    background: var(--moda-green);
+    color: var(--text-white);
+    border-color: var(--moda-green);
+}
+
+.moda-btn-green:hover {
+    background: var(--moda-green-light);
+    color: var(--text-white);
+}
+
+.moda-btn-secondary {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.moda-btn-secondary:hover {
+    background: var(--moda-gold-muted);
+    color: var(--moda-gold-dark);
+}
+
+/* ============================================= */
+/* CARD LINK (header right action)                */
+/* ============================================= */
+.moda-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--moda-green);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(36, 59, 51, 0.06);
+    transition: all var(--transition-fast);
+}
+
+.moda-card-link:hover {
+    background: rgba(201, 168, 76, 0.15);
+    color: var(--moda-gold-dark);
+}
+
+/* ============================================= */
+/* INFO / NOTE CARD                               */
+/* ============================================= */
+.moda-info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(201, 168, 76, 0.10);
+    border-right: 4px solid var(--moda-gold);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-top: 16px;
+    line-height: 1.7;
+}
+
+.moda-info-card i {
+    color: var(--moda-gold-dark);
+    font-size: 18px;
+    padding-top: 2px;
+}
+
+.moda-info-card a {
+    color: var(--moda-green);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.moda-info-card a:hover {
+    color: var(--moda-gold-dark);
+}
+
+/* ============================================= */
+/* DEPARTMENTS / PERMISSIONS GRID                 */
+/* ============================================= */
+.moda-dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.moda-dept-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 20px 14px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all var(--transition-fast);
+}
+
+.moda-dept-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--moda-gold);
+}
+
+.moda-dept-icon {
+    width: 54px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(36, 59, 51, 0.08);
+    color: var(--moda-green);
+    border-radius: 14px;
+    font-size: 22px;
+}
+
+.moda-dept-card:hover .moda-dept-icon {
+    background: var(--moda-gold-muted);
+    color: var(--moda-gold-dark);
+}
+
+.moda-dept-name {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.moda-dept-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.moda-dept-count i {
+    color: var(--moda-green);
+    margin-left: 3px;
+}
+
+.moda-dept-code {
+    display: inline-block;
+    background: rgba(36, 59, 51, 0.07);
+    color: var(--moda-green);
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Detail box variants */
+.moda-detail-box.bg-warning { background: rgba(245, 158, 11, 0.13); }
+.moda-detail-box.bg-warning i,
+.moda-detail-box.bg-warning .detail-number { color: #B45309; }
+
+/* ============================================= */
+/* RESPONSIVE                                     */
+/* ============================================= */
+@media (max-width: 1024px) {
+    .moda-stats-row { grid-template-columns: repeat(2, 1fr); }
+    .moda-detail-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .moda-stats-row { grid-template-columns: 1fr; }
+    .moda-detail-row { grid-template-columns: 1fr; }
+    .moda-quick-actions { flex-direction: column; }
+    .moda-quick-actions .moda-btn { width: 100%; justify-content: center; }
+    .moda-page-hero { padding: 20px; }
+    .moda-page-hero .hero-title { font-size: 18px; }
+}

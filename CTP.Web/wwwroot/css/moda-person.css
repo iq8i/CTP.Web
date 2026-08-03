@@ -1,0 +1,112 @@
+/* ============================================================
+   moda-person.css — تصميم موحّد لصفحة تفاصيل الشخص (ضابط/فرد/مدني)
+   يعيد كسو مكوّنات modern-* بالثيم الأخضر الموحّد ضمن .moda-person-page فقط.
+   ============================================================ */
+
+.moda-person-page {
+    --mp-green: var(--moda-green, #243B33);
+    --mp-green-dark: var(--moda-green-dark, #1A2E28);
+    --mp-gold: var(--moda-gold, #C9A84C);
+}
+
+/* ── الشريط العلوي (العنوان + رجوع) ──────────────────────────── */
+.moda-person-page .mp-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.moda-person-page .mp-topbar h2 {
+    font-weight: 800;
+    color: var(--mp-green);
+    margin: 0;
+}
+.moda-person-page .mp-topbar .mp-subtitle { color: #6b7280; margin: 2px 0 0; }
+.moda-person-page .mp-back {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--mp-green); color: #fff;
+    padding: 10px 18px; border-radius: 10px; font-weight: 600;
+    text-decoration: none; transition: background .2s;
+}
+.moda-person-page .mp-back:hover { background: var(--mp-green-dark); color: #fff; }
+
+/* ── بانر الملف الشخصي (أخضر بدل الأزرق) ─────────────────────── */
+.moda-person-page .mp-profile {
+    background: linear-gradient(135deg, var(--mp-green) 0%, var(--mp-green-dark) 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 26px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 22px rgba(36,59,51,0.20);
+    border-top: 3px solid var(--mp-gold);
+}
+.moda-person-page .mp-avatar {
+    width: 120px; height: 120px; margin: 0 auto;
+    background: rgba(255,255,255,0.15); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 4px solid rgba(201,168,76,0.5);
+}
+.moda-person-page .mp-avatar i { font-size: 64px; color: #fff; }
+.moda-person-page .mp-status {
+    background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; text-align: center;
+}
+
+/* ── إعادة كسو مكوّنات modern-* داخل النطاق ──────────────────── */
+.moda-person-page .modern-card {
+    background: #fff; border: 1px solid #e8ecea; border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04); padding: 20px;
+}
+.moda-person-page .nav-tabs-modern { border-bottom: 2px solid #eef1f0; gap: 4px; }
+.moda-person-page .nav-link-modern {
+    border: none; background: transparent; color: #5b6b64; font-weight: 600;
+    padding: 12px 18px; border-radius: 10px 10px 0 0; display: inline-flex; align-items: center; gap: 8px;
+}
+.moda-person-page .nav-link-modern.active {
+    color: var(--mp-green); background: rgba(36,59,51,0.06);
+    border-bottom: 3px solid var(--mp-gold);
+}
+.moda-person-page .badge-count {
+    background: var(--mp-gold); color: var(--mp-green-dark);
+    border-radius: 20px; padding: 1px 9px; font-size: 12px; font-weight: 700; margin-inline-start: 4px;
+}
+.moda-person-page .info-section-title {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; color: var(--mp-green); font-size: 1.05rem;
+    padding-bottom: 10px; margin-bottom: 14px; border-bottom: 2px solid #eef1f0;
+}
+.moda-person-page .info-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; background: #f7f9f8; border-radius: 10px; margin-bottom: 10px;
+}
+.moda-person-page .info-icon {
+    width: 42px; height: 42px; flex: 0 0 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    background: rgba(36,59,51,0.10); color: var(--mp-green);
+}
+.moda-person-page .info-label { font-size: 12px; color: #7a8580; }
+.moda-person-page .info-value { font-weight: 700; color: #1f2a26; }
+
+/* الجداول الزمنية والبطاقات */
+.moda-person-page .timeline-marker { background: var(--mp-green) !important; color: #fff; }
+.moda-person-page .award-icon { background: var(--mp-gold); color: var(--mp-green-dark); }
+.moda-person-page .rank-new .rank-value { color: var(--mp-green); }
+
+/* الأزرار والنماذج */
+.moda-person-page .btn-modern {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 10px; font-weight: 600; border: none; text-decoration: none;
+}
+.moda-person-page .btn-primary { background: var(--mp-green); border-color: var(--mp-green); }
+.moda-person-page .btn-primary:hover { background: var(--mp-green-dark); border-color: var(--mp-green-dark); }
+.moda-person-page .btn-outline-primary { color: var(--mp-green); border-color: var(--mp-green); }
+.moda-person-page .btn-outline-primary:hover { background: var(--mp-green); color: #fff; }
+.moda-person-page .form-control-modern {
+    width: 100%; padding: 10px 12px; border: 1px solid #d8dedb; border-radius: 10px;
+}
+.moda-person-page .form-control-modern:focus {
+    outline: none; border-color: var(--mp-gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+}
+.moda-person-page .empty-state { text-align: center; padding: 40px 20px; color: #9aa5a0; }
+.moda-person-page .empty-state h3 { color: #5b6b64; margin-top: 12px; }

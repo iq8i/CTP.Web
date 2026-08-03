@@ -1,0 +1,73 @@
+@{
+    // تم إزالة الاعتمادية القديمة واستبدالها بقيم ديناميكية تناسب المنصة الجديدة
+    var accent = ViewData["ThemeColor"] as string ?? "#106981";
+    var title = ViewData["EntityTitle"] as string ?? "منصة التغيير والتحول";
+    var subtitle = ViewData["EntityHeaderSubtitle"] as string ?? "لوحة المعلومات والإحصائيات";
+    var icon = ViewData["EntityHeaderIcon"] as string ?? "bi-speedometer2";
+    var logoPath = ViewData["LogoPath"] as string;
+}
+
+<div class="entity-header" style="background-color:@accent; background-image:linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.28) 100%);">
+    <div class="entity-header-logo">
+        @if (!string.IsNullOrWhiteSpace(logoPath))
+        {
+            <img src="@logoPath" alt="@title" />
+        }
+        else
+        {
+            <i class="bi @icon"></i>
+        }
+    </div>
+    <div class="entity-header-text">
+        <h1>@title</h1>
+        <div class="entity-header-subtitle">@subtitle</div>
+    </div>
+</div>
+
+<style>
+    .entity-header {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 22px 26px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+        color: #fff;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    }
+
+    .entity-header-logo {
+        width: 64px;
+        height: 64px;
+        flex: 0 0 64px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+        .entity-header-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .entity-header-logo i {
+            font-size: 2rem;
+            color: #fff;
+        }
+
+    .entity-header-text h1 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 800;
+    }
+
+    .entity-header-subtitle {
+        opacity: 0.85;
+        font-size: 0.95rem;
+        margin-top: 4px;
+    }
+</style>

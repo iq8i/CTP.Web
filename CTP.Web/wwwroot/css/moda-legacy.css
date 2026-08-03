@@ -1,0 +1,146 @@
+/* ============================================================
+   moda-legacy.css — يوفّر تخطيط + ثيم أخضر موحّد لفئات الواجهة القديمة
+   (modern-card / btn-*-modern / info-* / nav-tabs-modern / timeline / award ...)
+   كانت معرّفة في modern-arabic.css غير المُحمّل، فظهرت بلا تنسيق.
+   يُحمّل عالمياً من _Layout. محدّدات نوعية فقط (لا .active/.show العامة).
+   ============================================================ */
+
+:root {
+    --ml-green: var(--moda-green, #243B33);
+    --ml-green-dark: var(--moda-green-dark, #1A2E28);
+    --ml-green-soft: rgba(36, 59, 51, 0.10);
+    --ml-gold: var(--moda-gold, #C9A84C);
+    --ml-line: #e8ecea;
+    --ml-muted: #6b7280;
+}
+
+/* ── البطاقات ───────────────────────────────────────────────── */
+.modern-card {
+    background: #fff; border: 1px solid var(--ml-line); border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04); padding: 20px; margin-bottom: 20px;
+}
+.card-header-modern { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.card-title-modern { font-weight: 800; color: var(--ml-green); font-size: 1.1rem; margin: 0; }
+
+/* ── الأزرار ────────────────────────────────────────────────── */
+.btn-modern {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 10px; font-weight: 600;
+    border: none; text-decoration: none; cursor: pointer; transition: filter .2s, background .2s;
+    background: var(--ml-green-soft); color: var(--ml-green);
+}
+.btn-modern:hover { filter: brightness(0.97); }
+.btn-primary-modern { background: var(--ml-green); color: #fff; }
+.btn-primary-modern:hover { background: var(--ml-green-dark); color: #fff; }
+.btn-success-modern { background: #2e7d54; color: #fff; }
+.btn-warning-modern { background: var(--ml-gold); color: var(--ml-green-dark); }
+.btn-danger-modern { background: #b3402f; color: #fff; }
+
+/* ── الجداول ────────────────────────────────────────────────── */
+.modern-table { width: 100%; border-collapse: collapse; }
+.modern-table thead th {
+    background: var(--ml-green); color: #fff; padding: 12px 14px; font-weight: 700; text-align: start;
+}
+.modern-table tbody td { padding: 11px 14px; border-bottom: 1px solid var(--ml-line); }
+.modern-table tbody tr:hover { background: #f7f9f8; }
+
+/* ── التبويبات ──────────────────────────────────────────────── */
+.nav-tabs-modern { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid #eef1f0; list-style: none; padding: 0; margin: 0 0 16px; }
+.nav-link-modern {
+    border: none; background: transparent; color: #5b6b64; font-weight: 600;
+    padding: 12px 18px; border-radius: 10px 10px 0 0; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.nav-link-modern.active { color: var(--ml-green); background: var(--ml-green-soft); border-bottom: 3px solid var(--ml-gold); }
+.tab-content-modern { padding-top: 18px; }
+.badge-count { background: var(--ml-gold); color: var(--ml-green-dark); border-radius: 20px; padding: 1px 9px; font-size: 12px; font-weight: 700; margin-inline-start: 4px; }
+
+/* ── أقسام المعلومات ────────────────────────────────────────── */
+.info-section { margin-bottom: 18px; }
+.info-section-title {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; color: var(--ml-green); font-size: 1.05rem;
+    padding-bottom: 10px; margin-bottom: 14px; border-bottom: 2px solid #eef1f0;
+}
+.info-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.info-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #f7f9f8; border-radius: 10px; }
+.info-icon {
+    width: 42px; height: 42px; flex: 0 0 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    background: var(--ml-green-soft); color: var(--ml-green);
+}
+.info-label { font-size: 12px; color: #7a8580; }
+.info-value { font-weight: 700; color: #1f2a26; }
+
+/* ── الجداول الزمنية ────────────────────────────────────────── */
+.timeline { position: relative; padding-inline-start: 28px; }
+.timeline-item { position: relative; margin-bottom: 18px; }
+.timeline-marker {
+    position: absolute; inset-inline-start: -28px; top: 2px;
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    background: var(--ml-green) !important;
+}
+.timeline-content { background: #fff; border: 1px solid var(--ml-line); border-radius: 12px; padding: 14px 16px; }
+.timeline-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.timeline-header h4 { font-size: 1rem; font-weight: 700; color: var(--ml-green); margin: 0; }
+.timeline-date { color: var(--ml-muted); font-size: 13px; }
+.timeline-detail { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+
+/* ── الأوسمة ────────────────────────────────────────────────── */
+.award-card { display: flex; gap: 14px; align-items: center; background: #fff; border: 1px solid var(--ml-line); border-radius: 12px; padding: 16px; }
+.award-icon { width: 54px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: var(--ml-gold); color: var(--ml-green-dark); }
+.award-detail { display: flex; align-items: center; gap: 6px; color: var(--ml-muted); font-size: 13px; }
+
+/* ── شارات الترقية ──────────────────────────────────────────── */
+.promotion-badges { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.rank-badge { background: #f7f9f8; border: 1px solid var(--ml-line); border-radius: 10px; padding: 10px 14px; text-align: center; }
+.rank-label { font-size: 12px; color: var(--ml-muted); }
+.rank-new .rank-value { color: var(--ml-green); font-weight: 700; }
+.rank-arrow { color: var(--ml-gold); font-size: 1.4rem; }
+
+/* ── الحالة الفارغة ─────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 40px 20px; color: #9aa5a0; }
+.empty-state h3 { color: #5b6b64; margin-top: 12px; }
+
+/* ── النماذج ────────────────────────────────────────────────── */
+.form-label-modern { font-weight: 600; color: var(--ml-green); margin-bottom: 6px; display: block; }
+.form-control-modern { width: 100%; padding: 10px 12px; border: 1px solid #d8dedb; border-radius: 10px; }
+.form-control-modern:focus { outline: none; border-color: var(--ml-gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+
+/* ── التنبيهات ──────────────────────────────────────────────── */
+.alert-modern { border-radius: 10px; padding: 12px 16px; border: 1px solid var(--ml-line); }
+.alert-success-modern { background: rgba(46,125,84,0.10); color: #20613e; border-color: rgba(46,125,84,0.30); }
+.alert-warning-modern { background: rgba(201,168,76,0.12); color: #8a6d1f; border-color: rgba(201,168,76,0.35); }
+.alert-danger-modern { background: rgba(179,64,47,0.10); color: #8d2f22; border-color: rgba(179,64,47,0.30); }
+
+/* ── بطاقات الإحصاء ─────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.stat-card { background: #fff; border: 1px solid var(--ml-line); border-radius: 14px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+.stat-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--ml-green-soft); color: var(--ml-green); font-size: 1.3rem; }
+.stat-number { font-size: 1.8rem; font-weight: 800; color: var(--ml-green); }
+.stat-label { color: var(--ml-muted); font-size: 13px; }
+
+@media (min-width: 768px) { .info-grid { grid-template-columns: 1fr 1fr; } }
+
+/* ── توحيد عناصر Bootstrap الأساسية مع الثيم الأخضر (للصفحات المبنية على Bootstrap) ── */
+.btn-primary {
+    --bs-btn-bg: var(--ml-green); --bs-btn-border-color: var(--ml-green);
+    --bs-btn-hover-bg: var(--ml-green-dark); --bs-btn-hover-border-color: var(--ml-green-dark);
+    --bs-btn-active-bg: var(--ml-green-dark); --bs-btn-active-border-color: var(--ml-green-dark);
+    --bs-btn-disabled-bg: var(--ml-green); --bs-btn-disabled-border-color: var(--ml-green);
+}
+.btn-outline-primary {
+    --bs-btn-color: var(--ml-green); --bs-btn-border-color: var(--ml-green);
+    --bs-btn-hover-bg: var(--ml-green); --bs-btn-hover-border-color: var(--ml-green);
+    --bs-btn-active-bg: var(--ml-green); --bs-btn-active-border-color: var(--ml-green);
+}
+.text-primary { color: var(--ml-green) !important; }
+.bg-primary { background-color: var(--ml-green) !important; }
+.badge.bg-primary, .badge.text-bg-primary { background-color: var(--ml-green) !important; }
+.link-primary, a.text-primary { color: var(--ml-green) !important; }
+.form-control:focus, .form-select:focus {
+    border-color: var(--ml-gold); box-shadow: 0 0 0 0.2rem rgba(201,168,76,0.20);
+}
+.form-check-input:checked { background-color: var(--ml-green); border-color: var(--ml-green); }
+.nav-tabs .nav-link.active { color: var(--ml-green); }
+.spinner-border.text-primary { color: var(--ml-green) !important; }
