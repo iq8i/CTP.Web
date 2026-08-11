@@ -1,16 +1,56 @@
-﻿@{
-    Layout = "_Layout"; // استخدام الـ Layout الأساسي للمنصة
+﻿@model IEnumerable<CTP.Web.Areas.Committee.Models.CommitteeViewModel>
+@{
+    Layout = "_Layout";
 }
 
-<!-- استدعاء المكون الذي صممناه سابقاً -->
 <partial name="_EntityDashboardHeader" />
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm border-0 p-4">
-                <h3>أهلاً بك في لوحة تحكم اللجان</h3>
-                <p>هنا ستظهر قائمة اللجان النشطة والمهام المعلقة قريباً...</p>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-muted"><i class="bi bi-list-check me-2"></i> اللجان النشطة</h5>
+            <button class="btn btn-primary btn-sm" style="background-color: var(--ctp-primary-olive); border: none;">
+                <i class="bi bi-plus-lg"></i> إضافة لجنة
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>اسم اللجنة</th>
+                            <th>الوصف</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td class="fw-bold text-dark">@item.Name</td>
+                                    <td class="text-muted">@item.Description</td>
+                                    <td>@item.CreatedDateFormatted</td>
+                                    <td><span class="badge bg-success">@item.Status</span></td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-outline-secondary" title="إدارة"><i class="bi bi-gear"></i></a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">لا توجد لجان مسجلة حتى الآن.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

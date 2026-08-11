@@ -8,23 +8,29 @@ namespace CTP.Web.ViewComponents
     {
         public IViewComponentResult Invoke()
         {
-            // نجلب دور المستخدم من الجلسة (Cookies)
             var role = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "STAFF";
-
             var menu = new List<MenuSection>();
 
-            // 1. القائمة الأساسية (تظهر للجميع)
+            // 1. القائمة الأساسية (للجميع)
             var mainSection = new MenuSection { Title = "الرئيسية" };
             mainSection.Items.Add(new MenuItem { Title = "لوحة القياس", IconClass = "bi-speedometer2", Url = "/Home/Index" });
             menu.Add(mainSection);
 
-            // 2. قوائم مخصصة (مثال: تظهر لرئيس اللجنة والقيادة فقط)
+            // 2. مساحة رئيس لجنة شركاء التغيير والقيادة
             if (role == "COMMITTEE_CHAIR" || role == "LEADER")
             {
                 var committeeSection = new MenuSection { Title = "إدارة اللجان" };
-                committeeSection.Items.Add(new MenuItem { Title = "مركز الأعمال", IconClass = "bi-bullseye", Url = "#" });
+                committeeSection.Items.Add(new MenuItem { Title = "مركز الأعمال", IconClass = "bi-bullseye", Url = "/Committee/Dashboard/Index" });
                 committeeSection.Items.Add(new MenuItem { Title = "التقارير المرفوعة", IconClass = "bi-file-earmark-text", Url = "#" });
                 menu.Add(committeeSection);
+            }
+            // 3. مساحة سفراء التغيير (التحديث الجديد)
+            else if (role == "AMBASSADOR")
+            {
+                var ambassadorSection = new MenuSection { Title = "إدارة التقارير" };
+                ambassadorSection.Items.Add(new MenuItem { Title = "رفع تقرير جديد", IconClass = "bi-file-earmark-plus", Url = "/Ambassador/Report/Create" });
+                ambassadorSection.Items.Add(new MenuItem { Title = "تقاريري السابقة", IconClass = "bi-clock-history", Url = "#" }); // مسار مستقبلي
+                menu.Add(ambassadorSection);
             }
 
             return View("Default", menu);

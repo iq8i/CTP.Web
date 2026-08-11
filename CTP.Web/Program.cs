@@ -1,12 +1,19 @@
 using CTP.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using CTP.Application.Interfaces.Repositories;
+using CTP.Application.Interfaces.Services;
+using CTP.Infrastructure.Repositories;
+using CTP.Application.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================
 // 1. تسجيل الخدمات (Dependency Injection)
 // ==========================================
+builder.Services.AddScoped<ICommitteeRepository, CommitteeRepository>();
+builder.Services.AddScoped<ICommitteeService, CommitteeService>();
 
 // إضافة خدمات MVC (Controllers & Views)
 builder.Services.AddControllersWithViews();
@@ -19,7 +26,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     // السطر السحري لتجاهل التدقيق الصارم وإجبار تحديث قاعدة البيانات
     options.ConfigureWarnings(warnings =>
         warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
-});
+}
+);
 // ==========================================
 // 2. إعداد نظام المصادقة والحماية (Authentication & Security)
 // ==========================================
@@ -36,8 +44,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;                // حماية من هجمات XSS
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // يعمل على HTTPS فقط
     });
-
-// بناء التطبيق
+builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
+builder.Services.AddScoped<IMonthlyReportService, MonthlyReportService>();// بناء التطبيق
 var app = builder.Build();
 
 // ==========================================
@@ -67,6 +75,11 @@ app.MapAreaControllerRoute(
     name: "CommitteeArea",
     areaName: "Committee",
     pattern: "Committee/{controller=Dashboard}/{action=Index}/{id?}");
+
+app.MapAreaControllerRoute(
+    name: "AmbassadorArea",
+    areaName: "Ambassador",
+    pattern: "Ambassador/{controller=Report}/{action=Create}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

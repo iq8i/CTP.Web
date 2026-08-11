@@ -16,58 +16,46 @@ namespace CTP.Infrastructure.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<OrganizationEntity> OrganizationEntities { get; set; }
+        public DbSet<Committee> Committees { get; set; }
 
+        public DbSet<MonthlyReport> MonthlyReports { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // إعداد المفتاح المركب (Composite Key) لجدول الربط
-            modelBuilder.Entity<UserRole>()
-                .HasKey(ur => new { ur.UserId, ur.RoleId });
+            // إعداد المفتاح المركب والعلاقات
+            modelBuilder.Entity<UserRole>().HasKey(ur => new { ur.UserId, ur.RoleId });
 
-            // ربط المستخدم بالأدوار
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.User)
-                .WithMany(u => u.UserRoles)
-                .HasForeignKey(ur => ur.UserId);
+            modelBuilder.Entity<UserRole>().HasOne(ur => ur.User).WithMany(u => u.UserRoles).HasForeignKey(ur => ur.UserId);
+            modelBuilder.Entity<UserRole>().HasOne(ur => ur.Role).WithMany(r => r.UserRoles).HasForeignKey(ur => ur.RoleId);
 
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.Role)
-                .WithMany(r => r.UserRoles)
-                .HasForeignKey(ur => ur.RoleId);
+            // منع الحذف المتسلسل للتقارير لحماية سلامة البيانات (تمت إضافتها في الخطوة السابقة)
+            modelBuilder.Entity<MonthlyReport>().HasOne(m => m.Organization).WithMany().HasForeignKey(m => m.OrganizationEntityId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<MonthlyReport>().HasOne(m => m.Preparer).WithMany().HasForeignKey(m => m.PreparerId).OnDelete(DeleteBehavior.Restrict);
 
-            // بذر البيانات الأساسية (الأدوار الـ 13)
+            // 1. بذر الأدوار الأساسية
             modelBuilder.Entity<Role>().HasData(
-                new Role { RoleId = 1, RoleCode = "LEADER", RoleName = "معالي القائد" },
-                new Role { RoleId = 2, RoleCode = "AMBASSADOR", RoleName = "سفير التغيير" },
-                new Role { RoleId = 3, RoleCode = "COMMITTEE_CHAIR", RoleName = "رئيس لجنة شركاء التغيير" },
-                new Role { RoleId = 4, RoleCode = "STAFF", RoleName = "المنسوبون" }
-                // يمكنك إكمال باقي الأدوار هنا...
+                new Role { RoleId = 1, RoleCode = "LEADER", RoleName = "معالي القائد", CreatedDate = new DateTime(2026, 1, 1) },
+                new Role { RoleId = 2, RoleCode = "AMBASSADOR", RoleName = "سفير التغيير", CreatedDate = new DateTime(2026, 1, 1) },
+                new Role { RoleId = 3, RoleCode = "COMMITTEE_CHAIR", RoleName = "رئيس لجنة شركاء التغيير", CreatedDate = new DateTime(2026, 1, 1) },
+                new Role { RoleId = 4, RoleCode = "STAFF", RoleName = "المنسوبون", CreatedDate = new DateTime(2026, 1, 1) }
             );
 
-            // بذر مستخدم تجريبي
+            // 2. بذر جهة تجريبية (Organization) لربط المستخدمين والتقارير
+            modelBuilder.Entity<OrganizationEntity>().HasData(
+                new OrganizationEntity { Id = 1, EntityCode = "UNIT-01", EntityName = "وحدة التحول الرقمي", IsActive = true, CreatedDate = new DateTime(2026, 1, 1) }
+            );
+
+            // 3. بذر المستخدمين (المدير + السفير) وربطهم بالجهة رقم 1
             modelBuilder.Entity<User>().HasData(
-                new User
-                {
-                    UserId = 1,
-                    Username = "admin",
-                    PasswordHash = "123456", // فحصنا المطابقة المباشرة مؤقتاً في الـ Controller
-                    FullName = "مدير النظام التجريبي",
-                    IsActive = true,
-                    CreatedDate = new DateTime(2026, 1, 1) // تاريخ ثابت لتجنب مشاكل الـ Migrations
-                }
+                new User { UserId = 1, Username = "admin", PasswordHash = "123456", FullName = "مدير النظام التجريبي", OrganizationEntityId = 1, IsActive = true, CreatedDate = new DateTime(2026, 1, 1) },
+                new User { UserId = 2, Username = "ambassador", PasswordHash = "123456", FullName = "سفير التغيير التجريبي", OrganizationEntityId = 1, IsActive = true, CreatedDate = new DateTime(2026, 1, 1) }
             );
 
-            // ربط المستخدم التجريبي بدور (رئيس لجنة شركاء التغيير) كمثال لتجربة الشاشة
+            // 4. ربط المستخدمين بالأدوار (UserRoles)
             modelBuilder.Entity<UserRole>().HasData(
-                new UserRole
-                {
-                    UserRoleId = 1,
-                    UserId = 1,
-                    RoleId = 3, // 3 = COMMITTEE_CHAIR حسب الأدوار التي أضفناها
-                    AssignedDate = new DateTime(2026, 1, 1),
-                    IsActive = true
-                }
+                new UserRole { UserRoleId = 1, UserId = 1, RoleId = 3, AssignedDate = new DateTime(2026, 1, 1), IsActive = true }, // admin -> COMMITTEE_CHAIR
+                new UserRole { UserRoleId = 2, UserId = 2, RoleId = 2, AssignedDate = new DateTime(2026, 1, 1), IsActive = true }  // ambassador -> AMBASSADOR
             );
         }
     }

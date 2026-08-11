@@ -5,15 +5,16 @@
     {
         @if (!string.IsNullOrWhiteSpace(section.Title))
         {
-            <li class="nav-item sidebar-section-title mt-4 mb-2 px-3 text-muted" style="font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+            <li class="nav-item sidebar-section-title mt-4 mb-2 px-3 text-white-50" style="font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
                 @(section.Title)
             </li>
         }
-        
+
         @foreach (var item in section.Items)
         {
+            // تم استبدال text-dark بـ text-light ليظهر النص بوضوح
             <li class="nav-item mb-1">
-                <a class="nav-link px-3 py-2 rounded @(item.IsActive ? "active bg-primary text-white" : "text-dark")" href="@item.Url" style="display: flex; align-items: center; gap: 10px; transition: all 0.2s;">
+                <a class="nav-link px-3 py-2 rounded @(item.IsActive ? "active bg-primary text-white" : "text-light")" href="@item.Url" style="display: flex; align-items: center; gap: 10px; transition: all 0.2s;">
                     <i class="bi @item.IconClass" style="font-size: 1.1rem;"></i>
                     <span style="font-weight: 500;">@item.Title</span>
                 </a>
@@ -23,8 +24,9 @@
 </ul>
 
 <style>
+    /* تحسين تأثير التمرير (Hover) ليتناسب مع الخلفية الداكنة */
     .sidebar-nav .nav-link:hover:not(.active) {
-        background-color: rgba(0, 0, 0, 0.05);
-        color: #106981 !important;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff !important;
     }
 </style>

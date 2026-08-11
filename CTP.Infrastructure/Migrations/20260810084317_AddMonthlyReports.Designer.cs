@@ -3,6 +3,7 @@ using System;
 using CTP.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CTP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260810084317_AddMonthlyReports")]
+    partial class AddMonthlyReports
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -41,6 +44,24 @@ namespace CTP.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Committees");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedDate = new DateTime(2026, 8, 10, 11, 43, 16, 753, DateTimeKind.Local).AddTicks(1054),
+                            Description = "مسؤولة عن متابعة أتمتة الإجراءات",
+                            IsActive = true,
+                            Name = "لجنة التحول الرقمي"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedDate = new DateTime(2026, 8, 10, 11, 43, 16, 753, DateTimeKind.Local).AddTicks(1122),
+                            Description = "إدارة عمليات التغيير للموظفين",
+                            IsActive = true,
+                            Name = "لجنة الموارد البشرية"
+                        });
                 });
 
             modelBuilder.Entity("CTP.Domain.Entities.MonthlyReport", b =>
@@ -165,16 +186,6 @@ namespace CTP.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OrganizationEntities");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EntityCode = "UNIT-01",
-                            EntityName = "وحدة التحول الرقمي",
-                            IsActive = true
-                        });
                 });
 
             modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
@@ -211,7 +222,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 1,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 11, 43, 16, 751, DateTimeKind.Local).AddTicks(6416),
                             IsActive = true,
                             RoleCode = "LEADER",
                             RoleName = "معالي القائد"
@@ -219,7 +230,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 2,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 11, 43, 16, 752, DateTimeKind.Local).AddTicks(6438),
                             IsActive = true,
                             RoleCode = "AMBASSADOR",
                             RoleName = "سفير التغيير"
@@ -227,7 +238,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 3,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 11, 43, 16, 752, DateTimeKind.Local).AddTicks(6448),
                             IsActive = true,
                             RoleCode = "COMMITTEE_CHAIR",
                             RoleName = "رئيس لجنة شركاء التغيير"
@@ -235,7 +246,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 4,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 11, 43, 16, 752, DateTimeKind.Local).AddTicks(6449),
                             IsActive = true,
                             RoleCode = "STAFF",
                             RoleName = "المنسوبون"
@@ -317,21 +328,8 @@ namespace CTP.Infrastructure.Migrations
                             FullName = "مدير النظام التجريبي",
                             IsActive = true,
                             MustChangePassword = false,
-                            OrganizationEntityId = 1,
                             PasswordHash = "123456",
                             Username = "admin"
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "سفير التغيير التجريبي",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "ambassador"
                         });
                 });
 
@@ -369,14 +367,6 @@ namespace CTP.Infrastructure.Migrations
                             AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             UserRoleId = 1
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            RoleId = 2,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 2
                         });
                 });
 

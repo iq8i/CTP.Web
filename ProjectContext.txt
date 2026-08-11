@@ -1,0 +1,2232 @@
+======================================================
+File: \CTP.Application\Interfaces\Repositories\IGenericRepository.cs
+======================================================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CTP.Application.Interfaces.Repositories
+{
+    internal interface IGenericRepository
+    {
+    }
+}
+
+
+
+======================================================
+File: \CTP.Application\Class1.cs
+======================================================
+namespace CTP.Application
+{
+    public class Class1
+    {
+
+    }
+}
+
+
+
+======================================================
+File: \CTP.Domain\Entities\OrganizationEntity.cs
+======================================================
+using System.ComponentModel.DataAnnotations;
+
+namespace CTP.Domain.Entities
+{
+    public class OrganizationEntity
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required, StringLength(50)]
+        public string EntityCode { get; set; } = string.Empty;
+
+        [Required, StringLength(150)]
+        public string EntityName { get; set; } = string.Empty;
+
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        public ICollection<User> Users { get; set; } = new List<User>();
+    }
+}
+
+
+
+======================================================
+File: \CTP.Domain\Entities\Role.cs
+======================================================
+using System.ComponentModel.DataAnnotations;
+
+namespace CTP.Domain.Entities
+{
+    public class Role
+    {
+        [Key]
+        public int RoleId { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string RoleCode { get; set; } = string.Empty; // ãËá: LEADER, AMBASSADOR
+
+        [Required]
+        [StringLength(100)]
+        public string RoleName { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? Description { get; set; }
+
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        // ÚáÇŞÉ ÇáãÓÊÎÏãíä ÈÇáÃÏæÇÑ (Many-to-Many)
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    }
+}
+
+
+
+======================================================
+File: \CTP.Domain\Entities\User.cs
+======================================================
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CTP.Domain.Entities
+{
+    public class User
+    {
+        [Key]
+        public int UserId { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string PasswordHash { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(200)]
+        public string FullName { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? Email { get; set; }
+
+        [StringLength(200)]
+        public string? JobTitle { get; set; }
+
+        // Êã ÇÓÊÈÏÇá AdminSectionId ÈÜ OrganizationEntityId áíÊäÇÓÈ ãÚ ÇáãäÕÉ ÇáÌÏíÏÉ
+        public int? OrganizationEntityId { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        public DateTime? LastLogin { get; set; }
+
+        // ãíÒÇÊ ÇáÃãÇä ÇáãÓÊæÑÏÉ ãä ãÔÑæÚß ÇáŞÏíã
+        public bool MustChangePassword { get; set; } = false;
+        public DateTime? PasswordExpiresDate { get; set; }
+        public int FailedLoginAttempts { get; set; } = 0;
+        public DateTime? LockedUntil { get; set; }
+        [StringLength(500)]
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiresDate { get; set; }
+
+        // ÇáÚáÇŞÇÊ
+        [ForeignKey("OrganizationEntityId")]
+        public virtual OrganizationEntity? Organization { get; set; }
+
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    }
+}
+
+
+
+======================================================
+File: \CTP.Domain\Entities\UserRole.cs
+======================================================
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CTP.Domain.Entities
+{
+    public class UserRole
+    {
+        [Key]
+        public int UserRoleId { get; set; }
+
+        [Required]
+        public int UserId { get; set; }
+
+        [Required]
+        public int RoleId { get; set; }
+
+        public DateTime AssignedDate { get; set; } = DateTime.Now;
+
+        public DateTime? ExpiresDate { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        // ÇáÚáÇŞÇÊ
+        [ForeignKey("UserId")]
+        public virtual User User { get; set; } = null!;
+
+        [ForeignKey("RoleId")]
+        public virtual Role Role { get; set; } = null!;
+    }
+}
+
+
+
+======================================================
+File: \CTP.Domain\Class1.cs
+======================================================
+namespace CTP.Domain
+{
+    public class Class1
+    {
+
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Data\ApplicationDbContext.cs
+======================================================
+using CTP.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
+
+namespace CTP.Infrastructure.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        // ÌÏÇæá ÇáäÙÇã ÇáÃÓÇÓíÉ
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<OrganizationEntity> OrganizationEntities { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // ÅÚÏÇÏ ÇáãİÊÇÍ ÇáãÑßÈ (Composite Key) áÌÏæá ÇáÑÈØ
+            modelBuilder.Entity<UserRole>()
+                .HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            // ÑÈØ ÇáãÓÊÎÏã ÈÇáÃÏæÇÑ
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId);
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId);
+
+            // ÈĞÑ ÇáÈíÇäÇÊ ÇáÃÓÇÓíÉ (ÇáÃÏæÇÑ ÇáÜ 13)
+            modelBuilder.Entity<Role>().HasData(
+                new Role { RoleId = 1, RoleCode = "LEADER", RoleName = "ãÚÇáí ÇáŞÇÆÏ" },
+                new Role { RoleId = 2, RoleCode = "AMBASSADOR", RoleName = "ÓİíÑ ÇáÊÛííÑ" },
+                new Role { RoleId = 3, RoleCode = "COMMITTEE_CHAIR", RoleName = "ÑÆíÓ áÌäÉ ÔÑßÇÁ ÇáÊÛííÑ" },
+                new Role { RoleId = 4, RoleCode = "STAFF", RoleName = "ÇáãäÓæÈæä" }
+                // íãßäß ÅßãÇá ÈÇŞí ÇáÃÏæÇÑ åäÇ...
+            );
+
+            // ÈĞÑ ãÓÊÎÏã ÊÌÑíÈí
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    UserId = 1,
+                    Username = "admin",
+                    PasswordHash = "123456", // İÍÕäÇ ÇáãØÇÈŞÉ ÇáãÈÇÔÑÉ ãÄŞÊÇğ İí ÇáÜ Controller
+                    FullName = "ãÏíÑ ÇáäÙÇã ÇáÊÌÑíÈí",
+                    IsActive = true,
+                    CreatedDate = new DateTime(2026, 1, 1) // ÊÇÑíÎ ËÇÈÊ áÊÌäÈ ãÔÇßá ÇáÜ Migrations
+                }
+            );
+
+            // ÑÈØ ÇáãÓÊÎÏã ÇáÊÌÑíÈí ÈÏæÑ (ÑÆíÓ áÌäÉ ÔÑßÇÁ ÇáÊÛííÑ) ßãËÇá áÊÌÑÈÉ ÇáÔÇÔÉ
+            modelBuilder.Entity<UserRole>().HasData(
+                new UserRole
+                {
+                    UserRoleId = 1,
+                    UserId = 1,
+                    RoleId = 3, // 3 = COMMITTEE_CHAIR ÍÓÈ ÇáÃÏæÇÑ ÇáÊí ÃÖİäÇåÇ
+                    AssignedDate = new DateTime(2026, 1, 1),
+                    IsActive = true
+                }
+            );
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Migrations\20260803074227_InitialCreate.cs
+======================================================
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace CTP.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class InitialCreate : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "OrganizationEntities",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    EntityCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    EntityName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrganizationEntities", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Roles",
+                columns: table => new
+                {
+                    RoleId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RoleCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    RoleName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.RoleId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Username = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    FullName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    JobTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    OrganizationEntityId = table.Column<int>(type: "INTEGER", nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastLogin = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    MustChangePassword = table.Column<bool>(type: "INTEGER", nullable: false),
+                    PasswordExpiresDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    FailedLoginAttempts = table.Column<int>(type: "INTEGER", nullable: false),
+                    LockedUntil = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    RefreshToken = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    RefreshTokenExpiresDate = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.UserId);
+                    table.ForeignKey(
+                        name: "FK_Users_OrganizationEntities_OrganizationEntityId",
+                        column: x => x.OrganizationEntityId,
+                        principalTable: "OrganizationEntities",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    RoleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserRoleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AssignedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExpiresDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_UserRoles_Roles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Roles",
+                        principalColumn: "RoleId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserRoles_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Roles",
+                columns: new[] { "RoleId", "CreatedDate", "Description", "IsActive", "RoleCode", "RoleName" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2026, 8, 3, 10, 42, 27, 225, DateTimeKind.Local).AddTicks(2432), null, true, "LEADER", "ãÚÇáí ÇáŞÇÆÏ" },
+                    { 2, new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2080), null, true, "AMBASSADOR", "ÓİíÑ ÇáÊÛííÑ" },
+                    { 3, new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2088), null, true, "COMMITTEE_CHAIR", "ÑÆíÓ áÌäÉ ÔÑßÇÁ ÇáÊÛííÑ" },
+                    { 4, new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2089), null, true, "STAFF", "ÇáãäÓæÈæä" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "UserId", "CreatedDate", "Email", "FailedLoginAttempts", "FullName", "IsActive", "JobTitle", "LastLogin", "LockedUntil", "MustChangePassword", "OrganizationEntityId", "PasswordExpiresDate", "PasswordHash", "RefreshToken", "RefreshTokenExpiresDate", "Username" },
+                values: new object[] { 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, 0, "ãÏíÑ ÇáäÙÇã ÇáÊÌÑíÈí", true, null, null, null, false, null, null, "123456", null, null, "admin" });
+
+            migrationBuilder.InsertData(
+                table: "UserRoles",
+                columns: new[] { "RoleId", "UserId", "AssignedDate", "ExpiresDate", "IsActive", "UserRoleId" },
+                values: new object[] { 3, 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, 1 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserRoles_RoleId",
+                table: "UserRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_OrganizationEntityId",
+                table: "Users",
+                column: "OrganizationEntityId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "UserRoles");
+
+            migrationBuilder.DropTable(
+                name: "Roles");
+
+            migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "OrganizationEntities");
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Migrations\20260803074227_InitialCreate.Designer.cs
+======================================================
+// <auto-generated />
+using System;
+using CTP.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace CTP.Infrastructure.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260803074227_InitialCreate")]
+    partial class InitialCreate
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrganizationEntities");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RoleCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("RoleId");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 225, DateTimeKind.Local).AddTicks(2432),
+                            IsActive = true,
+                            RoleCode = "LEADER",
+                            RoleName = "ãÚÇáí ÇáŞÇÆÏ"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2080),
+                            IsActive = true,
+                            RoleCode = "AMBASSADOR",
+                            RoleName = "ÓİíÑ ÇáÊÛííÑ"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2088),
+                            IsActive = true,
+                            RoleCode = "COMMITTEE_CHAIR",
+                            RoleName = "ÑÆíÓ áÌäÉ ÔÑßÇÁ ÇáÊÛííÑ"
+                        },
+                        new
+                        {
+                            RoleId = 4,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2089),
+                            IsActive = true,
+                            RoleCode = "STAFF",
+                            RoleName = "ÇáãäÓæÈæä"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("PasswordExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RefreshTokenExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "ãÏíÑ ÇáäÙÇã ÇáÊÌÑíÈí",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            PasswordHash = "123456",
+                            Username = "admin"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserRoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 3,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 1
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany("Users")
+                        .HasForeignKey("OrganizationEntityId");
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Migrations\ApplicationDbContextModelSnapshot.cs
+======================================================
+// <auto-generated />
+using System;
+using CTP.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace CTP.Infrastructure.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    {
+        protected override void BuildModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrganizationEntities");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RoleCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("RoleId");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 225, DateTimeKind.Local).AddTicks(2432),
+                            IsActive = true,
+                            RoleCode = "LEADER",
+                            RoleName = "ãÚÇáí ÇáŞÇÆÏ"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2080),
+                            IsActive = true,
+                            RoleCode = "AMBASSADOR",
+                            RoleName = "ÓİíÑ ÇáÊÛííÑ"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2088),
+                            IsActive = true,
+                            RoleCode = "COMMITTEE_CHAIR",
+                            RoleName = "ÑÆíÓ áÌäÉ ÔÑßÇÁ ÇáÊÛííÑ"
+                        },
+                        new
+                        {
+                            RoleId = 4,
+                            CreatedDate = new DateTime(2026, 8, 3, 10, 42, 27, 226, DateTimeKind.Local).AddTicks(2089),
+                            IsActive = true,
+                            RoleCode = "STAFF",
+                            RoleName = "ÇáãäÓæÈæä"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("PasswordExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RefreshTokenExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "ãÏíÑ ÇáäÙÇã ÇáÊÌÑíÈí",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            PasswordHash = "123456",
+                            Username = "admin"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserRoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 3,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 1
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany("Users")
+                        .HasForeignKey("OrganizationEntityId");
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Repositories\GenericRepository.cs
+======================================================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CTP.Infrastructure.Repositories
+{
+    internal class GenericRepository
+    {
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Class1.cs
+======================================================
+namespace CTP.Infrastructure
+{
+    public class Class1
+    {
+
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Controllers\DashboardController.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+
+namespace CTP.Web.Areas.Committee.Controllers
+{
+    [Area("Committee")] // ãåã ÌÏÇğ: åĞÇ íÑÈØ ÇáßäÊÑæáÑ ÈÇáÜ Area
+   // [Authorize(Roles = "COMMITTEE_CHAIR")] // ÊÃãíä: áä íÏÎá ÅáÇ ÑÆíÓ ÇááÌäÉ
+    public class DashboardController : Controller
+    {
+        public IActionResult Index()
+        {
+            // åäÇ ÓÊÌáÈ ÇáÈíÇäÇÊ ÇáÍŞíŞíÉ áÇÍŞÇğ ãä ŞÇÚÏÉ ÇáÈíÇäÇÊ
+            ViewData["EntityTitle"] = "ÅÏÇÑÉ ÇááÌÇä";
+            ViewData["EntityHeaderSubtitle"] = "ãÑßÒ ÚãáíÇÊ ÇááÌÇä æÇáÇÚÊãÇÏÇÊ";
+            ViewData["EntityHeaderIcon"] = "bi-bullseye";
+
+            return View();
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Dashboard\Index.cshtml
+======================================================
+@{
+    Layout = "_Layout"; // ÇÓÊÎÏÇã ÇáÜ Layout ÇáÃÓÇÓí ááãäÕÉ
+}
+
+<!-- ÇÓÊÏÚÇÁ Çáãßæä ÇáĞí ÕããäÇå ÓÇÈŞÇğ -->
+<partial name="_EntityDashboardHeader" />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 p-4">
+                <h3>ÃåáÇğ Èß İí áæÍÉ ÊÍßã ÇááÌÇä</h3>
+                <p>åäÇ ÓÊÙåÑ ŞÇÆãÉ ÇááÌÇä ÇáäÔØÉ æÇáãåÇã ÇáãÚáŞÉ ŞÑíÈÇğ...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Dashboard\Index.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Area.Committee.Views.Dashboard
+{
+    public class IndexModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Controllers\AccountController.cs
+======================================================
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using CTP.Infrastructure.Data; // ãÓÇÑ ŞÇÚÏÉ ÇáÈíÇäÇÊ ÇáÌÏíÏ
+
+namespace CTP.Web.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        // ŞãäÇ ÈÍŞä DbContext ãÈÇÔÑÉ åäÇ ãÄŞÊÇğ áÊÓåíá ÇáÇÎÊÈÇÑ
+        // ãÓÊŞÈáÇğ İí ÇáãÚãÇÑíÉ ÇáäÙíİÉ¡ ÓääŞá åĞÇ ÇáãäØŞ Åáì ØÈŞÉ Application
+        public AccountController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Login(string? returnUrl = null)
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(string username, string password, bool rememberMe, string? returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            var constantDelay = Task.Delay(300);
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                ViewBag.Error = "íÑÌì ÅÏÎÇá ÇÓã ÇáãÓÊÎÏã æßáãÉ ÇáãÑæÑ";
+                await constantDelay;
+                return View();
+            }
+
+            // ÇáÈÍË Úä ÇáãÓÊÎÏã İí ŞÇÚÏÉ ÈíÇäÇÊ CTP ãÚ ÃÏæÇÑå
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.Organization)
+                .FirstOrDefaultAsync(u => u.Username == username);
+
+            // ÇáÊÍŞŞ ÇáãÄŞÊ ãä ßáãÉ ÇáãÑæÑ (áÃÛÑÇÖ ÇáÇÎÊÈÇÑ¡ ÓäÖíİ ÇáÊÔİíÑ áÇÍŞÇğ)
+            if (user == null || user.PasswordHash != password)
+            {
+                ViewBag.Error = "ÇÓã ÇáãÓÊÎÏã Ãæ ßáãÉ ÇáãÑæÑ ÛíÑ ÕÍíÍÉ";
+                await constantDelay;
+                return View();
+            }
+
+            if (!user.IsActive)
+            {
+                ViewBag.Error = "ÇáÍÓÇÈ ÛíÑ ãİÚá. íÑÌì ÇáÊæÇÕá ãÚ ãÓÄæá ÇáäÙÇã.";
+                await constantDelay;
+                return View();
+            }
+
+            // ÊÍÏíË ÈíÇäÇÊ ÇáÏÎæá
+            user.LastLogin = DateTime.Now;
+            user.FailedLoginAttempts = 0;
+            await _context.SaveChangesAsync();
+
+            await constantDelay;
+            return await SignInUserAsync(user, rememberMe, returnUrl);
+        }
+
+        private async Task<IActionResult> SignInUserAsync(CTP.Domain.Entities.User user, bool rememberMe, string? returnUrl)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.GivenName, user.FullName)
+            };
+
+            // ÌáÈ ÇáÃÏæÇÑ ÇáİÚÇáÉ ááãÓÊÎÏã
+            var activeRoles = user.UserRoles
+                .Where(ur => ur.IsActive && (ur.ExpiresDate == null || ur.ExpiresDate > DateTime.Now))
+                .ToList();
+
+            foreach (var ur in activeRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, ur.Role.RoleCode));
+            }
+
+            if (user.OrganizationEntityId.HasValue)
+            {
+                claims.Add(new Claim("OrganizationId", user.OrganizationEntityId.Value.ToString()));
+            }
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = rememberMe,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction("Index", "Home"); // ÊæÌíå ááÔÇÔÉ ÇáÑÆíÓíÉ ÇáÌÏíÏÉ
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Controllers\HomeController.cs
+======================================================
+//using CTP.Web.Models;
+//using Microsoft.AspNetCore.Mvc;
+//using System.Diagnostics;
+
+//namespace CTP.Web.Controllers
+//{
+//    public class HomeController : Controller
+//    {
+//        private readonly ILogger<HomeController> _logger;
+
+//        public HomeController(ILogger<HomeController> logger)
+//        {
+//            _logger = logger;
+//        }
+
+//        public IActionResult Index()
+//        {
+//            return View();
+//        }
+
+//        public IActionResult Privacy()
+//        {
+//            return View();
+//        }
+
+//        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+//        public IActionResult Error()
+//        {
+//            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+//        }
+//    }
+//}
+
+using Microsoft.AspNetCore.Mvc;
+// using MediatR; // Ø³Ù†Ø³ØªØ®Ø¯Ù…Ù‡Ø§ Ù„Ø§Ø­Ù‚Ø§Ù‹ Ù„Ù„Ø§ØªØµØ§Ù„ Ø¨Ø·Ø¨Ù‚Ø© Ø§Ù„Ù€ Application
+
+namespace CTP.Web.Controllers
+{
+    // [Authorize] // Ø³Ù†Ù‚ÙˆÙ… Ø¨ØªÙØ¹ÙŠÙ„Ù‡Ø§ Ø¨Ø¹Ø¯ Ø§Ù„Ø§Ù†ØªÙ‡Ø§Ø¡ Ù…Ù† Ù†Ø¸Ø§Ù… ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„
+    public class HomeController : Controller
+    {
+        // private readonly ISender _mediator;
+
+        public HomeController()
+        {
+            // _mediator = mediator; // Ø­Ù‚Ù† Ù…ÙƒØªØ¨Ø© MediatR
+        }
+
+        // 1. Ø¹Ø±Ø¶ Ø§Ù„Ø´Ø§Ø´Ø© Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©
+        public IActionResult Index()
+        {
+            // Ù…Ø³ØªÙ‚Ø¨Ù„Ø§Ù‹: ÙŠÙ…ÙƒÙ†Ù†Ø§ Ø¬Ù„Ø¨ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙˆØµÙ„Ø§Ø­ÙŠØ§ØªÙ‡ ÙˆØªÙ…Ø±ÙŠØ±Ù‡Ø§ Ù„Ù„Ù€ View
+            return View();
+        }
+
+        // ==========================================
+        // Endpoints (APIs) Ù„ØªØºØ°ÙŠØ© Ø§Ù„Ø´Ø§Ø´Ø© Ø¨Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª
+        // ==========================================
+
+        [HttpGet]
+        public IActionResult DashboardStats()
+        {
+            // Ù…Ø³ØªÙ‚Ø¨Ù„Ø§Ù‹: var stats = await _mediator.Send(new GetDashboardStatsQuery());
+
+            // Ø¨ÙŠØ§Ù†Ø§Øª ØªØ¬Ø±ÙŠØ¨ÙŠØ© Ù…Ø¤Ù‚ØªØ©
+            return Json(new
+            {
+                totalReports = 24,
+                avgAdkar = 76,
+                totalRecommendations = 18,
+                totalChallenges = 5
+            });
+        }
+
+        [HttpGet]
+        public IActionResult RecentActivities()
+        {
+            var activities = new[]
+            {
+                new { title = "ØªÙ… Ø±ÙØ¹ ØªÙ‚Ø±ÙŠØ± (Ù‡ÙŠØ¦Ø© Ø§Ù„Ø¹Ù…Ù„ÙŠØ§Øª)", time = "Ù…Ù†Ø° 10 Ø¯Ù‚Ø§Ø¦Ù‚", icon = "bi-arrow-up-circle-fill", color = "#10b981" },
+                new { title = "Ø§Ø¹ØªÙ…Ø§Ø¯ ØªÙˆØµÙŠØ© Ù„Ø¯Ø¹Ù… Ø§Ù„Ø§ØªØµØ§Ù„", time = "Ù…Ù†Ø° Ø³Ø§Ø¹Ø©", icon = "bi-check-circle", color = "#10b981" },
+                new { title = "ØªØ¹Ù„ÙŠÙ‚ Ù…Ù† Ù…Ø¯ÙŠØ± Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©", time = "Ù…Ù†Ø° 3 Ø³Ø§Ø¹Ø§Øª", icon = "bi-chat-dots", color = "#f59e0b" }
+            };
+
+            return Json(activities);
+        }
+
+        [HttpGet]
+        public IActionResult ChartData()
+        {
+            var data = new[]
+            {
+                new { status = "Ù…Ø³ÙˆØ¯Ø©", count = 5 },
+                new { status = "Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯", count = 12 },
+                new { status = "Ù…Ø¹ØªÙ…Ø¯", count = 7 }
+            };
+
+            return Json(data);
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Models\Navigation\MenuSection.cs
+======================================================
+namespace CTP.Web.Models.Navigation
+{
+    public class MenuSection
+    {
+        public string Title { get; set; } = string.Empty;
+        public List<MenuItem> Items { get; set; } = new();
+    }
+
+    public class MenuItem
+    {
+        public string Title { get; set; } = string.Empty;
+        public string IconClass { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Models\ErrorViewModel.cs
+======================================================
+namespace CTP.Web.Models
+{
+    public class ErrorViewModel
+    {
+        public string? RequestId { get; set; }
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\ViewComponents\SidebarNavigationViewComponent.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using CTP.Web.Models.Navigation;
+
+namespace CTP.Web.ViewComponents
+{
+    public class SidebarNavigationViewComponent : ViewComponent
+    {
+        public IViewComponentResult Invoke()
+        {
+            // Ù†Ø¬Ù„Ø¨ Ø¯ÙˆØ± Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ù† Ø§Ù„Ø¬Ù„Ø³Ø© (Cookies)
+            var role = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "STAFF";
+
+            var menu = new List<MenuSection>();
+
+            // 1. Ø§Ù„Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ© (ØªØ¸Ù‡Ø± Ù„Ù„Ø¬Ù…ÙŠØ¹)
+            var mainSection = new MenuSection { Title = "Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©" };
+            mainSection.Items.Add(new MenuItem { Title = "Ù„ÙˆØ­Ø© Ø§Ù„Ù‚ÙŠØ§Ø³", IconClass = "bi-speedometer2", Url = "/Home/Index" });
+            menu.Add(mainSection);
+
+            // 2. Ù‚ÙˆØ§Ø¦Ù… Ù…Ø®ØµØµØ© (Ù…Ø«Ø§Ù„: ØªØ¸Ù‡Ø± Ù„Ø±Ø¦ÙŠØ³ Ø§Ù„Ù„Ø¬Ù†Ø© ÙˆØ§Ù„Ù‚ÙŠØ§Ø¯Ø© ÙÙ‚Ø·)
+            if (role == "COMMITTEE_CHAIR" || role == "LEADER")
+            {
+                var committeeSection = new MenuSection { Title = "Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù„Ø¬Ø§Ù†" };
+                committeeSection.Items.Add(new MenuItem { Title = "Ù…Ø±ÙƒØ² Ø§Ù„Ø£Ø¹Ù…Ø§Ù„", IconClass = "bi-bullseye", Url = "#" });
+                committeeSection.Items.Add(new MenuItem { Title = "Ø§Ù„ØªÙ‚Ø§Ø±ÙŠØ± Ø§Ù„Ù…Ø±ÙÙˆØ¹Ø©", IconClass = "bi-file-earmark-text", Url = "#" });
+                menu.Add(committeeSection);
+            }
+
+            return View("Default", menu);
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Views\Account\AccessDenied.cshtml
+======================================================
+@{
+    ViewData["Title"] = "ÑİÖ ÇáæÕæá";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow-sm" style="border-radius: 16px;">
+                <div class="card-header bg-danger text-white text-center" style="border-radius: 16px 16px 0 0;">
+                    <i class="bi bi-shield-exclamation" style="font-size: 48px;"></i>
+                    <h3 class="mt-3">ÑİÖ ÇáæÕæá</h3>
+                </div>
+                <div class="card-body text-center p-5">
+                    <p class="lead" style="font-weight: 600;">áíÓ áÏíß ÕáÇÍíÉ ááæÕæá Åáì åĞå ÇáÔÇÔÉ.</p>
+                    <p class="text-muted">
+                        åĞå ÇáÎÇÕíÉ ÛíÑ ãÊÇÍÉ ááÏæÑ ÇáÍÇáí ÇáãÎÕÕ áß. ÅĞÇ ßäÊ ÊÚÊŞÏ Ãä åĞÇ ÎØÃ¡ íÑÌì ÇáÊæÇÕá ãÚ ãÓÄæá ÈÑäÇãÌ ÇáÊÛííÑ æÇáÊÍæá.
+                    </p>
+                    <hr class="my-4" />
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-primary" style="background-color: #106981; border: none; border-radius: 8px;">
+                        <i class="bi bi-house-door ms-2"></i>
+                        ÇáÚæÏÉ Åáì áæÍÉ ÇáŞíÇÓ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Views\Account\AccessDenied.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Views.Account
+{
+    public class AccessDeniedModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Views\Account\Login.cshtml
+======================================================
+@{
+    ViewData["Title"] = "ÊÓÌíá ÇáÏÎæá";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ãäÕÉ ÇáÊÛííÑ æÇáÊÍæá</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/moda-login.css" asp-append-version="true" />
+</head>
+<body>
+
+    <div class="lg-scene">
+        <div class="lg-bg-gradient"></div>
+        <div class="lg-bg-grid"></div>
+        <div class="lg-bg-glow lg-bg-glow-1"></div>
+        <div class="lg-bg-glow lg-bg-glow-2"></div>
+
+        <div class="lg-shapes" aria-hidden="true">
+            <i class="bi bi-shield-shaded lg-shape lg-shape-1"></i>
+            <i class="bi bi-star-fill lg-shape lg-shape-2"></i>
+            <i class="bi bi-diagram-3-fill lg-shape lg-shape-3"></i>
+            <i class="bi bi-bullseye lg-shape lg-shape-4"></i>
+            <i class="bi bi-award-fill lg-shape lg-shape-5"></i>
+            <i class="bi bi-lightning-charge-fill lg-shape lg-shape-6"></i>
+        </div>
+
+        <div class="lg-card">
+            <div class="lg-card-accent"></div>
+
+            <div class="lg-card-head">
+                <div class="lg-logo">
+                    <div class="lg-logo-ring">
+                        <img src="~/logo.png" alt="ÔÚÇÑ ÇáãäÕÉ" />
+                    </div>
+                </div>
+                <h1 class="lg-system">ãäÕÉ ÇáÊÛííÑ æÇáÊÍæá</h1>
+                <p class="lg-org">ÈÑäÇãÌ ÇáÊÛííÑ æÇáÊÍæá ÇáãÄÓÓí</p>
+                <div class="lg-ornament">
+                    <span></span>
+                    <i class="bi bi-shield-fill-check"></i>
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="lg-card-body">
+                <div class="lg-form-intro">
+                    <span class="lg-badge">
+                        <i class="bi bi-lock-fill"></i>
+                        ÏÎæá Âãä
+                    </span>
+                    <h2 class="lg-form-title">ÊÓÌíá ÇáÏÎæá</h2>
+                    <p class="lg-form-sub">ÃÏÎá ÈíÇäÇÊ ÇáÇÚÊãÇÏ ááæÕæá Åáì áæÍÉ ÇáŞíÇÓ</p>
+                </div>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="lg-alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span>@ViewBag.Error</span>
+                    </div>
+                }
+
+                <form method="post" asp-controller="Account" asp-action="Login" asp-antiforgery="true" id="loginForm" class="lg-form" novalidate>
+                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                    <div class="lg-field">
+                        <label for="username"><i class="bi bi-person-badge-fill"></i> ÇÓã ÇáãÓÊÎÏã</label>
+                        <div class="lg-input-wrap">
+                            <span class="lg-input-icon"><i class="bi bi-person-fill"></i></span>
+                            <input type="text" id="username" name="username" class="lg-input" placeholder="ÃÏÎá ÇÓã ÇáãÓÊÎÏã" autocomplete="username" required autofocus />
+                        </div>
+                    </div>
+
+                    <div class="lg-field">
+                        <label for="password"><i class="bi bi-key-fill"></i> ßáãÉ ÇáãÑæÑ</label>
+                        <div class="lg-input-wrap">
+                            <span class="lg-input-icon"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" id="password" name="password" class="lg-input lg-input-action" placeholder="ÃÏÎá ßáãÉ ÇáãÑæÑ" autocomplete="current-password" required />
+                            <button type="button" class="lg-eye-btn" id="togglePassword" tabindex="-1" title="ÅÙåÇÑ/ÅÎİÇÁ ßáãÉ ÇáãÑæÑ">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg-options">
+                        <label class="lg-checkbox">
+                            <input type="checkbox" name="rememberMe" value="true" />
+                            <span class="lg-checkbox-mark"><i class="bi bi-check-lg"></i></span>
+                            <span class="lg-checkbox-text">ÊĞßÑäí Úáì åĞÇ ÇáÌåÇÒ</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="lg-submit" id="submitBtn">
+                        <span class="lg-submit-text"><i class="bi bi-box-arrow-in-right"></i> ÊÓÌíá ÇáÏÎæá</span>
+                        <span class="lg-submit-loading" style="display:none;"><span class="lg-spinner"></span> ÌÇÑí ÇáÊÍŞŞ...</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="lg-card-foot">
+                <div class="lg-foot-row">
+                    <span class="lg-foot-tag lg-foot-tag-success"><i class="bi bi-shield-fill-check"></i> ÇÊÕÇá ãÔİÑ</span>
+                    <span class="lg-foot-tag"><i class="bi bi-c-circle"></i> @DateTime.Now.Year — ÌãíÚ ÇáÍŞæŞ ãÍİæÙÉ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                var pw = document.getElementById('password');
+                var icon = document.getElementById('toggleIcon');
+                if (pw.type === 'password') {
+                    pw.type = 'text';
+                    icon.className = 'bi bi-eye-slash';
+                } else {
+                    pw.type = 'password';
+                    icon.className = 'bi bi-eye';
+                }
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', function() {
+                var btn = document.getElementById('submitBtn');
+                btn.querySelector('.lg-submit-text').style.display = 'none';
+                btn.querySelector('.lg-submit-loading').style.display = 'inline-flex';
+                btn.disabled = true;
+            });
+
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.form.submit();
+                }
+            });
+    </script>
+</body>
+</html>
+
+
+
+======================================================
+File: \CTP.Web\Views\Account\Login.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Views.Account
+{
+    public class LoginModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Views\Home\Index.cshtml
+======================================================
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Views\Home\Privacy.cshtml
+======================================================
+@{
+    ViewData["Title"] = "Privacy Policy";
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>Use this page to detail your site's privacy policy.</p>
+
+
+
+======================================================
+File: \CTP.Web\Views\Shared\Components\SidebarNavigation\Default.cshtml
+======================================================
+@model IEnumerable<CTP.Web.Models.Navigation.MenuSection>
+
+<ul class="nav flex-column sidebar-nav">
+    @foreach (var section in Model)
+    {
+        @if (!string.IsNullOrWhiteSpace(section.Title))
+        {
+            <li class="nav-item sidebar-section-title mt-4 mb-2 px-3 text-muted" style="font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                @(section.Title)
+            </li>
+        }
+        
+        @foreach (var item in section.Items)
+        {
+            <li class="nav-item mb-1">
+                <a class="nav-link px-3 py-2 rounded @(item.IsActive ? "active bg-primary text-white" : "text-dark")" href="@item.Url" style="display: flex; align-items: center; gap: 10px; transition: all 0.2s;">
+                    <i class="bi @item.IconClass" style="font-size: 1.1rem;"></i>
+                    <span style="font-weight: 500;">@item.Title</span>
+                </a>
+            </li>
+        }
+    }
+</ul>
+
+<style>
+    .sidebar-nav .nav-link:hover:not(.active) {
+        background-color: rgba(0, 0, 0, 0.05);
+        color: #106981 !important;
+    }
+</style>
+
+
+
+======================================================
+File: \CTP.Web\Views\Shared\Error.cshtml
+======================================================
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Error.</h1>
+<h2 class="text-danger">An error occurred while processing your request.</h2>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<h3>Development Mode</h3>
+<p>
+    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
+</p>
+<p>
+    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
+    It can result in displaying sensitive information from exceptions to end users.
+    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
+    and restarting the app.
+</p>
+
+
+
+======================================================
+File: \CTP.Web\Views\Shared\_EntityDashboardHeader.cshtml
+======================================================
+@{
+    // ØªÙ… Ø¥Ø²Ø§Ù„Ø© Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯ÙŠØ© Ø§Ù„Ù‚Ø¯ÙŠÙ…Ø© ÙˆØ§Ø³ØªØ¨Ø¯Ø§Ù„Ù‡Ø§ Ø¨Ù‚ÙŠÙ… Ø¯ÙŠÙ†Ø§Ù…ÙŠÙƒÙŠØ© ØªÙ†Ø§Ø³Ø¨ Ø§Ù„Ù…Ù†ØµØ© Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø©
+    var accent = ViewData["ThemeColor"] as string ?? "#106981";
+    var title = ViewData["EntityTitle"] as string ?? "Ù…Ù†ØµØ© Ø§Ù„ØªØºÙŠÙŠØ± ÙˆØ§Ù„ØªØ­ÙˆÙ„";
+    var subtitle = ViewData["EntityHeaderSubtitle"] as string ?? "Ù„ÙˆØ­Ø© Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª ÙˆØ§Ù„Ø¥Ø­ØµØ§Ø¦ÙŠØ§Øª";
+    var icon = ViewData["EntityHeaderIcon"] as string ?? "bi-speedometer2";
+    var logoPath = ViewData["LogoPath"] as string;
+}
+
+<div class="entity-header" style="background-color:@accent; background-image:linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.28) 100%);">
+    <div class="entity-header-logo">
+        @if (!string.IsNullOrWhiteSpace(logoPath))
+        {
+            <img src="@logoPath" alt="@title" />
+        }
+        else
+        {
+            <i class="bi @icon"></i>
+        }
+    </div>
+    <div class="entity-header-text">
+        <h1>@title</h1>
+        <div class="entity-header-subtitle">@subtitle</div>
+    </div>
+</div>
+
+<style>
+    .entity-header {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 22px 26px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+        color: #fff;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    }
+
+    .entity-header-logo {
+        width: 64px;
+        height: 64px;
+        flex: 0 0 64px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+        .entity-header-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .entity-header-logo i {
+            font-size: 2rem;
+            color: #fff;
+        }
+
+    .entity-header-text h1 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 800;
+    }
+
+    .entity-header-subtitle {
+        opacity: 0.85;
+        font-size: 0.95rem;
+        margin-top: 4px;
+    }
+</style>
+
+
+
+======================================================
+File: \CTP.Web\Views\Shared\_Flash.cshtml
+======================================================
+@*
+    ÙŠØ¹Ø±Ø¶ Ø±Ø³Ø§Ø¦Ù„ TempData (Success/Error) ÙƒÙ†Ø§ÙØ°Ø© SweetAlert2 Ù…Ø±ÙƒØ²ÙŠØ© ÙƒØ¨ÙŠØ±Ø© ÙÙŠ ÙˆØ³Ø· Ø§Ù„ØµÙØ­Ø©
+    (showSuccess/showError) Ø¨Ø¯Ù„Ø§Ù‹ Ù…Ù† Ø¥Ø´Ø¹Ø§Ø± toast Ø§Ù„ØµØºÙŠØ± Ø£Ø¹Ù„Ù‰ Ø§Ù„ØµÙØ­Ø©.
+    ÙŠØ³ØªØ®Ø¯Ù… Ù…Ø¹Ø±Ù‘ÙØ§Øª Ø®Ø§ØµØ© ÙƒÙŠ Ù„Ø§ ÙŠÙ„ØªÙ‚Ø·Ù‡Ø§ Ù…Ø¹Ø§Ù„Ø¬ toast Ø§Ù„Ø¹Ø§Ù… ÙÙŠ swal-helpers.js.
+*@
+@{
+    var flashSuccess = TempData["Success"] as string;
+    var flashError = TempData["Error"] as string;
+}
+@if (!string.IsNullOrEmpty(flashSuccess) || !string.IsNullOrEmpty(flashError))
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (!string.IsNullOrEmpty(flashSuccess))
+            {
+                @:if (typeof showSuccess === 'function') { showSuccess(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(flashSuccess))); }
+            }
+            @if (!string.IsNullOrEmpty(flashError))
+            {
+                @:if (typeof showError === 'function') { showError(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(flashError))); }
+            }
+        });
+    </script>
+}
+
+
+
+======================================================
+File: \CTP.Web\Views\Shared\_Layout.cshtml
+======================================================
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var __afTokens = Antiforgery.GetAndStoreTokens(Context);
+    // ÙŠÙ…ÙƒÙ†Ùƒ Ù„Ø§Ø­Ù‚Ø§Ù‹ Ø±Ø¨Ø· Ù‡Ø°Ø§ Ø§Ù„Ù…ØªØºÙŠØ± Ø¨Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„Ù†Ø¸Ø§Ù… Ø£Ùˆ Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª
+    var systemName = "Ù…Ù†ØµØ© Ø§Ù„ØªØºÙŠÙŠØ± ÙˆØ§Ù„ØªØ­ÙˆÙ„";
+    var systemSubtitle = "Ø¨Ø±Ù†Ø§Ù…Ø¬ Ø§Ù„ØªØºÙŠÙŠØ± ÙˆØ§Ù„ØªØ­ÙˆÙ„ Ø§Ù„Ù…Ø¤Ø³Ø³ÙŠ";
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="@__afTokens.RequestToken" />
+    <meta name="csrf-header" content="@__afTokens.HeaderName" />
+    <link rel="icon" type="image/png" href="~/logo.png" />
+    <title>@ViewData["Title"] - @systemName</title>
+
+    <!-- Ø§Ù„Ø£Ù„ÙˆØ§Ù† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø© Ù„Ù„Ù…Ù†ØµØ© (Ø§Ù„Ø²ÙŠØªÙŠ ÙˆØ§Ù„Ø°Ù‡Ø¨ÙŠ) -->
+    <style>
+            :root {
+                --moda-section-accent: #C9A227; /* Ø§Ù„Ù„ÙˆÙ† Ø§Ù„Ø°Ù‡Ø¨ÙŠ Ø§Ù„Ø®Ø§Øµ Ø¨Ø§Ù„Ù…Ù†ØµØ© */
+                --ctp-primary-olive: #106981; /* Ø§Ù„Ù„ÙˆÙ† Ø§Ù„Ø²ÙŠØªÙŠ Ø§Ù„Ø®Ø§Øµ Ø¨Ø§Ù„Ù…Ù†ØµØ© */
+            }
+    </style>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.css" />
+
+    <!-- Ù…Ù„ÙØ§Øª Ø§Ù„Ù€ CSS Ø§Ù„Ù…Ø³ØªÙˆØ±Ø¯Ø© Ù…Ù† Ø§Ù„Ù…Ø´Ø±ÙˆØ¹ Ø§Ù„Ø³Ø§Ø¨Ù‚ -->
+    <link rel="stylesheet" href="~/css/moda-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/moda-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/moda-components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/moda-legacy.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="moda-sidebar-overlay"></div>
+
+    <div class="moda-page">
+        <!-- ===== FLOATING SIDEBAR ===== -->
+        <aside class="moda-sidebar">
+            <!-- Logo & Name -->
+            <div class="moda-sidebar-header">
+                <div class="moda-sidebar-logo">
+                    <img src="~/logo.png" alt="@systemName" />
+                </div>
+                <h3 class="moda-sidebar-title">@systemName</h3>
+                <p class="moda-sidebar-subtitle">@systemSubtitle</p>
+            </div>
+
+            <!-- Navigation - Dynamic based on user roles -->
+            <nav class="moda-sidebar-nav">
+                @await Component.InvokeAsync("SidebarNavigation")
+            </nav>
+
+            <div class="moda-sidebar-footer">
+                <div class="moda-sidebar-version">Ø¥ØµØ¯Ø§Ø± Ø§Ù„ØªØ¯Ø´ÙŠÙ† (UAT)</div>
+            </div>
+        </aside>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="moda-main">
+            <!-- Top Bar -->
+            <header class="moda-topbar">
+                <div class="moda-topbar-right">
+                    <button class="moda-sidebar-toggle" aria-label="ÙØªØ­ Ø§Ù„Ù‚Ø§Ø¦Ù…Ø©"><i class="bi bi-list"></i></button>
+                    @{
+                        var areaName = ViewContext.RouteData.Values["area"]?.ToString();
+                        var controllerName = ViewContext.RouteData.Values["controller"]?.ToString();
+                        var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+
+                        // Ù‚Ø§Ù…ÙˆØ³ Ù…Ø­Ø¯Ø« Ù„Ù„Ù…Ø³Ø§Ø±Ø§Øª ÙŠØªÙ†Ø§Ø³Ø¨ Ù…Ø¹ Ù…Ù†ØµØ© Ø§Ù„ØªØºÙŠÙŠØ± ÙˆØ§Ù„ØªØ­ÙˆÙ„
+                        var areaDisplayNames = new Dictionary<string, string>
+                        {
+                            { "Core", "Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©" },
+                            { "Committee", "Ù…Ø±ÙƒØ² Ø§Ù„Ø£Ø¹Ù…Ø§Ù„" },
+                            { "Reports", "Ø§Ù„ØªÙ‚Ø§Ø±ÙŠØ± Ø§Ù„Ø´Ù‡Ø±ÙŠØ©" },
+                            { "Dashboards", "Ù„ÙˆØ­Ø§Øª Ø§Ù„Ù‚ÙŠØ§Ø³" },
+                            { "Knowledge", "Ø§Ù„Ù…ÙˆØ§Ø¯ Ø§Ù„ØªØ¹Ù„ÙŠÙ…ÙŠØ©" },
+                            { "Administration", "Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù†Ø¸Ø§Ù…" }
+                        };
+
+                        var areaDisplay = areaName != null && areaDisplayNames.ContainsKey(areaName)
+                            ? areaDisplayNames[areaName]
+                            : areaName ?? "Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©";
+
+                        var pageTitle = ViewData["Title"]?.ToString() ?? "";
+                        var isHomePage = controllerName == "Home" && actionName == "Index";
+                    }
+                    <nav class="moda-breadcrumb" aria-label="Ù…Ø³Ø§Ø± Ø§Ù„ØªÙ†Ù‚Ù„">
+                        <a href="@Url.Action("Index", "Home", new { area = "" })" class="moda-breadcrumb-item">
+                            <i class="bi bi-house-door-fill"></i>
+                            <span>Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©</span>
+                        </a>
+                        @if (!isHomePage && !string.IsNullOrEmpty(areaName) && areaName != "Core")
+                        {
+                            <span class="moda-breadcrumb-sep"><i class="bi bi-chevron-left"></i></span>
+                            <span class="moda-breadcrumb-item">@areaDisplay</span>
+                        }
+                        @if (!isHomePage && !string.IsNullOrEmpty(pageTitle))
+                        {
+                            <span class="moda-breadcrumb-sep"><i class="bi bi-chevron-left"></i></span>
+                            <span class="moda-breadcrumb-item moda-breadcrumb-current">@pageTitle</span>
+                        }
+                    </nav>
+                </div>
+
+                <!-- Hijri / Gregorian Date -->
+                <div class="moda-topbar-date" id="topbarDate"></div>
+
+                <div class="moda-topbar-left">
+                    <a href="@Url.Action("Index", "Notifications", new { area = "Administration" })" class="moda-notification-bell">
+                        <i class="bi bi-bell-fill"></i>
+                        <span class="moda-notification-badge" id="notificationBadge" style="display:none;">0</span>
+                    </a>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="moda-user-dropdown dropdown">
+                            <button class="btn dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="moda-user-avatar"><i class="bi bi-person"></i></div>
+                                <div class="moda-user-info">
+                                    <span class="moda-user-name">@User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value</span>
+                                    <span class="moda-user-role">@(ViewData["UserRoleDisplay"] ?? "Ù…Ø³ØªØ®Ø¯Ù… Ø§Ù„Ù†Ø¸Ø§Ù…")</span>
+                                </div>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="@Url.Action("Profile", "Account", new { area = "" })"><i class="bi bi-person-circle"></i> Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" asp-antiforgery="true">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø®Ø±ÙˆØ¬</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="moda-content">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+            // Ø­Ù…Ø§ÙŠØ© CSRF: Ø­Ù‚Ù† Ø±Ù…Ø² Ù…ÙƒØ§ÙØ­Ø© Ø§Ù„ØªØ²ÙˆÙŠØ± ÙÙŠ ÙƒÙ„ Ø·Ù„Ø¨Ø§Øª AJAX
+            (function() {
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                var hmeta = document.querySelector('meta[name="csrf-header"]');
+                if (!meta || !hmeta) return;
+                var token = meta.getAttribute('content');
+                var header = hmeta.getAttribute('content');
+                var safe = /^(GET|HEAD|OPTIONS|TRACE)$/i;
+                function sameOrigin(url) {
+                    try { return new URL(url, window.location.href).origin === window.location.origin; }
+                    catch (e) { return true; }
+                }
+                if (window.jQuery) {
+                    jQuery.ajaxSetup({
+                        beforeSend: function(xhr, settings) {
+                            if (!safe.test(settings.type || 'GET') && sameOrigin(settings.url)) {
+                                xhr.setRequestHeader(header, token);
+                            }
+                        }
+                    });
+                }
+                if (window.fetch) {
+                    var origFetch = window.fetch;
+                    window.fetch = function(input, init) {
+                        init = init || {};
+                        var method = (init.method || (typeof input !== 'string' && input && input.method) || 'GET');
+                        var url = (typeof input === 'string') ? input : (input && input.url) || '';
+                        if (!safe.test(method) && sameOrigin(url)) {
+                            var headers = new Headers(init.headers || (typeof input !== 'string' && input && input.headers) || {});
+                            if (!headers.has(header)) headers.set(header, token);
+                            init.headers = headers;
+                        }
+                        return origFetch(input, init);
+                    };
+                }
+            })();
+    </script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Ù…ÙƒØªØ¨Ø§Øª Ù…Ø³Ø§Ø¹Ø¯Ø© (ØªØ£ÙƒØ¯ Ù…Ù† ÙˆØ¬ÙˆØ¯Ù‡Ø§ ÙÙŠ Ø§Ù„Ù…Ø¬Ù„Ø¯Ø§Øª) -->
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/js/moda-alerts.js" asp-append-version="true"></script>
+    <script src="~/js/swal-helpers.js" asp-append-version="true"></script>
+    <script src="~/js/moda-app.js" asp-append-version="true"></script>
+
+    @* TempData flash messages *@
+    @if (TempData["Success"] != null)
+    {
+        <div data-flash-success="@TempData["Success"]" style="display:none"></div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div data-flash-error="@TempData["Error"]" style="display:none"></div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div data-flash-warning="@TempData["Warning"]" style="display:none"></div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div data-flash-info="@TempData["Info"]" style="display:none"></div>
+    }
+
+    <script>
+            // Ø¯Ø§Ù„Ø© Ø¬Ù„Ø¨ Ø§Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª
+            function loadUnreadCount() {
+                $.get('@Url.Action("GetUnread", "Notifications", new { area = "Administration" })', function(data) {
+                    if (data && data.count > 0) { $('#notificationBadge').text(data.count).show(); }
+                    else { $('#notificationBadge').hide(); }
+                }).fail(function() { });
+            }
+            $(document).ready(function() { loadUnreadCount(); setInterval(loadUnreadCount, 60000); });
+
+            // Ø¹Ø±Ø¶ Ø§Ù„ØªØ§Ø±ÙŠØ® Ø§Ù„Ù‡Ø¬Ø±ÙŠ ÙˆØ§Ù„Ù…ÙŠÙ„Ø§Ø¯ÙŠ
+            (function() {
+                var weekDays = ['Ø§Ù„Ø£Ø­Ø¯', 'Ø§Ù„Ø¥Ø«Ù†ÙŠÙ†', 'Ø§Ù„Ø«Ù„Ø§Ø«Ø§Ø¡', 'Ø§Ù„Ø£Ø±Ø¨Ø¹Ø§Ø¡', 'Ø§Ù„Ø®Ù…ÙŠØ³', 'Ø§Ù„Ø¬Ù…Ø¹Ø©', 'Ø§Ù„Ø³Ø¨Øª'];
+                var gMonths = ['ÙŠÙ†Ø§ÙŠØ±', 'ÙØ¨Ø±Ø§ÙŠØ±', 'Ù…Ø§Ø±Ø³', 'Ø£Ø¨Ø±ÙŠÙ„', 'Ù…Ø§ÙŠÙˆ', 'ÙŠÙˆÙ†ÙŠÙˆ', 'ÙŠÙˆÙ„ÙŠÙˆ', 'Ø£ØºØ³Ø·Ø³', 'Ø³Ø¨ØªÙ…Ø¨Ø±', 'Ø£ÙƒØªÙˆØ¨Ø±', 'Ù†ÙˆÙÙ…Ø¨Ø±', 'Ø¯ÙŠØ³Ù…Ø¨Ø±'];
+                var hMonths = ['Ù…Ø­Ø±Ù…', 'ØµÙØ±', 'Ø±Ø¨ÙŠØ¹ Ø§Ù„Ø£ÙˆÙ„', 'Ø±Ø¨ÙŠØ¹ Ø§Ù„Ø«Ø§Ù†ÙŠ', 'Ø¬Ù…Ø§Ø¯Ù‰ Ø§Ù„Ø£ÙˆÙ„Ù‰', 'Ø¬Ù…Ø§Ø¯Ù‰ Ø§Ù„Ø¢Ø®Ø±Ø©',
+                    'Ø±Ø¬Ø¨', 'Ø´Ø¹Ø¨Ø§Ù†', 'Ø±Ù…Ø¶Ø§Ù†', 'Ø´ÙˆØ§Ù„', 'Ø°Ùˆ Ø§Ù„Ù‚Ø¹Ø¯Ø©', 'Ø°Ùˆ Ø§Ù„Ø­Ø¬Ø©'];
+
+                function toHijri(date) {
+                    try {
+                        var parts = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {
+                            day: 'numeric', month: 'numeric', year: 'numeric'
+                        }).formatToParts(date);
+                        var d = {};
+                        parts.forEach(function(p) {
+                            if (p.type === 'day') d.day = parseInt(p.value, 10);
+                            else if (p.type === 'month') d.month = parseInt(p.value, 10);
+                            else if (p.type === 'year') d.year = parseInt(p.value, 10);
+                        });
+                        return d;
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
+                function updateDate() {
+                    var now = new Date();
+                    var dayName = weekDays[now.getDay()];
+                    var gDate = now.getDate() + ' ' + gMonths[now.getMonth()] + ' ' + now.getFullYear() + ' Ù…';
+                    var h = toHijri(now);
+                    var hDate = h ? (h.day + ' ' + hMonths[h.month - 1] + ' ' + h.year + ' Ù‡Ù€') : '';
+                    var el = document.getElementById('topbarDate');
+                    if (el) {
+                        el.innerHTML = '<i class="bi bi-calendar3"></i> ' +
+                            '<span class="moda-date-hijri">' + dayName + (hDate ? ' ' + hDate : '') + '</span>' +
+                            '<span class="moda-date-separator">â€”</span>' +
+                            '<span class="moda-date-gregorian">' + gDate + '</span>';
+                    }
+                }
+                updateDate();
+            })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+
+
+======================================================
+File: \CTP.Web\Views\Shared\_ValidationScriptsPartial.cshtml
+======================================================
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+
+
+======================================================
+File: \CTP.Web\Views\_ViewImports.cshtml
+======================================================
+@using CTP.Web
+@using CTP.Web.Models
+@using CTP.Domain.Entities
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+
+
+
+======================================================
+File: \CTP.Web\Views\_ViewStart.cshtml
+======================================================
+@{
+    Layout = "_Layout";
+}
+
+
+
+======================================================
+File: \CTP.Web\Program.cs
+======================================================
+using CTP.Infrastructure.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ==========================================
+// 1. ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø®Ø¯Ù…Ø§Øª (Dependency Injection)
+// ==========================================
+
+// Ø¥Ø¶Ø§ÙØ© Ø®Ø¯Ù…Ø§Øª MVC (Controllers & Views)
+builder.Services.AddControllersWithViews();
+
+// Ø¥Ø®Ø¨Ø§Ø± Ø§Ù„Ù†Ø¸Ø§Ù… Ø¨ÙˆØ¬ÙˆØ¯ Ø·Ø¨Ù‚Ø© Infrastructure ÙˆØ±Ø¨Ø· Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª (SQLite)
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+    // Ø§Ù„Ø³Ø·Ø± Ø§Ù„Ø³Ø­Ø±ÙŠ Ù„ØªØ¬Ø§Ù‡Ù„ Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚ Ø§Ù„ØµØ§Ø±Ù… ÙˆØ¥Ø¬Ø¨Ø§Ø± ØªØ­Ø¯ÙŠØ« Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª
+    options.ConfigureWarnings(warnings =>
+        warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
+// ==========================================
+// 2. Ø¥Ø¹Ø¯Ø§Ø¯ Ù†Ø¸Ø§Ù… Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø© ÙˆØ§Ù„Ø­Ù…Ø§ÙŠØ© (Authentication & Security)
+// ==========================================
+
+// Ø¥Ø¹Ø¯Ø§Ø¯ Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø© Ø¹Ø¨Ø± Ù…Ù„ÙØ§Øª Ø§Ù„Ø§Ø±ØªØ¨Ø§Ø· (Cookies)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";          // Ù…Ø³Ø§Ø± Ø´Ø§Ø´Ø© ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„
+        options.AccessDeniedPath = "/Account/AccessDenied"; // Ù…Ø³Ø§Ø± Ø´Ø§Ø´Ø© Ø±ÙØ¶ Ø§Ù„ÙˆØµÙˆÙ„
+        options.ExpireTimeSpan = TimeSpan.FromHours(8); // Ù…Ø¯Ø© Ø§Ù„Ø¬Ù„Ø³Ø©
+        options.SlidingExpiration = true;              // ØªØ¬Ø¯ÙŠØ¯ Ø§Ù„Ø¬Ù„Ø³Ø© Ø¥Ø°Ø§ ÙƒØ§Ù† Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù†Ø´Ø·Ø§Ù‹
+        options.Cookie.Name = "CTP_Auth_Cookie";       // Ø§Ø³Ù… Ø§Ù„Ù€ Cookie
+        options.Cookie.HttpOnly = true;                // Ø­Ù…Ø§ÙŠØ© Ù…Ù† Ù‡Ø¬Ù…Ø§Øª XSS
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // ÙŠØ¹Ù…Ù„ Ø¹Ù„Ù‰ HTTPS ÙÙ‚Ø·
+    });
+
+// Ø¨Ù†Ø§Ø¡ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚
+var app = builder.Build();
+
+// ==========================================
+// 3. Ø¥Ø¹Ø¯Ø§Ø¯ Ø®Ø· Ø£Ù†Ø§Ø¨ÙŠØ¨ Ø§Ù„Ø·Ù„Ø¨Ø§Øª (HTTP Request Pipeline)
+// ==========================================
+
+// Ø§Ù„ØªØ¹Ø§Ù…Ù„ Ù…Ø¹ Ø§Ù„Ø£Ø®Ø·Ø§Ø¡ ÙÙŠ Ø¨ÙŠØ¦Ø© Ø§Ù„Ø¥Ù†ØªØ§Ø¬
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection(); // ØªÙˆØ¬ÙŠÙ‡ Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø·Ù„Ø¨Ø§Øª Ø¥Ù„Ù‰ HTTPS
+app.UseStaticFiles();      // ØªÙØ¹ÙŠÙ„ Ù…Ù„ÙØ§Øª wwwroot (CSS, JS, Images)
+
+app.UseRouting();          // ØªÙØ¹ÙŠÙ„ Ø§Ù„ØªÙˆØ¬ÙŠÙ‡
+
+// Ø§Ù„ØªØ±ØªÙŠØ¨ Ù‡Ù†Ø§ Ø­Ø³Ø§Ø³ Ø¬Ø¯Ø§Ù‹: ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† Ø§Ù„Ù…ØµØ§Ø¯Ù‚Ø© Ù‚Ø¨Ù„ Ø§Ù„ØµÙ„Ø§Ø­ÙŠØ§Øª
+app.UseAuthentication();   // Ù…Ù† Ø£Ù†ØªØŸ (Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ù„Ù‡ÙˆÙŠØ©)
+app.UseAuthorization();    // Ù…Ø§Ø°Ø§ ÙŠØ­Ù‚ Ù„Ùƒ Ø£Ù† ØªÙØ¹Ù„ØŸ (Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ù„ØµÙ„Ø§Ø­ÙŠØ§Øª)
+
+// ==========================================
+// 4. Ø¥Ø¹Ø¯Ø§Ø¯ Ù…Ø³Ø§Ø±Ø§Øª Ø§Ù„ØµÙØ­Ø§Øª (Routing)
+// ==========================================
+app.MapAreaControllerRoute(
+    name: "CommitteeArea",
+    areaName: "Committee",
+    pattern: "Committee/{controller=Dashboard}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Account}/{action=Login}/{id?}"); // Ø¬Ø¹Ù„ Ø´Ø§Ø´Ø© Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù‡ÙŠ Ø§Ù„Ø´Ø§Ø´Ø© Ø§Ù„Ø§ÙØªØªØ§Ø­ÙŠØ©
+
+app.Run();
+
+
+

@@ -1,0 +1,194 @@
+﻿@model CTP.Web.Areas.Ambassador.Models.CreateMonthlyReportViewModel
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        /* تم الإبقاء فقط على تنسيقات الشبكة (Grid) الخاصة بهيكلة هذا النموذج تحديداً */
+        .ctp-frm {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .ctp-fld {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+            .ctp-fld label {
+                font-size: 13px;
+                color: #0B4F61;
+                font-weight: bold;
+                margin-bottom: 0;
+            }
+
+            .ctp-fld input, .ctp-fld select, .ctp-fld textarea {
+                border: 1px solid #D6E5EA;
+                border-radius: 9px;
+                padding: 10px 14px;
+                font-family: inherit;
+                font-size: 13.5px;
+                background: #FFFFFF;
+                transition: all .15s;
+                box-shadow: inset 0 1px 3px rgba(7,59,73,.05);
+                width: 100%;
+            }
+
+                .ctp-fld input:focus, .ctp-fld select:focus, .ctp-fld textarea:focus {
+                    outline: none;
+                    border-color: #C9A227;
+                    box-shadow: 0 0 0 3px rgba(201,162,39,.18);
+                }
+
+            .ctp-fld.wide {
+                grid-column: 1 / -1;
+            }
+
+        fieldset.ctp-fset {
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            background: linear-gradient(180deg, #FFFFFF, #F7FBFC);
+            box-shadow: 0 2px 8px rgba(7,59,73,.07);
+        }
+
+            fieldset.ctp-fset legend {
+                width: auto !important;
+                float: none !important;
+                font-size: 13.5px;
+                font-weight: bold;
+                color: #0B4F61;
+                background: linear-gradient(145deg, #FBF4DE, #F6ECC9);
+                border: 1px solid rgba(201,162,39,.35);
+                border-radius: 16px;
+                padding: 6px 18px;
+                margin-bottom: 0;
+                line-height: 1.5;
+            }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+    <form method="post" asp-action="Create" id="monthlyReportForm">
+
+        <fieldset class="ctp-fset">
+            <legend>بيانات التقرير الأساسية</legend>
+            <div class="ctp-frm">
+                <div class="ctp-fld">
+                    <label asp-for="Year">سنة التقرير</label>
+                    <input asp-for="Year" type="number" />
+                    <span asp-validation-for="Year" class="text-danger small"></span>
+                </div>
+                <div class="ctp-fld">
+                    <label asp-for="Month">شهر التقرير</label>
+                    <select asp-for="Month">
+                        <option value="محرم">محرم</option>
+                        <option value="صفر">صفر</option>
+                        <option value="ربيع الأول">ربيع الأول</option>
+                        <option value="ربيع الآخر">ربيع الآخر</option>
+                        <option value="جمادى الأولى">جمادى الأولى</option>
+                        <option value="جمادى الآخرة">جمادى الآخرة</option>
+                        <option value="رجب">رجب</option>
+                        <option value="شعبان">شعبان</option>
+                        <option value="رمضان">رمضان</option>
+                        <option value="شوال">شوال</option>
+                        <option value="ذو القعدة">ذو القعدة</option>
+                        <option value="ذو الحجة">ذو الحجة</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="ctp-fset">
+            <legend>بيانات التغيير</legend>
+            <div class="ctp-frm">
+                <div class="ctp-fld">
+                    <label asp-for="ChangeName">اسم التغيير</label>
+                    <input asp-for="ChangeName" />
+                    <span asp-validation-for="ChangeName" class="text-danger small"></span>
+                </div>
+                <div class="ctp-fld">
+                    <label asp-for="ChangeType">نوع التغيير</label>
+                    <select asp-for="ChangeType">
+                        <option value="إجرائي">إجرائي</option>
+                        <option value="تقني">تقني</option>
+                        <option value="تنظيمي">تنظيمي</option>
+                        <option value="خدمي">خدمي</option>
+                        <option value="ثقافي">ثقافي</option>
+                    </select>
+                </div>
+                <div class="ctp-fld">
+                    <label asp-for="CurrentStage">المرحلة الحالية</label>
+                    <select asp-for="CurrentStage">
+                        <option value="تعريف">تعريف</option>
+                        <option value="تهيئة">تهيئة</option>
+                        <option value="تطبيق">تطبيق</option>
+                        <option value="تثبيت">تثبيت</option>
+                    </select>
+                </div>
+                <div class="ctp-fld wide">
+                    <label asp-for="ChangeSummary">ملخص التغيير</label>
+                    <textarea asp-for="ChangeSummary" rows="2"></textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="ctp-fset">
+            <legend>مؤشرات ADKAR (نسبة من 0 إلى 100)</legend>
+            <div class="ctp-frm">
+                <div class="ctp-fld"><label asp-for="AdkarAwareness">الوعي</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" /></div>
+                <div class="ctp-fld"><label asp-for="AdkarDesire">الرغبة</label><input asp-for="AdkarDesire" type="number" min="0" max="100" /></div>
+                <div class="ctp-fld"><label asp-for="AdkarKnowledge">المعرفة</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" /></div>
+                <div class="ctp-fld"><label asp-for="AdkarAbility">القدرة على التطبيق</label><input asp-for="AdkarAbility" type="number" min="0" max="100" /></div>
+                <div class="ctp-fld"><label asp-for="AdkarReinforcement">التعزيز والاستدامة</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" /></div>
+            </div>
+            <p style="font-size:11.5px; color:#537382; margin-top:12px; margin-bottom:0;">
+                <i class="bi bi-info-circle"></i> يتم حساب الجاهزية والتبني تلقائياً بناءً على هذه المدخلات عبر محرك التحليل.
+            </p>
+        </fieldset>
+
+        <fieldset class="ctp-fset">
+            <legend>التحديات والتوصيات والشواهد</legend>
+            <div class="ctp-frm">
+                <div class="ctp-fld wide">
+                    <label asp-for="Obstacles">العوائق والتحديات</label>
+                    <textarea asp-for="Obstacles" rows="2"></textarea>
+                </div>
+                <div class="ctp-fld wide">
+                    <label asp-for="InitialRecommendation">التوصية الأولية المقترحة من الجهة</label>
+                    <textarea asp-for="InitialRecommendation" rows="2"></textarea>
+                </div>
+                <div class="ctp-fld wide">
+                    <label asp-for="EvidenceLinks">الشواهد (روابط داخلية)</label>
+                    <textarea asp-for="EvidenceLinks" rows="1" placeholder="مثال: رابط مجلد شيربوينت يحتوي على محاضر الاجتماعات"></textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <input type="hidden" asp-for="ActionType" id="ActionType" />
+
+        <!-- استخدام الكلاسات القياسية هنا -->
+        <!-- استخدام منظومة أزرار MODA القياسية -->
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="submit" class="moda-btn moda-btn-gold" onclick="document.getElementById('ActionType').value='Submit';">
+                <i class="bi bi-send"></i> رفع لاعتماد الجهة
+            </button>
+            <button type="submit" class="moda-btn moda-btn-outline" onclick="document.getElementById('ActionType').value='Draft';">
+                <i class="bi bi-save"></i> حفظ كمسودة
+            </button>
+            <button type="reset" class="moda-btn moda-btn-secondary">
+                <i class="bi bi-trash3"></i> تفريغ النموذج
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

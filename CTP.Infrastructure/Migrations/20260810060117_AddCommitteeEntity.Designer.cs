@@ -3,6 +3,7 @@ using System;
 using CTP.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CTP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260810060117_AddCommitteeEntity")]
+    partial class AddCommitteeEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -41,103 +44,24 @@ namespace CTP.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Committees");
-                });
 
-            modelBuilder.Entity("CTP.Domain.Entities.MonthlyReport", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AdkarAbility")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AdkarAwareness")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AdkarDesire")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AdkarKnowledge")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AdkarReinforcement")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AdoptionScore")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("ApprovedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ApproverNotes")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ChangeName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ChangeSummary")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ChangeType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CurrentStage")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EvidenceLinks")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("InitialRecommendation")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Month")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Obstacles")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("OrganizationEntityId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PreparerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ReadinessScore")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ReportNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("SubmittedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationEntityId");
-
-                    b.HasIndex("PreparerId");
-
-                    b.ToTable("MonthlyReports");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedDate = new DateTime(2026, 8, 10, 9, 1, 17, 33, DateTimeKind.Local).AddTicks(4274),
+                            Description = "مسؤولة عن متابعة أتمتة الإجراءات",
+                            IsActive = true,
+                            Name = "لجنة التحول الرقمي"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedDate = new DateTime(2026, 8, 10, 9, 1, 17, 33, DateTimeKind.Local).AddTicks(4343),
+                            Description = "إدارة عمليات التغيير للموظفين",
+                            IsActive = true,
+                            Name = "لجنة الموارد البشرية"
+                        });
                 });
 
             modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
@@ -165,16 +89,6 @@ namespace CTP.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OrganizationEntities");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EntityCode = "UNIT-01",
-                            EntityName = "وحدة التحول الرقمي",
-                            IsActive = true
-                        });
                 });
 
             modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
@@ -211,7 +125,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 1,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 9, 1, 17, 31, DateTimeKind.Local).AddTicks(6105),
                             IsActive = true,
                             RoleCode = "LEADER",
                             RoleName = "معالي القائد"
@@ -219,7 +133,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 2,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 9, 1, 17, 32, DateTimeKind.Local).AddTicks(8309),
                             IsActive = true,
                             RoleCode = "AMBASSADOR",
                             RoleName = "سفير التغيير"
@@ -227,7 +141,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 3,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 9, 1, 17, 32, DateTimeKind.Local).AddTicks(8315),
                             IsActive = true,
                             RoleCode = "COMMITTEE_CHAIR",
                             RoleName = "رئيس لجنة شركاء التغيير"
@@ -235,7 +149,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             RoleId = 4,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 8, 10, 9, 1, 17, 32, DateTimeKind.Local).AddTicks(8316),
                             IsActive = true,
                             RoleCode = "STAFF",
                             RoleName = "المنسوبون"
@@ -317,21 +231,8 @@ namespace CTP.Infrastructure.Migrations
                             FullName = "مدير النظام التجريبي",
                             IsActive = true,
                             MustChangePassword = false,
-                            OrganizationEntityId = 1,
                             PasswordHash = "123456",
                             Username = "admin"
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "سفير التغيير التجريبي",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "ambassador"
                         });
                 });
 
@@ -369,34 +270,7 @@ namespace CTP.Infrastructure.Migrations
                             AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             UserRoleId = 1
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            RoleId = 2,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 2
                         });
-                });
-
-            modelBuilder.Entity("CTP.Domain.Entities.MonthlyReport", b =>
-                {
-                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationEntityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("CTP.Domain.Entities.User", "Preparer")
-                        .WithMany()
-                        .HasForeignKey("PreparerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Preparer");
                 });
 
             modelBuilder.Entity("CTP.Domain.Entities.User", b =>
