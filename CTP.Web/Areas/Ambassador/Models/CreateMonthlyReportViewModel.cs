@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 
 namespace CTP.Web.Areas.Ambassador.Models
 {
     public class CreateMonthlyReportViewModel
     {
+        // تعيين السنة الهجرية الحالية كافتراضي
         [Required(ErrorMessage = "سنة التقرير مطلوبة")]
-        public int Year { get; set; } = DateTime.Now.Year;
+        public int Year { get; set; } = new UmAlQuraCalendar().GetYear(DateTime.Now);
 
         [Required(ErrorMessage = "شهر التقرير مطلوب")]
         public string Month { get; set; } = string.Empty;
@@ -25,9 +27,7 @@ namespace CTP.Web.Areas.Ambassador.Models
 
         public string? Obstacles { get; set; }
         public string? InitialRecommendation { get; set; }
-        public string? EvidenceLinks { get; set; }
 
-        // أكشن الحفظ (Draft أو Submit)
         public string ActionType { get; set; } = "Draft";
     }
 }

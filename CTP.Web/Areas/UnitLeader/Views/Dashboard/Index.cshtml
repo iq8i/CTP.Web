@@ -1,0 +1,56 @@
+﻿@model IEnumerable<CTP.Web.Areas.UnitLeader.Models.PendingReportViewModel>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+    <div class="moda-card">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title"><i class="bi bi-inboxes"></i> التقارير بانتظار الاعتماد</h5>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table">
+                    <thead>
+                        <tr>
+                            <th>التقرير</th>
+                            <th>الشهر/السنة</th>
+                            <th>معد التقرير (السفير)</th>
+                            <th>اسم التغيير</th>
+                            <th>الجاهزية</th>
+                            <th>تاريخ الرفع</th>
+                            <th>الإجراء (اعتماد / إعادة)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark">@item.ReportNumber</td>
+                                    <td>@item.MonthYear</td>
+                                    <td>@item.PreparerName</td>
+                                    <td>@item.ChangeName</td>
+                                    <td class="fw-bold text-primary">@item.ReadinessScore%</td>
+                                    <td>@item.SubmittedDate</td>
+                                    <td>
+                                        <a asp-area="UnitLeader" asp-controller="Dashboard" asp-action="Details" asp-route-id="@item.Id" class="moda-btn moda-btn-sm" style="background-color: var(--ctp-primary-olive); color: white;">
+                                            <i class="bi bi-file-earmark-text"></i> مراجعة واتخاذ قرار
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="7" class="text-center py-5 text-muted">لا توجد تقارير بانتظار الاعتماد حالياً.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

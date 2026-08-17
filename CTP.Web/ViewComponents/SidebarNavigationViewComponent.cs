@@ -29,8 +29,14 @@ namespace CTP.Web.ViewComponents
             {
                 var ambassadorSection = new MenuSection { Title = "إدارة التقارير" };
                 ambassadorSection.Items.Add(new MenuItem { Title = "رفع تقرير جديد", IconClass = "bi-file-earmark-plus", Url = "/Ambassador/Report/Create" });
-                ambassadorSection.Items.Add(new MenuItem { Title = "تقاريري السابقة", IconClass = "bi-clock-history", Url = "#" }); // مسار مستقبلي
-                menu.Add(ambassadorSection);
+                ambassadorSection.Items.Add(new MenuItem { Title = "تقاريري السابقة", IconClass = "bi-clock-history", Url = "/Ambassador/Report/Index" }); menu.Add(ambassadorSection);
+                ambassadorSection.Items.Add(new MenuItem { Title = "مشاركة عاجلة / دعم", IconClass = "bi-chat-left-dots", Url = "/Ambassador/Input/Create" });
+            }
+            else if (role == CTP.Domain.Constants.AppRoles.UnitLeader)
+            {
+                var leaderSection = new MenuSection { Title = "مساحة القيادة" };
+                leaderSection.Items.Add(new MenuItem { Title = "اعتماد التقارير", IconClass = "bi-building-check", Url = "/UnitLeader/Dashboard/Index" });
+                menu.Add(leaderSection);
             }
 
             return View("Default", menu);

@@ -14,7 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 // ==========================================
 builder.Services.AddScoped<ICommitteeRepository, CommitteeRepository>();
 builder.Services.AddScoped<ICommitteeService, CommitteeService>();
-
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // إضافة خدمات MVC (Controllers & Views)
 builder.Services.AddControllersWithViews();
 
@@ -44,8 +45,23 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;                // حماية من هجمات XSS
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // يعمل على HTTPS فقط
     });
+// إعداد سياسات الوصول (Authorization Policies)
+builder.Services.AddAuthorization(options =>
+{
+    // سياسة "المساحة العامة" تشمل المنسوبين وكل من يعلوهم للوصول للمواد التعليمية وبطاقات التغيير
+    options.AddPolicy("StaffAreaPolicy", policy =>
+        policy.RequireRole(
+            CTP.Domain.Constants.AppRoles.Staff,
+            CTP.Domain.Constants.AppRoles.Manager,
+            CTP.Domain.Constants.AppRoles.Ambassador,
+            CTP.Domain.Constants.AppRoles.CorporateComms
+        // يمكن إضافة المزيد من الأدوار التي يحق لها دخول شاشة المنسوبين
+        ));
+});
 builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
 builder.Services.AddScoped<IMonthlyReportService, MonthlyReportService>();// بناء التطبيق
+builder.Services.AddScoped<IEntityInputRepository, EntityInputRepository>();
+builder.Services.AddScoped<IEntityInputService, EntityInputService>();
 var app = builder.Build();
 
 // ==========================================
@@ -71,18 +87,13 @@ app.UseAuthorization();    // ماذا يحق لك أن تفعل؟ (التحقق
 // ==========================================
 // 4. إعداد مسارات الصفحات (Routing)
 // ==========================================
-app.MapAreaControllerRoute(
-    name: "CommitteeArea",
-    areaName: "Committee",
-    pattern: "Committee/{controller=Dashboard}/{action=Index}/{id?}");
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
-app.MapAreaControllerRoute(
-    name: "AmbassadorArea",
-    areaName: "Ambassador",
-    pattern: "Ambassador/{controller=Report}/{action=Create}/{id?}");
-
+// 2. التوجيه الافتراضي (للشاشات العامة وتسجيل الدخول)
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}"); // جعل شاشة الدخول هي الشاشة الافتتاحية
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

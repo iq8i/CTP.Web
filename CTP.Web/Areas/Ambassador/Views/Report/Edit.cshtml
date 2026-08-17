@@ -1,11 +1,10 @@
-﻿@model CTP.Web.Areas.Ambassador.Models.CreateMonthlyReportViewModel
+﻿@model CTP.Web.Areas.Ambassador.Models.EditMonthlyReportViewModel
 @{
     Layout = "_Layout";
 }
 
 @section Styles {
     <style>
-        /* تم الإبقاء فقط على تنسيقات الشبكة (Grid) الخاصة بهيكلة هذا النموذج تحديداً */
         .ctp-frm {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -67,7 +66,6 @@
                 border-radius: 16px;
                 padding: 6px 18px;
                 margin-bottom: 0;
-                line-height: 1.5;
             }
     </style>
 }
@@ -75,13 +73,27 @@
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-3 mb-5">
-    <form method="post" asp-action="Create" id="monthlyReportForm">
+
+    @if (!string.IsNullOrEmpty(Model.ApproverNotes))
+    {
+        <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 12px; border-right: 5px solid #ffc107 !important; background-color: #fff8e1;">
+            <i class="bi bi-chat-left-text-fill fs-3 text-warning me-3"></i>
+            <div>
+                <h6 class="fw-bold mb-1">ملاحظات قائد الوحدة / الإدارة:</h6>
+                <p class="mb-0 fs-6 text-dark">@Model.ApproverNotes</p>
+            </div>
+        </div>
+    }
+
+    <form method="post" asp-action="Edit" id="monthlyReportForm">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ReportNumber" />
 
         <fieldset class="ctp-fset">
             <legend>بيانات التقرير الأساسية</legend>
             <div class="ctp-frm">
                 <div class="ctp-fld">
-                    <label asp-for="Year">سنة التقرير</label>
+                    <label asp-for="Year">سنة التقرير (هجري)</label>
                     <input asp-for="Year" type="number" />
                     <span asp-validation-for="Year" class="text-danger small"></span>
                 </div>
@@ -148,13 +160,10 @@
                 <div class="ctp-fld"><label asp-for="AdkarAbility">القدرة على التطبيق</label><input asp-for="AdkarAbility" type="number" min="0" max="100" /></div>
                 <div class="ctp-fld"><label asp-for="AdkarReinforcement">التعزيز والاستدامة</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" /></div>
             </div>
-            <p style="font-size:11.5px; color:#537382; margin-top:12px; margin-bottom:0;">
-                <i class="bi bi-info-circle"></i> يتم حساب الجاهزية والتبني تلقائياً بناءً على هذه المدخلات عبر محرك التحليل.
-            </p>
         </fieldset>
 
         <fieldset class="ctp-fset">
-            <legend>التحديات والتوصيات والشواهد</legend>
+            <legend>التحديات والتوصيات</legend>
             <div class="ctp-frm">
                 <div class="ctp-fld wide">
                     <label asp-for="Obstacles">العوائق والتحديات</label>
@@ -164,24 +173,18 @@
                     <label asp-for="InitialRecommendation">التوصية الأولية المقترحة من الجهة</label>
                     <textarea asp-for="InitialRecommendation" rows="2"></textarea>
                 </div>
-               
             </div>
         </fieldset>
 
         <input type="hidden" asp-for="ActionType" id="ActionType" />
-
-        <!-- استخدام الكلاسات القياسية هنا -->
-        <!-- استخدام منظومة أزرار MODA القياسية -->
         <div class="d-flex gap-2 flex-wrap">
             <button type="submit" class="moda-btn moda-btn-gold" onclick="document.getElementById('ActionType').value='Submit';">
-                <i class="bi bi-send"></i> رفع لاعتماد الجهة
+                <i class="bi bi-send"></i> إعادة إرسال لاعتماد الجهة
             </button>
             <button type="submit" class="moda-btn moda-btn-outline" onclick="document.getElementById('ActionType').value='Draft';">
-                <i class="bi bi-save"></i> حفظ كمسودة
+                <i class="bi bi-save"></i> حفظ التعديلات כمسودة
             </button>
-            <button type="reset" class="moda-btn moda-btn-secondary">
-                <i class="bi bi-trash3"></i> تفريغ النموذج
-            </button>
+            <a asp-action="Index" class="moda-btn moda-btn-secondary">إلغاء</a>
         </div>
     </form>
 </div>

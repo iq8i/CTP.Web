@@ -1,0 +1,66 @@
+﻿@model IEnumerable<CTP.Web.Areas.Ambassador.Models.AmbassadorReportListViewModel>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+
+    <!-- منطقة الإشعارات للسفير -->
+  
+
+    <div class="moda-card">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title"><i class="bi bi-list-ul"></i> سجل التقارير</h5>
+            <a href="@Url.Action("Create")" class="moda-btn moda-btn-gold">
+                <i class="bi bi-plus-lg"></i> رفع تقرير جديد
+            </a>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table">
+                    <thead>
+                        <tr>
+                            <th>التقرير</th>
+                            <th>الشهر/السنة</th>
+                            <th>التغيير</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark">@item.ReportNumber</td>
+                                    <td>@item.MonthYear</td>
+                                    <td>@item.ChangeName</td>
+                                    <td>@item.CreatedDateFormatted</td>
+                                    <td><span class="moda-badge @item.StatusBadgeClass">@item.StatusName</span></td>
+                                    <td>
+                                        @if (item.IsDraft)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="moda-btn moda-btn-sm moda-btn-outline" title="استكمال وتعديل">
+                                                <i class="bi bi-pencil-square"></i> استكمال / تعديل
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="moda-btn moda-btn-sm moda-btn-secondary" title="عرض التفاصيل">
+                                                <i class="bi bi-eye"></i> عرض
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,112 @@
+﻿@model CTP.Web.Areas.Ambassador.Models.CreateEntityInputViewModel
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header bg-white border-bottom py-3 d-flex align-items-center">
+            <h5 class="moda-card-title mb-0" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-chat-left-dots-fill me-2"></i> نموذج رفع المدخلات العاجلة
+            </h5>
+        </div>
+
+        <div class="moda-card-body p-4">
+            <div class="alert border-0 d-flex align-items-center" style="background: rgba(16,105,129,0.06); color: var(--ctp-primary-olive); border-radius: 12px;">
+                <i class="bi bi-info-circle-fill fs-3 me-3"></i>
+                <div>
+                    هذا النموذج مخصص لرفع مدخلات فورية للمنصة غير مرتبطة بجدول التقرير الشهري.
+                    <span class="text-danger fw-bold d-block mt-1">* جميع الحقول إلزامية.</span>
+                </div>
+            </div>
+
+            <form method="post" asp-action="Create" id="entityInputForm" class="mt-4" novalidate>
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <label asp-for="Type" class="form-label fw-bold text-dark">نوع المدخل <span class="text-danger">*</span></label>
+                        <select asp-for="Type" class="form-select form-select-lg shadow-none border-secondary-subtle" id="InputType" required>
+                            <option value="" disabled selected>— اختر نوع المدخل —</option>
+                            <option value="2">قصة نجاح</option>
+                            <option value="5">احتياج دعم</option>
+                            <option value="3">فرصة تحسين</option>
+                            <option value="1">تحدٍ</option>
+                            <option value="4">استفسار</option>
+                            <option value="6">ملاحظة على تجربة المنصة</option>
+                            <option value="7">عائق تبني</option>
+                        </select>
+                        <span asp-validation-for="Type" class="text-danger small fw-bold mt-1 d-block"></span>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <label asp-for="Content" class="form-label fw-bold text-dark">تفاصيل المدخل <span class="text-danger">*</span></label>
+                        <textarea asp-for="Content" id="InputContent" class="form-control form-control-lg shadow-none border-secondary-subtle" rows="6" placeholder="اكتب التفاصيل هنا بوضوح..." required></textarea>
+                        <span asp-validation-for="Content" class="text-danger small fw-bold mt-1 d-block"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-2 pt-3 border-top">
+                    <a href="@Url.Action("Index", "Home", new { area = "" })" class="moda-btn moda-btn-outline">
+                        <i class="bi bi-x-circle"></i> إلغاء
+                    </a>
+                    <button type="submit" id="SubmitBtn" class="moda-btn" style="background-color: var(--ctp-primary-olive); color: white;" disabled>
+                        <i class="bi bi-send-check"></i> إرسال المدخل للجنة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputType = document.getElementById("InputType");
+            const inputContent = document.getElementById("InputContent");
+            const submitBtn = document.getElementById("SubmitBtn");
+            const form = document.getElementById("entityInputForm");
+
+            // دالة التحقق الذكية (تستخدم كلاسات Bootstrap القياسية)
+            function validateForm() {
+                const isTypeValid = inputType.value !== "";
+                const isContentValid = inputContent.value.trim() !== "";
+
+                if (!isTypeValid && inputType.classList.contains("touched")) {
+                    inputType.classList.add("is-invalid");
+                } else {
+                    inputType.classList.remove("is-invalid");
+                }
+
+                if (!isContentValid && inputContent.classList.contains("touched")) {
+                    inputContent.classList.add("is-invalid");
+                } else {
+                    inputContent.classList.remove("is-invalid");
+                }
+
+                // تفعيل الزر فقط عند اكتمال الحقول
+                submitBtn.disabled = !(isTypeValid && isContentValid);
+            }
+
+            // مراقبة أحداث المستخدم
+            inputType.addEventListener("blur", () => { inputType.classList.add("touched"); validateForm(); });
+            inputContent.addEventListener("blur", () => { inputContent.classList.add("touched"); validateForm(); });
+            inputType.addEventListener("change", validateForm);
+            inputContent.addEventListener("input", validateForm);
+
+            // الحماية أثناء الإرسال لمنع النقر المزدوج
+            form.addEventListener("submit", function(e) {
+                if (submitBtn.disabled) {
+                    e.preventDefault();
+                } else {
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> جاري الإرسال...';
+                    submitBtn.style.opacity = '0.7';
+                }
+            });
+        });
+    </script>
+}

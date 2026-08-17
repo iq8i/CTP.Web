@@ -3,6 +3,7 @@ using System;
 using CTP.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CTP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811060815_AddEntityInputs")]
+    partial class AddEntityInputs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -248,44 +251,20 @@ namespace CTP.Infrastructure.Migrations
                             RoleId = 1,
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            RoleCode = "STAFF",
-                            RoleName = "المنسوبون"
+                            RoleCode = "LEADER",
+                            RoleName = "معالي القائد"
                         },
                         new
                         {
                             RoleId = 2,
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            RoleCode = "MANAGER",
-                            RoleName = "القادة والمدراء المباشرون"
+                            RoleCode = "AMBASSADOR",
+                            RoleName = "سفير التغيير"
                         },
                         new
                         {
                             RoleId = 3,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            RoleCode = "AMBASSADOR",
-                            RoleName = "سفراء التغيير"
-                        },
-                        new
-                        {
-                            RoleId = 4,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            RoleCode = "UNIT_LEADER",
-                            RoleName = "أصحاب السعادة قادة الوحدات والمدراء"
-                        },
-                        new
-                        {
-                            RoleId = 5,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            RoleCode = "COMMITTEE_MEMBER",
-                            RoleName = "أعضاء لجنة شركاء التغيير"
-                        },
-                        new
-                        {
-                            RoleId = 6,
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             RoleCode = "COMMITTEE_CHAIR",
@@ -293,35 +272,11 @@ namespace CTP.Infrastructure.Migrations
                         },
                         new
                         {
-                            RoleId = 7,
+                            RoleId = 4,
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            RoleCode = "CHIEF_OF_STAFF",
-                            RoleName = "سعادة رئيس فريق عمل القائد"
-                        },
-                        new
-                        {
-                            RoleId = 8,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            RoleCode = "DEPUTY_LEADER",
-                            RoleName = "سعادة نائب القائد"
-                        },
-                        new
-                        {
-                            RoleId = 9,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            RoleCode = "LEADER",
-                            RoleName = "معالي القائد"
-                        },
-                        new
-                        {
-                            RoleId = 10,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            RoleCode = "CORP_COMMS",
-                            RoleName = "الاتصال المؤسسي"
+                            RoleCode = "STAFF",
+                            RoleName = "المنسوبون"
                         });
                 });
 
@@ -397,120 +352,24 @@ namespace CTP.Infrastructure.Migrations
                             UserId = 1,
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FailedLoginAttempts = 0,
-                            FullName = "مستخدم منسوب",
+                            FullName = "مدير النظام التجريبي",
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
                             PasswordHash = "123456",
-                            Username = "staff"
+                            Username = "admin"
                         },
                         new
                         {
                             UserId = 2,
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FailedLoginAttempts = 0,
-                            FullName = "مدير مباشر",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "manager"
-                        },
-                        new
-                        {
-                            UserId = 3,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "سفير التغيير",
+                            FullName = "سفير التغيير التجريبي",
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
                             PasswordHash = "123456",
                             Username = "ambassador"
-                        },
-                        new
-                        {
-                            UserId = 4,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "قائد الوحدة",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "unitleader"
-                        },
-                        new
-                        {
-                            UserId = 5,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "عضو اللجنة",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "member"
-                        },
-                        new
-                        {
-                            UserId = 6,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "رئيس اللجنة",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "chair"
-                        },
-                        new
-                        {
-                            UserId = 7,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "رئيس فريق عمل القائد",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "chief"
-                        },
-                        new
-                        {
-                            UserId = 8,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "نائب القائد",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "deputy"
-                        },
-                        new
-                        {
-                            UserId = 9,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "معالي القائد",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "leader"
-                        },
-                        new
-                        {
-                            UserId = 10,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FailedLoginAttempts = 0,
-                            FullName = "موظف الاتصال",
-                            IsActive = true,
-                            MustChangePassword = false,
-                            OrganizationEntityId = 1,
-                            PasswordHash = "123456",
-                            Username = "comms"
                         });
                 });
 
@@ -544,7 +403,7 @@ namespace CTP.Infrastructure.Migrations
                         new
                         {
                             UserId = 1,
-                            RoleId = 1,
+                            RoleId = 3,
                             AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             UserRoleId = 1
@@ -556,70 +415,6 @@ namespace CTP.Infrastructure.Migrations
                             AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             UserRoleId = 2
-                        },
-                        new
-                        {
-                            UserId = 3,
-                            RoleId = 3,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 3
-                        },
-                        new
-                        {
-                            UserId = 4,
-                            RoleId = 4,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 4
-                        },
-                        new
-                        {
-                            UserId = 5,
-                            RoleId = 5,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 5
-                        },
-                        new
-                        {
-                            UserId = 6,
-                            RoleId = 6,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 6
-                        },
-                        new
-                        {
-                            UserId = 7,
-                            RoleId = 7,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 7
-                        },
-                        new
-                        {
-                            UserId = 8,
-                            RoleId = 8,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 8
-                        },
-                        new
-                        {
-                            UserId = 9,
-                            RoleId = 9,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 9
-                        },
-                        new
-                        {
-                            UserId = 10,
-                            RoleId = 10,
-                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            UserRoleId = 10
                         });
                 });
 
@@ -628,13 +423,13 @@ namespace CTP.Infrastructure.Migrations
                     b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
                         .WithMany()
                         .HasForeignKey("OrganizationEntityId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("CTP.Domain.Entities.User", "Preparer")
                         .WithMany()
                         .HasForeignKey("PreparerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Organization");
