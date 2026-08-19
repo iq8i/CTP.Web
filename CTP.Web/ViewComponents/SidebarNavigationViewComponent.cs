@@ -14,6 +14,7 @@ namespace CTP.Web.ViewComponents
             // 1. القائمة الأساسية (للجميع)
             var mainSection = new MenuSection { Title = "الرئيسية" };
             mainSection.Items.Add(new MenuItem { Title = "لوحة القياس", IconClass = "bi-speedometer2", Url = "/Home/Index" });
+            mainSection.Items.Add(new MenuItem { Title = "لوحة التغييرات", IconClass = "bi-kanban", Url = "/ChangeBoard/Index" });
             menu.Add(mainSection);
 
             // 2. مساحة رئيس لجنة شركاء التغيير والقيادة

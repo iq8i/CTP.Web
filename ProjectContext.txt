@@ -1,4 +1,38 @@
 ======================================================
+File: \CTP.Application\Helpers\DateHelper.cs
+======================================================
+using System;
+using System.Globalization;
+
+namespace CTP.Application.Helpers
+{
+    public static class DateHelper
+    {
+        /// <summary>
+        /// ÌÕÊ· «· «—ÌŒ «·„Ì·«œÌ ≈·Ï ‰’ ÂÃ—Ì „‰”ﬁ
+        /// </summary>
+        public static string ToHijri(this DateTime date)
+        {
+            var culture = new CultureInfo("ar-SA");
+            //  À»Ì   ﬁÊÌ„ √„ «·ﬁ—Ï
+            culture.DateTimeFormat.Calendar = new UmAlQuraCalendar();
+
+            return date.ToString("dd/MM/yyyy", culture);
+        }
+
+        /// <summary>
+        /// ÌÕÊ· «· «—ÌŒ «·„Ì·«œÌ («·ﬁ«»· ··ŒÊ«¡) ≈·Ï ‰’ ÂÃ—Ì „‰”ﬁ
+        /// </summary>
+        public static string ToHijri(this DateTime? date)
+        {
+            return date.HasValue ? date.Value.ToHijri() : "-";
+        }
+    }
+}
+
+
+
+======================================================
 File: \CTP.Application\Interfaces\Repositories\ICommitteeRepository.cs
 ======================================================
 using CTP.Domain.Entities;
@@ -65,7 +99,25 @@ namespace CTP.Application.Interfaces.Repositories
         Task<IEnumerable<MonthlyReport>> GetByOrganizationAndStatusAsync(int orgId, CTP.Domain.Enums.ReportStatus status);
 
         Task<IEnumerable<MonthlyReport>> GetSubmittedReportsAsync();
+        Task<IEnumerable<MonthlyReport>> GetApprovedByOrganizationAsync(int orgId);
+    }
+}
 
+
+
+======================================================
+File: \CTP.Application\Interfaces\Repositories\INotificationRepository.cs
+======================================================
+using CTP.Domain.Entities;
+
+namespace CTP.Application.Interfaces.Repositories
+{
+    public interface INotificationRepository
+    {
+        Task AddAsync(Notification notification);
+        Task<List<Notification>> GetUnreadByUserIdAsync(int userId);
+        Task MarkAllAsReadAsync(int userId);
+        Task<int> SaveChangesAsync();
     }
 }
 
@@ -112,7 +164,7 @@ namespace CTP.Application.Interfaces.Services
         Task<bool> ReviewReportAsync(int reportId, bool isApproved, string? notes);
         Task<MonthlyReport?> GetReportByIdAsync(int id);
         Task<bool> UpdateReportAsync(MonthlyReport report);
-
+        Task<IEnumerable<MonthlyReport>> GetUnitActiveChangesAsync(int orgId);
     }
 
 
@@ -266,6 +318,10 @@ namespace CTP.Application.Services
             await _repository.SaveChangesAsync();
             return true;
         }
+        public async Task<IEnumerable<MonthlyReport>> GetUnitActiveChangesAsync(int orgId)
+        {
+            return await _repository.GetApprovedByOrganizationAsync(orgId);
+        }
     }
 }
 
@@ -274,20 +330,19 @@ namespace CTP.Application.Services
 ======================================================
 File: \CTP.Application\Services\NotificationService.cs
 ======================================================
+using CTP.Application.Interfaces.Repositories;
 using CTP.Application.Interfaces.Services;
 using CTP.Domain.Entities;
-using CTP.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace CTP.Application.Services
 {
     public class NotificationService : INotificationService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly INotificationRepository _repository;
 
-        public NotificationService(ApplicationDbContext context)
+        public NotificationService(INotificationRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         public async Task CreateNotificationAsync(int userId, string title, string message, string url, string iconClass, string colorClass)
@@ -304,32 +359,18 @@ namespace CTP.Application.Services
                 IsRead = false
             };
 
-            await _context.Notifications.AddAsync(notification);
-            await _context.SaveChangesAsync();
+            await _repository.AddAsync(notification);
+            await _repository.SaveChangesAsync();
         }
 
         public async Task<List<Notification>> GetUnreadNotificationsAsync(int userId)
         {
-            return await _context.Notifications
-                .Where(n => n.UserId == userId && !n.IsRead)
-                .OrderByDescending(n => n.CreatedDate)
-                .ToListAsync();
+            return await _repository.GetUnreadByUserIdAsync(userId);
         }
 
         public async Task MarkAllAsReadAsync(int userId)
         {
-            var unread = await _context.Notifications
-                .Where(n => n.UserId == userId && !n.IsRead)
-                .ToListAsync();
-
-            if (unread.Any())
-            {
-                foreach (var item in unread)
-                {
-                    item.IsRead = true;
-                }
-                await _context.SaveChangesAsync();
-            }
+            await _repository.MarkAllAsReadAsync(userId);
         }
     }
 }
@@ -452,7 +493,7 @@ namespace CTP.Domain.Entities
         public int Id { get; set; }
 
         [Required, StringLength(50)]
-        public string ReportNumber { get; set; } = string.Empty; // „À·: CTP-2026-07-001
+        public string ReportNumber { get; set; } = string.Empty;
 
         [Required]
         public int Year { get; set; }
@@ -460,48 +501,67 @@ namespace CTP.Domain.Entities
         [Required, StringLength(20)]
         public string Month { get; set; } = string.Empty;
 
-        // «·—»ÿ „⁄ «·ÃÂ… («·ÊÕœ…/«·ÂÌ∆…/«·≈œ«—…)
+        // «·—»ÿ »«·ÃÂ… Ê«·”›Ì—
         [Required]
         public int OrganizationEntityId { get; set; }
         [ForeignKey("OrganizationEntityId")]
         public virtual OrganizationEntity? Organization { get; set; }
 
-        // «·—»ÿ „⁄ „⁄œ «· ﬁ—Ì— (”›Ì— «· €ÌÌ—)
         [Required]
         public int PreparerId { get; set; }
         [ForeignKey("PreparerId")]
         public virtual User? Preparer { get; set; }
 
-        // »Ì«‰«  «· €ÌÌ—
+        // »Ì«‰«  «· €ÌÌ— Ê‰ÿ«ﬁ «·√À—
         [Required, StringLength(255)]
         public string ChangeName { get; set; } = string.Empty;
 
         [StringLength(50)]
-        public string ChangeType { get; set; } = string.Empty; // ≈Ã—«∆Ì°  ﬁ‰Ì°  ‰ŸÌ„Ì
+        public string ChangeType { get; set; } = string.Empty; //  ‰ŸÌ„Ì° ≈Ã—«∆Ì°  ﬁ‰Ì° Œœ„Ì° Àﬁ«›Ì
 
         [StringLength(50)]
-        public string CurrentStage { get; set; } = string.Empty; //  ⁄—Ì›°  ÂÌ∆…°  ÿ»Ìﬁ
+        public string CurrentStage { get; set; } = string.Empty; //  ⁄—Ì›°  ÂÌ∆…°  ÿ»Ìﬁ°  À»Ì 
 
+        [StringLength(255)]
+        public string? AffectedGroups { get; set; } // «·›∆«  «·„ √À—…
+
+        [StringLength(100)]
+        public string? ImpactScope { get; set; } // ‰ÿ«ﬁ «·√À— («·ÃÂ…° «·≈œ«—…° «·„‰ŸÊ„…)
+
+        [StringLength(255)]
+        public string? MostInNeedGroup { get; set; } // «·›∆… «·√ﬂÀ— «Õ Ì«Ã« ··œ⁄„
+
+        [Range(0, 100)]
+        public int ActivityCompletionRate { get; set; } // ‰”»… «ﬂ „«· «·√‰‘ÿ… (%)
+
+        //  ›«’Ì· «· €ÌÌ— «· Õ·Ì·Ì…
         public string? ChangeSummary { get; set; }
+        public string? WhyImportant { get; set; }
+        public string? WhatWillChange { get; set; }
+        public string? WhatWillNotChange { get; set; }
+        public string? ExecutedActivities { get; set; }
 
-        // „ƒ‘—«  «·√œ«¡ („‰ 0 ≈·Ï 100)
-        [Range(0, 100)] public int ReadinessScore { get; set; }
-        [Range(0, 100)] public int AdoptionScore { get; set; }
-
-        // ADKAR Metrics
+        // „ƒ‘—«  ADKAR Ê„Õ—ﬂ «·«Õ ”«»
         [Range(0, 100)] public int AdkarAwareness { get; set; }
         [Range(0, 100)] public int AdkarDesire { get; set; }
         [Range(0, 100)] public int AdkarKnowledge { get; set; }
         [Range(0, 100)] public int AdkarAbility { get; set; }
         [Range(0, 100)] public int AdkarReinforcement { get; set; }
 
-        // «· ÕœÌ«  Ê«· Ê’Ì«  «·√Ê·Ì…
+        [Range(0, 100)] public int ReadinessScore { get; set; }
+        [Range(0, 100)] public int AdoptionScore { get; set; }
+
+        // «· ÕœÌ« ° «·„Œ«ÿ—° Ê«·œ⁄„
         public string? Obstacles { get; set; }
+        public string? AdoptionBarriers { get; set; }
+        public string? RequiredSupport { get; set; }
+        public string? Risks { get; set; }
+        public string? ImprovementOpportunities { get; set; }
+        public string? SuccessStories { get; set; }
         public string? InitialRecommendation { get; set; }
 
         // ≈œ«—… «·Õ«·… Ê«·«⁄ „«œ
         public ReportStatus Status { get; set; } = ReportStatus.Draft;
-
         public string? ApproverNotes { get; set; }
         public string? EvidenceLinks { get; set; }
 
@@ -4609,13 +4669,73 @@ namespace CTP.Infrastructure.Migrations
 
 
 ======================================================
-File: \CTP.Infrastructure\Migrations\ApplicationDbContextModelSnapshot.cs
+File: \CTP.Infrastructure\Migrations\20260819060316_AddNotificationsTable.cs
+======================================================
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace CTP.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddNotificationsTable : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ActionUrl = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
+                    IconClass = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    TextColorClass = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId",
+                table: "Notifications",
+                column: "UserId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "Notifications");
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Migrations\20260819060316_AddNotificationsTable.Designer.cs
 ======================================================
 // <auto-generated />
 using System;
 using CTP.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -4623,9 +4743,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CTP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819060316_AddNotificationsTable")]
+    partial class AddNotificationsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -4786,6 +4908,52 @@ namespace CTP.Infrastructure.Migrations
                     b.HasIndex("PreparerId");
 
                     b.ToTable("MonthlyReports");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActionUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IconClass")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TextColorClass")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
@@ -5274,6 +5442,1806 @@ namespace CTP.Infrastructure.Migrations
                     b.Navigation("Preparer");
                 });
 
+            modelBuilder.Entity("CTP.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany("Users")
+                        .HasForeignKey("OrganizationEntityId");
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Migrations\20260819070146_UpdateMonthlyReportSchema.cs
+======================================================
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace CTP.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class UpdateMonthlyReportSchema : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<int>(
+                name: "ActivityCompletionRate",
+                table: "MonthlyReports",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<string>(
+                name: "AdoptionBarriers",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "AffectedGroups",
+                table: "MonthlyReports",
+                type: "TEXT",
+                maxLength: 255,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "ExecutedActivities",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "ImpactScope",
+                table: "MonthlyReports",
+                type: "TEXT",
+                maxLength: 100,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "ImprovementOpportunities",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "MostInNeedGroup",
+                table: "MonthlyReports",
+                type: "TEXT",
+                maxLength: 255,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "RequiredSupport",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "Risks",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "SuccessStories",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "WhatWillChange",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "WhatWillNotChange",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "WhyImportant",
+                table: "MonthlyReports",
+                type: "TEXT",
+                nullable: true);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "ActivityCompletionRate",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "AdoptionBarriers",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "AffectedGroups",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "ExecutedActivities",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "ImpactScope",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "ImprovementOpportunities",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "MostInNeedGroup",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "RequiredSupport",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "Risks",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "SuccessStories",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "WhatWillChange",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "WhatWillNotChange",
+                table: "MonthlyReports");
+
+            migrationBuilder.DropColumn(
+                name: "WhyImportant",
+                table: "MonthlyReports");
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Migrations\20260819070146_UpdateMonthlyReportSchema.Designer.cs
+======================================================
+// <auto-generated />
+using System;
+using CTP.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace CTP.Infrastructure.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260819070146_UpdateMonthlyReportSchema")]
+    partial class UpdateMonthlyReportSchema
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+
+            modelBuilder.Entity("CTP.Domain.Entities.Committee", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Committees");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.EntityInput", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PreparerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.HasIndex("PreparerId");
+
+                    b.ToTable("EntityInputs");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.MonthlyReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ActivityCompletionRate")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarAbility")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarAwareness")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarDesire")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarKnowledge")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarReinforcement")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdoptionBarriers")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AdoptionScore")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AffectedGroups")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ApproverNotes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChangeName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChangeSummary")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CurrentStage")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EvidenceLinks")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExecutedActivities")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImpactScope")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImprovementOpportunities")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InitialRecommendation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Month")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MostInNeedGroup")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Obstacles")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PreparerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ReadinessScore")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReportNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequiredSupport")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Risks")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("SubmittedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SuccessStories")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WhatWillChange")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WhatWillNotChange")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WhyImportant")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.HasIndex("PreparerId");
+
+                    b.ToTable("MonthlyReports");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActionUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IconClass")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TextColorClass")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrganizationEntities");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EntityCode = "UNIT-01",
+                            EntityName = "ÊÕœ… «· ÕÊ· «·—ﬁ„Ì",
+                            IsActive = true
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RoleCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("RoleId");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "STAFF",
+                            RoleName = "«·„‰”Ê»Ê‰"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "MANAGER",
+                            RoleName = "«·ﬁ«œ… Ê«·„œ—«¡ «·„»«‘—Ê‰"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "AMBASSADOR",
+                            RoleName = "”›—«¡ «· €ÌÌ—"
+                        },
+                        new
+                        {
+                            RoleId = 4,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "UNIT_LEADER",
+                            RoleName = "√’Õ«» «·”⁄«œ… ﬁ«œ… «·ÊÕœ«  Ê«·„œ—«¡"
+                        },
+                        new
+                        {
+                            RoleId = 5,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "COMMITTEE_MEMBER",
+                            RoleName = "√⁄÷«¡ ·Ã‰… ‘—ﬂ«¡ «· €ÌÌ—"
+                        },
+                        new
+                        {
+                            RoleId = 6,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "COMMITTEE_CHAIR",
+                            RoleName = "—∆Ì” ·Ã‰… ‘—ﬂ«¡ «· €ÌÌ—"
+                        },
+                        new
+                        {
+                            RoleId = 7,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "CHIEF_OF_STAFF",
+                            RoleName = "”⁄«œ… —∆Ì” ›—Ìﬁ ⁄„· «·ﬁ«∆œ"
+                        },
+                        new
+                        {
+                            RoleId = 8,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "DEPUTY_LEADER",
+                            RoleName = "”⁄«œ… ‰«∆» «·ﬁ«∆œ"
+                        },
+                        new
+                        {
+                            RoleId = 9,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "LEADER",
+                            RoleName = "„⁄«·Ì «·ﬁ«∆œ"
+                        },
+                        new
+                        {
+                            RoleId = 10,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "CORP_COMMS",
+                            RoleName = "«·« ’«· «·„ƒ””Ì"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("PasswordExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RefreshTokenExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„” Œœ„ „‰”Ê»",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "staff"
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„œÌ— „»«‘—",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "manager"
+                        },
+                        new
+                        {
+                            UserId = 3,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "”›Ì— «· €ÌÌ—",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "ambassador"
+                        },
+                        new
+                        {
+                            UserId = 4,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "ﬁ«∆œ «·ÊÕœ…",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "unitleader"
+                        },
+                        new
+                        {
+                            UserId = 5,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "⁄÷Ê «··Ã‰…",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "member"
+                        },
+                        new
+                        {
+                            UserId = 6,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "—∆Ì” «··Ã‰…",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "chair"
+                        },
+                        new
+                        {
+                            UserId = 7,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "—∆Ì” ›—Ìﬁ ⁄„· «·ﬁ«∆œ",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "chief"
+                        },
+                        new
+                        {
+                            UserId = 8,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "‰«∆» «·ﬁ«∆œ",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "deputy"
+                        },
+                        new
+                        {
+                            UserId = 9,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„⁄«·Ì «·ﬁ«∆œ",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "leader"
+                        },
+                        new
+                        {
+                            UserId = 10,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„ÊŸ› «·« ’«·",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "comms"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserRoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 1,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 1
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            RoleId = 2,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 2
+                        },
+                        new
+                        {
+                            UserId = 3,
+                            RoleId = 3,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 3
+                        },
+                        new
+                        {
+                            UserId = 4,
+                            RoleId = 4,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 4
+                        },
+                        new
+                        {
+                            UserId = 5,
+                            RoleId = 5,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 5
+                        },
+                        new
+                        {
+                            UserId = 6,
+                            RoleId = 6,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 6
+                        },
+                        new
+                        {
+                            UserId = 7,
+                            RoleId = 7,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 7
+                        },
+                        new
+                        {
+                            UserId = 8,
+                            RoleId = 8,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 8
+                        },
+                        new
+                        {
+                            UserId = 9,
+                            RoleId = 9,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 9
+                        },
+                        new
+                        {
+                            UserId = 10,
+                            RoleId = 10,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 10
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.EntityInput", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "Preparer")
+                        .WithMany()
+                        .HasForeignKey("PreparerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Preparer");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.MonthlyReport", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationEntityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "Preparer")
+                        .WithMany()
+                        .HasForeignKey("PreparerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Preparer");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany("Users")
+                        .HasForeignKey("OrganizationEntityId");
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Migrations\ApplicationDbContextModelSnapshot.cs
+======================================================
+// <auto-generated />
+using System;
+using CTP.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace CTP.Infrastructure.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    {
+        protected override void BuildModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+
+            modelBuilder.Entity("CTP.Domain.Entities.Committee", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Committees");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.EntityInput", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PreparerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.HasIndex("PreparerId");
+
+                    b.ToTable("EntityInputs");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.MonthlyReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ActivityCompletionRate")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarAbility")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarAwareness")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarDesire")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarKnowledge")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdkarReinforcement")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdoptionBarriers")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AdoptionScore")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AffectedGroups")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ApproverNotes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChangeName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChangeSummary")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CurrentStage")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EvidenceLinks")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExecutedActivities")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImpactScope")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImprovementOpportunities")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InitialRecommendation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Month")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MostInNeedGroup")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Obstacles")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PreparerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ReadinessScore")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReportNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequiredSupport")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Risks")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("SubmittedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SuccessStories")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WhatWillChange")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WhatWillNotChange")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WhyImportant")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.HasIndex("PreparerId");
+
+                    b.ToTable("MonthlyReports");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActionUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IconClass")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TextColorClass")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.OrganizationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrganizationEntities");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EntityCode = "UNIT-01",
+                            EntityName = "ÊÕœ… «· ÕÊ· «·—ﬁ„Ì",
+                            IsActive = true
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Role", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RoleCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("RoleId");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "STAFF",
+                            RoleName = "«·„‰”Ê»Ê‰"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "MANAGER",
+                            RoleName = "«·ﬁ«œ… Ê«·„œ—«¡ «·„»«‘—Ê‰"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "AMBASSADOR",
+                            RoleName = "”›—«¡ «· €ÌÌ—"
+                        },
+                        new
+                        {
+                            RoleId = 4,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "UNIT_LEADER",
+                            RoleName = "√’Õ«» «·”⁄«œ… ﬁ«œ… «·ÊÕœ«  Ê«·„œ—«¡"
+                        },
+                        new
+                        {
+                            RoleId = 5,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "COMMITTEE_MEMBER",
+                            RoleName = "√⁄÷«¡ ·Ã‰… ‘—ﬂ«¡ «· €ÌÌ—"
+                        },
+                        new
+                        {
+                            RoleId = 6,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "COMMITTEE_CHAIR",
+                            RoleName = "—∆Ì” ·Ã‰… ‘—ﬂ«¡ «· €ÌÌ—"
+                        },
+                        new
+                        {
+                            RoleId = 7,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "CHIEF_OF_STAFF",
+                            RoleName = "”⁄«œ… —∆Ì” ›—Ìﬁ ⁄„· «·ﬁ«∆œ"
+                        },
+                        new
+                        {
+                            RoleId = 8,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "DEPUTY_LEADER",
+                            RoleName = "”⁄«œ… ‰«∆» «·ﬁ«∆œ"
+                        },
+                        new
+                        {
+                            RoleId = 9,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "LEADER",
+                            RoleName = "„⁄«·Ì «·ﬁ«∆œ"
+                        },
+                        new
+                        {
+                            RoleId = 10,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            RoleCode = "CORP_COMMS",
+                            RoleName = "«·« ’«· «·„ƒ””Ì"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("OrganizationEntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("PasswordExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RefreshTokenExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("OrganizationEntityId");
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„” Œœ„ „‰”Ê»",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "staff"
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„œÌ— „»«‘—",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "manager"
+                        },
+                        new
+                        {
+                            UserId = 3,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "”›Ì— «· €ÌÌ—",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "ambassador"
+                        },
+                        new
+                        {
+                            UserId = 4,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "ﬁ«∆œ «·ÊÕœ…",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "unitleader"
+                        },
+                        new
+                        {
+                            UserId = 5,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "⁄÷Ê «··Ã‰…",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "member"
+                        },
+                        new
+                        {
+                            UserId = 6,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "—∆Ì” «··Ã‰…",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "chair"
+                        },
+                        new
+                        {
+                            UserId = 7,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "—∆Ì” ›—Ìﬁ ⁄„· «·ﬁ«∆œ",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "chief"
+                        },
+                        new
+                        {
+                            UserId = 8,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "‰«∆» «·ﬁ«∆œ",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "deputy"
+                        },
+                        new
+                        {
+                            UserId = 9,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„⁄«·Ì «·ﬁ«∆œ",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "leader"
+                        },
+                        new
+                        {
+                            UserId = 10,
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "„ÊŸ› «·« ’«·",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "123456",
+                            Username = "comms"
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserRoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 1,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 1
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            RoleId = 2,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 2
+                        },
+                        new
+                        {
+                            UserId = 3,
+                            RoleId = 3,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 3
+                        },
+                        new
+                        {
+                            UserId = 4,
+                            RoleId = 4,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 4
+                        },
+                        new
+                        {
+                            UserId = 5,
+                            RoleId = 5,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 5
+                        },
+                        new
+                        {
+                            UserId = 6,
+                            RoleId = 6,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 6
+                        },
+                        new
+                        {
+                            UserId = 7,
+                            RoleId = 7,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 7
+                        },
+                        new
+                        {
+                            UserId = 8,
+                            RoleId = 8,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 8
+                        },
+                        new
+                        {
+                            UserId = 9,
+                            RoleId = 9,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 9
+                        },
+                        new
+                        {
+                            UserId = 10,
+                            RoleId = 10,
+                            AssignedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 10
+                        });
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.EntityInput", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "Preparer")
+                        .WithMany()
+                        .HasForeignKey("PreparerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Preparer");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.MonthlyReport", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationEntityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CTP.Domain.Entities.User", "Preparer")
+                        .WithMany()
+                        .HasForeignKey("PreparerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Preparer");
+                });
+
+            modelBuilder.Entity("CTP.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("CTP.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CTP.Domain.Entities.User", b =>
                 {
                     b.HasOne("CTP.Domain.Entities.OrganizationEntity", "Organization")
@@ -5459,6 +7427,71 @@ namespace CTP.Infrastructure.Repositories
                 .OrderByDescending(m => m.SubmittedDate)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<MonthlyReport>> GetApprovedByOrganizationAsync(int orgId)
+        {
+            return await _context.MonthlyReports
+                .Include(m => m.Preparer)
+                .Where(m => m.OrganizationEntityId == orgId && m.Status == CTP.Domain.Enums.ReportStatus.Approved)
+                .OrderByDescending(m => m.ApprovedDate)
+                .ToListAsync();
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Infrastructure\Repositories\NotificationRepository.cs
+======================================================
+using CTP.Application.Interfaces.Repositories;
+using CTP.Domain.Entities;
+using CTP.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace CTP.Infrastructure.Repositories
+{
+    public class NotificationRepository : INotificationRepository
+    {
+        private readonly ApplicationDbContext _context;
+
+        public NotificationRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task AddAsync(Notification notification)
+        {
+            await _context.Notifications.AddAsync(notification);
+        }
+
+        public async Task<List<Notification>> GetUnreadByUserIdAsync(int userId)
+        {
+            return await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .OrderByDescending(n => n.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task MarkAllAsReadAsync(int userId)
+        {
+            var unread = await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ToListAsync();
+
+            if (unread.Any())
+            {
+                foreach (var item in unread)
+                {
+                    item.IsRead = true;
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
     }
 }
 
@@ -5548,6 +7581,7 @@ using CTP.Domain.Enums;
 using CTP.Web.Areas.Ambassador.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CTP.Application.Helpers;
 
 namespace CTP.Web.Areas.Ambassador.Controllers
 {
@@ -5579,21 +7613,20 @@ namespace CTP.Web.Areas.Ambassador.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Ì—ÃÏ «· √ﬂœ „‰  ⁄»∆… «·ÕﬁÊ· «·≈·“«„Ì….";
+                TempData["Error"] = "Ì—ÃÏ «· √ﬂœ „‰ «” ﬂ„«· «·ÕﬁÊ· «·≈·“«„Ì….";
                 return View(model);
             }
 
-            // «” Œ—«Ã ÂÊÌ… «·„” Œœ„ ÊÃÂ Â „‰ «·Ã·”… «·„ÊÀÊﬁ… (Claims)
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var orgIdStr = User.FindFirst("OrganizationId")?.Value;
 
             if (!int.TryParse(userIdStr, out int preparerId) || !int.TryParse(orgIdStr, out int orgId))
             {
-                TempData["Error"] = "ÕœÀ Œÿ√ ›Ì ﬁ—«¡… »Ì«‰«  «·„” Œœ„ Ê«·ÃÂ…. Ì—ÃÏ ≈⁄«œ…  ”ÃÌ· «·œŒÊ·.";
+                TempData["Error"] = "«‰ Â  ’·«ÕÌ… «·Ã·”…° Ì—ÃÏ ≈⁄«œ…  ”ÃÌ· «·œŒÊ·.";
                 return RedirectToAction("Login", "Account", new { area = "" });
             }
 
-            // «·Õ”«» «· ·ﬁ«∆Ì ·„⁄«œ·«  «· »‰Ì Ê«·Ã«Â“Ì…
+            // «·Õ”«» «·—Ì«÷Ì ··„ƒ‘—« 
             int readiness = (model.AdkarAwareness + model.AdkarDesire + model.AdkarKnowledge) / 3;
             int adoption = (model.AdkarAbility + model.AdkarReinforcement) / 2;
 
@@ -5606,7 +7639,15 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ChangeName = model.ChangeName,
                 ChangeType = model.ChangeType,
                 CurrentStage = model.CurrentStage,
+                AffectedGroups = model.AffectedGroups,
+                ImpactScope = model.ImpactScope,
+                MostInNeedGroup = model.MostInNeedGroup,
+                ActivityCompletionRate = model.ActivityCompletionRate,
                 ChangeSummary = model.ChangeSummary,
+                WhyImportant = model.WhyImportant,
+                WhatWillChange = model.WhatWillChange,
+                WhatWillNotChange = model.WhatWillNotChange,
+                ExecutedActivities = model.ExecutedActivities,
                 AdkarAwareness = model.AdkarAwareness,
                 AdkarDesire = model.AdkarDesire,
                 AdkarKnowledge = model.AdkarKnowledge,
@@ -5615,9 +7656,11 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ReadinessScore = readiness,
                 AdoptionScore = adoption,
                 Obstacles = model.Obstacles,
-                InitialRecommendation = model.InitialRecommendation,
-
-                //  ÕœÌœ «·Õ«·… »‰«¡ ⁄·Ï «·“— «·–Ì  „ «·÷€ÿ ⁄·ÌÂ
+                AdoptionBarriers = model.AdoptionBarriers,
+                RequiredSupport = model.RequiredSupport,
+                Risks = model.Risks,
+                ImprovementOpportunities = model.ImprovementOpportunities,
+                SuccessStories = model.SuccessStories,
                 Status = model.ActionType == "Submit" ? ReportStatus.Submitted : ReportStatus.Draft,
                 SubmittedDate = model.ActionType == "Submit" ? DateTime.Now : null
             };
@@ -5625,11 +7668,10 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             await _reportService.CreateReportAsync(report);
 
             TempData["Success"] = model.ActionType == "Submit"
-                ? $" „ —›⁄ «· ﬁ—Ì— »‰Ã«Õ »—ﬁ„: {report.ReportNumber}"
+                ? $" „ —›⁄ «· ﬁ—Ì— ··«⁄ „«œ »‰Ã«Õ »—ﬁ„: {report.ReportNumber}"
                 : $" „ Õ›Ÿ «·„”Êœ… »‰Ã«Õ »—ﬁ„: {report.ReportNumber}";
 
-            //  ÊÃÌÂ „»œ∆Ì ·‰›” «·’›Õ… (·ÕÌ‰ »‰«¡ ‘«‘… ⁄—÷  ﬁ«—Ì— «·”›Ì—)
-            return RedirectToAction(nameof(Create));
+            return RedirectToAction(nameof(Index));
         }
         [HttpGet]
         [HttpGet]
@@ -5655,7 +7697,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ReportNumber = r.ReportNumber,
                 MonthYear = $"{r.Month} {r.Year}",
                 ChangeName = r.ChangeName,
-                CreatedDateFormatted = r.CreatedDate.ToString("yyyy/MM/dd"),
+                CreatedDateFormatted = r.CreatedDate.ToHijri(),
                 IsDraft = r.Status == ReportStatus.Draft || r.Status == ReportStatus.Returned, // «·„⁄«œ Ì⁄«„· „⁄«„·… «·„”Êœ… ·Ì „ﬂ‰ „‰  ⁄œÌ·Â
                 StatusName = GetStatusName(r.Status),
                 StatusBadgeClass = GetStatusBadgeClass(r.Status)
@@ -5726,13 +7768,26 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ChangeName = report.ChangeName,
                 ChangeType = report.ChangeType,
                 CurrentStage = report.CurrentStage,
+                AffectedGroups = report.AffectedGroups,
+                ImpactScope = report.ImpactScope ?? "«·ÃÂ…",
+                MostInNeedGroup = report.MostInNeedGroup,
+                ActivityCompletionRate = report.ActivityCompletionRate,
                 ChangeSummary = report.ChangeSummary,
+                WhyImportant = report.WhyImportant,
+                WhatWillChange = report.WhatWillChange,
+                WhatWillNotChange = report.WhatWillNotChange,
+                ExecutedActivities = report.ExecutedActivities,
                 AdkarAwareness = report.AdkarAwareness,
                 AdkarDesire = report.AdkarDesire,
                 AdkarKnowledge = report.AdkarKnowledge,
                 AdkarAbility = report.AdkarAbility,
                 AdkarReinforcement = report.AdkarReinforcement,
                 Obstacles = report.Obstacles,
+                AdoptionBarriers = report.AdoptionBarriers,
+                RequiredSupport = report.RequiredSupport,
+                Risks = report.Risks,
+                ImprovementOpportunities = report.ImprovementOpportunities,
+                SuccessStories = report.SuccessStories,
                 InitialRecommendation = report.InitialRecommendation,
                 ApproverNotes = report.ApproverNotes
             };
@@ -5749,21 +7804,35 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             var report = await _reportService.GetReportByIdAsync(model.Id);
             if (report == null) return NotFound();
 
-            //  ÕœÌÀ «·»Ì«‰« 
+            //  ÕœÌÀ «·»Ì«‰«  «·‘«„·…
             report.Year = model.Year;
             report.Month = model.Month;
             report.ChangeName = model.ChangeName;
             report.ChangeType = model.ChangeType;
             report.CurrentStage = model.CurrentStage;
+            report.AffectedGroups = model.AffectedGroups;
+            report.ImpactScope = model.ImpactScope;
+            report.MostInNeedGroup = model.MostInNeedGroup;
+            report.ActivityCompletionRate = model.ActivityCompletionRate;
             report.ChangeSummary = model.ChangeSummary;
+            report.WhyImportant = model.WhyImportant;
+            report.WhatWillChange = model.WhatWillChange;
+            report.WhatWillNotChange = model.WhatWillNotChange;
+            report.ExecutedActivities = model.ExecutedActivities;
             report.AdkarAwareness = model.AdkarAwareness;
             report.AdkarDesire = model.AdkarDesire;
             report.AdkarKnowledge = model.AdkarKnowledge;
             report.AdkarAbility = model.AdkarAbility;
             report.AdkarReinforcement = model.AdkarReinforcement;
             report.Obstacles = model.Obstacles;
+            report.AdoptionBarriers = model.AdoptionBarriers;
+            report.RequiredSupport = model.RequiredSupport;
+            report.Risks = model.Risks;
+            report.ImprovementOpportunities = model.ImprovementOpportunities;
+            report.SuccessStories = model.SuccessStories;
             report.InitialRecommendation = model.InitialRecommendation;
 
+            // ≈⁄«œ… «Õ ”«» «·„ƒ‘—« 
             int readiness = (model.AdkarAwareness + model.AdkarDesire + model.AdkarKnowledge) / 3;
             int adoption = (model.AdkarAbility + model.AdkarReinforcement) / 2;
             report.ReadinessScore = readiness;
@@ -5773,7 +7842,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
 
             await _reportService.UpdateReportAsync(report);
 
-            TempData["Success"] = " „  ÕœÌÀ «· ﬁ—Ì— Ê≈—”«·Â »‰Ã«Õ.";
+            TempData["Success"] = " „ Õ›Ÿ Ê ÕœÌÀ «· ﬁ—Ì— »‰Ã«Õ.";
             return RedirectToAction(nameof(Index));
         }
     }
@@ -5831,28 +7900,47 @@ namespace CTP.Web.Areas.Ambassador.Models
 {
     public class CreateMonthlyReportViewModel
     {
-        //  ⁄ÌÌ‰ «·”‰… «·ÂÃ—Ì… «·Õ«·Ì… ﬂ«› —«÷Ì
+        // 1. »Ì«‰«  «· ﬁ—Ì—
         [Required(ErrorMessage = "”‰… «· ﬁ—Ì— „ÿ·Ê»…")]
         public int Year { get; set; } = new UmAlQuraCalendar().GetYear(DateTime.Now);
 
         [Required(ErrorMessage = "‘Â— «· ﬁ—Ì— „ÿ·Ê»")]
         public string Month { get; set; } = string.Empty;
 
+        // 2. »Ì«‰«  «· €ÌÌ— Ê‰ÿ«ﬁ «·√À—
         [Required(ErrorMessage = "«”„ «· €ÌÌ— „ÿ·Ê»")]
+        [StringLength(255)]
         public string ChangeName { get; set; } = string.Empty;
 
-        public string ChangeType { get; set; } = string.Empty;
-        public string CurrentStage { get; set; } = string.Empty;
+        public string ChangeType { get; set; } = " ‰ŸÌ„Ì";
+        public string CurrentStage { get; set; } = " ⁄—Ì›";
+        public string? AffectedGroups { get; set; }
+        public string ImpactScope { get; set; } = "«·ÃÂ…";
+        public string? MostInNeedGroup { get; set; }
+
+        [Range(0, 100, ErrorMessage = "«·‰”»… ÌÃ» √‰  ﬂÊ‰ »Ì‰ 0 Ê 100")]
+        public int ActivityCompletionRate { get; set; } = 0;
+
         public string? ChangeSummary { get; set; }
+        public string? WhyImportant { get; set; }
+        public string? WhatWillChange { get; set; }
+        public string? WhatWillNotChange { get; set; }
+        public string? ExecutedActivities { get; set; }
 
-        [Range(0, 100)] public int AdkarAwareness { get; set; }
-        [Range(0, 100)] public int AdkarDesire { get; set; }
-        [Range(0, 100)] public int AdkarKnowledge { get; set; }
-        [Range(0, 100)] public int AdkarAbility { get; set; }
-        [Range(0, 100)] public int AdkarReinforcement { get; set; }
+        // 3. „ƒ‘—«  ADKAR
+        [Range(0, 100)] public int AdkarAwareness { get; set; } = 0;
+        [Range(0, 100)] public int AdkarDesire { get; set; } = 0;
+        [Range(0, 100)] public int AdkarKnowledge { get; set; } = 0;
+        [Range(0, 100)] public int AdkarAbility { get; set; } = 0;
+        [Range(0, 100)] public int AdkarReinforcement { get; set; } = 0;
 
+        // 4. «· ÕœÌ«  Ê«·œ⁄„
         public string? Obstacles { get; set; }
-        public string? InitialRecommendation { get; set; }
+        public string? AdoptionBarriers { get; set; }
+        public string? RequiredSupport { get; set; }
+        public string? Risks { get; set; }
+        public string? ImprovementOpportunities { get; set; }
+        public string? SuccessStories { get; set; }
 
         public string ActionType { get; set; } = "Draft";
     }
@@ -5872,6 +7960,7 @@ namespace CTP.Web.Areas.Ambassador.Models
         public int Id { get; set; }
         public string ReportNumber { get; set; } = string.Empty;
         public string? ApproverNotes { get; set; } // ·⁄—÷ „·«ÕŸ«  «·ﬁ«∆œ ··”›Ì—
+        public string? InitialRecommendation { get; set; } // Õ· Œÿ√ CS1061
     }
 }
 
@@ -6017,76 +8106,90 @@ namespace CTP.Web.Areas.Ambassador.Views.Input
 File: \CTP.Web\Areas\Ambassador\Views\Report\Create.cshtml
 ======================================================
 @model CTP.Web.Areas.Ambassador.Models.CreateMonthlyReportViewModel
+@using System.Security.Claims
 @{
     Layout = "_Layout";
 }
 
 @section Styles {
     <style>
-        /*  „ «·≈»ﬁ«¡ ›ﬁÿ ⁄·Ï  ‰”Ìﬁ«  «·‘»ﬂ… (Grid) «·Œ«’… »ÂÌﬂ·… Â–« «·‰„Ê–Ã  ÕœÌœ« */
-        .ctp-frm {
+        .ctp-fset {
+            border: 1px solid #D6E5EA;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 28px;
+            background: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(11, 79, 97, 0.04);
+            position: relative;
+        }
+
+            .ctp-fset legend {
+                width: auto !important;
+                float: none !important;
+                font-size: 14px;
+                font-weight: 700;
+                color: #0B4F61;
+                background: #FDF9EC;
+                border: 1px solid rgba(201, 162, 39, 0.4);
+                border-radius: 20px;
+                padding: 6px 20px;
+                margin-bottom: 0;
+            }
+
+        .ctp-form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
         }
 
-        .ctp-fld {
+        .ctp-form-group {
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
 
-            .ctp-fld label {
-                font-size: 13px;
-                color: #0B4F61;
-                font-weight: bold;
-                margin-bottom: 0;
-            }
-
-            .ctp-fld input, .ctp-fld select, .ctp-fld textarea {
-                border: 1px solid #D6E5EA;
-                border-radius: 9px;
-                padding: 10px 14px;
-                font-family: inherit;
-                font-size: 13.5px;
-                background: #FFFFFF;
-                transition: all .15s;
-                box-shadow: inset 0 1px 3px rgba(7,59,73,.05);
-                width: 100%;
-            }
-
-                .ctp-fld input:focus, .ctp-fld select:focus, .ctp-fld textarea:focus {
-                    outline: none;
-                    border-color: #C9A227;
-                    box-shadow: 0 0 0 3px rgba(201,162,39,.18);
-                }
-
-            .ctp-fld.wide {
+            .ctp-form-group.full-width {
                 grid-column: 1 / -1;
             }
 
-        fieldset.ctp-fset {
+            .ctp-form-group label {
+                font-size: 13px;
+                font-weight: 700;
+                color: #0B4F61;
+                margin: 0;
+            }
+
+        .ctp-input {
             border: 1px solid #D6E5EA;
-            border-radius: 14px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            background: linear-gradient(180deg, #FFFFFF, #F7FBFC);
-            box-shadow: 0 2px 8px rgba(7,59,73,.07);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            background: #FFFFFF;
+            transition: all 0.2s ease-in-out;
+            width: 100%;
         }
 
-            fieldset.ctp-fset legend {
-                width: auto !important;
-                float: none !important;
-                font-size: 13.5px;
-                font-weight: bold;
-                color: #0B4F61;
-                background: linear-gradient(145deg, #FBF4DE, #F6ECC9);
-                border: 1px solid rgba(201,162,39,.35);
-                border-radius: 16px;
-                padding: 6px 18px;
-                margin-bottom: 0;
-                line-height: 1.5;
+            .ctp-input:focus {
+                outline: none;
+                border-color: #C9A227;
+                box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
             }
+
+        .ctp-input-readonly {
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
+            color: #64748B;
+            cursor: not-allowed;
+            font-weight: 600;
+        }
+
+        .score-box {
+            background: #F8FAFC;
+            border: 1px dashed #CBD5E1;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
     </style>
 }
 
@@ -6095,17 +8198,26 @@ File: \CTP.Web\Areas\Ambassador\Views\Report\Create.cshtml
 <div class="container-fluid mt-3 mb-5">
     <form method="post" asp-action="Create" id="monthlyReportForm">
 
+        <!-- «·ﬁ”„ 1: »Ì«‰«  «· ﬁ—Ì— «·√”«”Ì… -->
         <fieldset class="ctp-fset">
-            <legend>»Ì«‰«  «· ﬁ—Ì— «·√”«”Ì…</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld">
-                    <label asp-for="Year">”‰… «· ﬁ—Ì—</label>
-                    <input asp-for="Year" type="number" />
+            <legend><i class="bi bi-info-circle-fill me-1"></i> »Ì«‰«  «· ﬁ—Ì—</legend>
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group">
+                    <label>«·ÃÂ… «· «»⁄ ·Â«</label>
+                    <input type="text" class="ctp-input ctp-input-readonly" value="ÊÕœ… «· ÕÊ· «·„ƒ””Ì" readonly />
+                </div>
+                <div class="ctp-form-group">
+                    <label>„ı⁄œ «· ﬁ—Ì—</label>
+                    <input type="text" class="ctp-input ctp-input-readonly" value="@User.FindFirst(ClaimTypes.GivenName)?.Value" readonly />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="Year">”‰… «· ﬁ—Ì— (ÂÃ—Ì) <span class="text-danger">*</span></label>
+                    <input asp-for="Year" type="number" class="ctp-input" required />
                     <span asp-validation-for="Year" class="text-danger small"></span>
                 </div>
-                <div class="ctp-fld">
-                    <label asp-for="Month">‘Â— «· ﬁ—Ì—</label>
-                    <select asp-for="Month">
+                <div class="ctp-form-group">
+                    <label asp-for="Month">‘Â— «· ﬁ—Ì— <span class="text-danger">*</span></label>
+                    <select asp-for="Month" class="ctp-input" required>
                         <option value="„Õ—„">„Õ—„</option>
                         <option value="’›—">’›—</option>
                         <option value="—»Ì⁄ «·√Ê·">—»Ì⁄ «·√Ê·</option>
@@ -6123,89 +8235,195 @@ File: \CTP.Web\Areas\Ambassador\Views\Report\Create.cshtml
             </div>
         </fieldset>
 
+        <!-- «·ﬁ”„ 2:  ›«’Ì· «· €ÌÌ— Ê‰ÿ«ﬁ «·√À— -->
         <fieldset class="ctp-fset">
-            <legend>»Ì«‰«  «· €ÌÌ—</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld">
-                    <label asp-for="ChangeName">«”„ «· €ÌÌ—</label>
-                    <input asp-for="ChangeName" />
+            <legend><i class="bi bi-diagram-3-fill me-1"></i> «· €ÌÌ—</legend>
+            <div class="ctp-form-grid mb-3">
+                <div class="ctp-form-group">
+                    <label asp-for="ChangeName">«”„ «· €ÌÌ— <span class="text-danger">*</span></label>
+                    <input asp-for="ChangeName" class="ctp-input" placeholder="«ﬂ » «”„ «·„»«œ—… √Ê «· €ÌÌ—..." required />
                     <span asp-validation-for="ChangeName" class="text-danger small"></span>
                 </div>
-                <div class="ctp-fld">
+                <div class="ctp-form-group">
                     <label asp-for="ChangeType">‰Ê⁄ «· €ÌÌ—</label>
-                    <select asp-for="ChangeType">
+                    <select asp-for="ChangeType" class="ctp-input">
+                        <option value=" ‰ŸÌ„Ì"> ‰ŸÌ„Ì</option>
                         <option value="≈Ã—«∆Ì">≈Ã—«∆Ì</option>
                         <option value=" ﬁ‰Ì"> ﬁ‰Ì</option>
-                        <option value=" ‰ŸÌ„Ì"> ‰ŸÌ„Ì</option>
                         <option value="Œœ„Ì">Œœ„Ì</option>
                         <option value="Àﬁ«›Ì">Àﬁ«›Ì</option>
                     </select>
                 </div>
-                <div class="ctp-fld">
+                <div class="ctp-form-group">
                     <label asp-for="CurrentStage">«·„—Õ·… «·Õ«·Ì…</label>
-                    <select asp-for="CurrentStage">
+                    <select asp-for="CurrentStage" class="ctp-input">
                         <option value=" ⁄—Ì›"> ⁄—Ì›</option>
                         <option value=" ÂÌ∆…"> ÂÌ∆…</option>
                         <option value=" ÿ»Ìﬁ"> ÿ»Ìﬁ</option>
                         <option value=" À»Ì "> À»Ì </option>
                     </select>
                 </div>
-                <div class="ctp-fld wide">
+                <div class="ctp-form-group">
+                    <label asp-for="ImpactScope">‰ÿ«ﬁ «·√À—</label>
+                    <select asp-for="ImpactScope" class="ctp-input">
+                        <option value="«·ÃÂ…">«·ÃÂ…</option>
+                        <option value="≈œ«—… „Õœœ…">≈œ«—… „Õœœ…</option>
+                        <option value="«·„‰ŸÊ„… ﬂ«„·…">«·„‰ŸÊ„… ﬂ«„·…</option>
+                    </select>
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="AffectedGroups">«·›∆«  «·„ √À—…</label>
+                    <input asp-for="AffectedGroups" class="ctp-input" placeholder="„À·: „œ—«¡ «·≈œ«—« ° «·„ÊŸ›Ê‰..." />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="MostInNeedGroup">«·›∆… «·√ﬂÀ— «Õ Ì«Ã« ··œ⁄„</label>
+                    <input asp-for="MostInNeedGroup" class="ctp-input" placeholder="Õœœ «·›∆… «·√ﬂÀ—  √À—«..." />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="ActivityCompletionRate">‰”»… «ﬂ „«· «·√‰‘ÿ… (%)</label>
+                    <input asp-for="ActivityCompletionRate" type="number" min="0" max="100" class="ctp-input" />
+                </div>
+            </div>
+
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group full-width">
                     <label asp-for="ChangeSummary">„·Œ’ «· €ÌÌ—</label>
-                    <textarea asp-for="ChangeSummary" rows="2"></textarea>
+                    <textarea asp-for="ChangeSummary" class="ctp-input" rows="2" placeholder="Ê’› „ÊÃ“ ··„»«œ—…..."></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="WhyImportant">·„«–« Â–« «· €ÌÌ— „Â„ø</label>
+                    <textarea asp-for="WhyImportant" class="ctp-input" rows="2" placeholder="«·√À— Ê«·ﬁÌ„… «·„÷«›…..."></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="WhatWillChange">„«–« ”Ì €Ì—ø</label>
+                    <textarea asp-for="WhatWillChange" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="WhatWillNotChange">„«–« ·‰ Ì €Ì—ø</label>
+                    <textarea asp-for="WhatWillNotChange" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="ExecutedActivities">«·√‰‘ÿ… «·„‰›–…</label>
+                    <textarea asp-for="ExecutedActivities" class="ctp-input" rows="2" placeholder="√Â„ „«  „ ≈‰Ã«“Â Œ·«· Â–« «·‘Â—..."></textarea>
                 </div>
             </div>
         </fieldset>
 
+        <!-- «·ﬁ”„ 3: «·„ƒ‘—«  (‰”»… „‰ 100) -->
         <fieldset class="ctp-fset">
-            <legend>„ƒ‘—«  ADKAR (‰”»… „‰ 0 ≈·Ï 100)</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld"><label asp-for="AdkarAwareness">«·Ê⁄Ì</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarDesire">«·—€»…</label><input asp-for="AdkarDesire" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarKnowledge">«·„⁄—›…</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarAbility">«·ﬁœ—… ⁄·Ï «· ÿ»Ìﬁ</label><input asp-for="AdkarAbility" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarReinforcement">«· ⁄“Ì“ Ê«·«” œ«„…</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" /></div>
+            <legend><i class="bi bi-speedometer2 me-1"></i> «·„ƒ‘—«  (‰”»… „‰ 100)</legend>
+            <div class="ctp-form-grid mb-3">
+                <div class="ctp-form-group">
+                    <label asp-for="AdkarAwareness">«·Ê⁄Ì (A)</label>
+                    <input asp-for="AdkarAwareness" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarA" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="AdkarDesire">«·—€»… (D)</label>
+                    <input asp-for="AdkarDesire" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarD" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="AdkarKnowledge">«·„⁄—›… (K)</label>
+                    <input asp-for="AdkarKnowledge" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarK" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="AdkarAbility">«·ﬁœ—… ⁄·Ï «· ÿ»Ìﬁ (A)</label>
+                    <input asp-for="AdkarAbility" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarAb" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="AdkarReinforcement">«· ⁄“Ì“ Ê«·«” œ«„… (R)</label>
+                    <input asp-for="AdkarReinforcement" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarR" />
+                </div>
             </div>
-            <p style="font-size:11.5px; color:#537382; margin-top:12px; margin-bottom:0;">
-                <i class="bi bi-info-circle"></i> Ì „ Õ”«» «·Ã«Â“Ì… Ê«· »‰Ì  ·ﬁ«∆Ì« »‰«¡ ⁄·Ï Â–Â «·„œŒ·«  ⁄»— „Õ—ﬂ «· Õ·Ì·.
-            </p>
+
+            <!-- ·ÊÕ… ‰ «∆Ã «·„ƒ‘—«  «·„Õ”Ê»…  ·ﬁ«∆Ì« -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="score-box">
+                        <span class="text-muted small d-block">«·Ã«Â“Ì… «·⁄«„… („Õ”Ê»… ¬·Ì«)</span>
+                        <h4 class="fw-bold mb-0 text-primary" id="dispReadiness">0%</h4>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="score-box">
+                        <span class="text-muted small d-block">«· »‰Ì «·⁄«„ („Õ”Ê» ¬·Ì«)</span>
+                        <h4 class="fw-bold mb-0 text-success" id="dispAdoption">0%</h4>
+                    </div>
+                </div>
+            </div>
         </fieldset>
 
+        <!-- «·ﬁ”„ 4: «· ÕœÌ«  Ê«·œ⁄„ -->
         <fieldset class="ctp-fset">
-            <legend>«· ÕœÌ«  Ê«· Ê’Ì«  Ê«·‘Ê«Âœ</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld wide">
+            <legend><i class="bi bi-shield-exclamation me-1"></i> «· ÕœÌ«  Ê«·œ⁄„</legend>
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group full-width">
                     <label asp-for="Obstacles">«·⁄Ê«∆ﬁ Ê«· ÕœÌ« </label>
-                    <textarea asp-for="Obstacles" rows="2"></textarea>
+                    <textarea asp-for="Obstacles" class="ctp-input" rows="2"></textarea>
                 </div>
-                <div class="ctp-fld wide">
-                    <label asp-for="InitialRecommendation">«· Ê’Ì… «·√Ê·Ì… «·„ﬁ —Õ… „‰ «·ÃÂ…</label>
-                    <textarea asp-for="InitialRecommendation" rows="2"></textarea>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="AdoptionBarriers">⁄Ê«∆ﬁ «· »‰Ì („« «·–Ì Ì»ÿ∆ «‰ ﬁ«· «·›∆… «·„ √À—… ≈·Ï «· ÿ»Ìﬁø)</label>
+                    <textarea asp-for="AdoptionBarriers" class="ctp-input" rows="2"></textarea>
                 </div>
-               
+                <div class="ctp-form-group full-width">
+                    <label asp-for="RequiredSupport">«·œ⁄„ «·„ÿ·Ê»</label>
+                    <textarea asp-for="RequiredSupport" class="ctp-input" rows="2" placeholder="„«  Õ «ÃÂ «·ÃÂ… „‰ «··Ã‰… √Ê «·≈œ«—… «·⁄·Ì«..."></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="Risks">«·„Œ«ÿ— «·„ Êﬁ⁄…</label>
+                    <textarea asp-for="Risks" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="ImprovementOpportunities">›—’ «· Õ”Ì‰</label>
+                    <textarea asp-for="ImprovementOpportunities" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="SuccessStories">ﬁ’’ «·‰Ã«Õ «·„‰Ã“…</label>
+                    <textarea asp-for="SuccessStories" class="ctp-input" rows="2"></textarea>
+                </div>
             </div>
         </fieldset>
 
         <input type="hidden" asp-for="ActionType" id="ActionType" />
 
-        <!-- «” Œœ«„ «·ﬂ·«”«  «·ﬁÌ«”Ì… Â‰« -->
-        <!-- «” Œœ«„ „‰ŸÊ„… √“—«— MODA «·ﬁÌ«”Ì… -->
+        <!-- √“—«— «·≈Ã—«¡«  -->
         <div class="d-flex gap-2 flex-wrap">
             <button type="submit" class="moda-btn moda-btn-gold" onclick="document.getElementById('ActionType').value='Submit';">
-                <i class="bi bi-send"></i> —›⁄ ·«⁄ „«œ «·ÃÂ…
+                <i class="bi bi-send-check"></i> —›⁄ ·«⁄ „«œ «·ÃÂ…
             </button>
             <button type="submit" class="moda-btn moda-btn-outline" onclick="document.getElementById('ActionType').value='Draft';">
                 <i class="bi bi-save"></i> Õ›Ÿ ﬂ„”Êœ…
             </button>
-            <button type="reset" class="moda-btn moda-btn-secondary">
-                <i class="bi bi-trash3"></i>  ›—Ì€ «·‰„Ê–Ã
-            </button>
+            <a asp-action="Index" class="moda-btn moda-btn-secondary">≈·€«¡</a>
         </div>
     </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputs = document.querySelectorAll('.adkar-calc');
+            const dispReadiness = document.getElementById('dispReadiness');
+            const dispAdoption = document.getElementById('dispAdoption');
+
+            function recalculateScores() {
+                const a = parseInt(document.getElementById('adkarA').value) || 0;
+                const d = parseInt(document.getElementById('adkarD').value) || 0;
+                const k = parseInt(document.getElementById('adkarK').value) || 0;
+                const ab = parseInt(document.getElementById('adkarAb').value) || 0;
+                const r = parseInt(document.getElementById('adkarR').value) || 0;
+
+                const readiness = Math.round((a + d + k) / 3);
+                const adoption = Math.round((ab + r) / 2);
+
+                dispReadiness.textContent = readiness + "%";
+                dispAdoption.textContent = adoption + "%";
+            }
+
+            inputs.forEach(input => input.addEventListener('input', recalculateScores));
+            recalculateScores();
+        });
+    </script>
 }
 
 
@@ -6229,77 +8447,290 @@ namespace CTP.Web.Areas.Ambassador.Views.Report
 
 
 ======================================================
+File: \CTP.Web\Areas\Ambassador\Views\Report\Details.cshtml
+======================================================
+@model CTP.Domain.Entities.MonthlyReport
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+    <div class="moda-card border-0 shadow-sm p-4" style="border-radius: 16px;">
+
+        <!-- ﬁ”„ ⁄—÷ „·«ÕŸ«  «·ﬁ«∆œ ≈‰ ÊÃœ  -->
+        @if (!string.IsNullOrEmpty(Model.ApproverNotes))
+        {
+            <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 12px; border-right: 5px solid #ffc107 !important; background-color: #fff8e1;">
+                <i class="bi bi-chat-left-text-fill fs-3 text-warning me-3"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">„·«ÕŸ«  Ê«⁄ „«œ «·ﬁÌ«œ…:</h6>
+                    <p class="mb-0 fs-6 text-dark">@Model.ApproverNotes</p>
+                </div>
+            </div>
+        }
+
+        <!-- «· —ÊÌ”… «·√”«”Ì… -->
+        <div class="row border-bottom pb-3 mb-4">
+            <div class="col-md-5">
+                <h6 class="text-muted mb-1">«”„ «· €ÌÌ—</h6>
+                <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@Model.ChangeName</h4>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted mb-1">«·„—Õ·… «·Õ«·Ì…</h6>
+                <span class="badge bg-secondary px-3 py-2">@Model.CurrentStage</span>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted mb-1">‰Ê⁄ «· €ÌÌ—</h6>
+                <span class="fw-bold text-dark">@Model.ChangeType</span>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">Õ«·… «· ﬁ—Ì—</h6>
+                <span class="badge bg-info px-3 py-2">@Model.Status</span>
+            </div>
+        </div>
+
+        <!-- ‰ÿ«ﬁ «·√À— Ê«·›∆«  -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">‰ÿ«ﬁ «·√À—</h6>
+                <p>@Model.ImpactScope</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">«·›∆«  «·„ √À—…</h6>
+                <p>@(string.IsNullOrEmpty(Model.AffectedGroups) ? "-" : Model.AffectedGroups)</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">«·√ﬂÀ— «Õ Ì«Ã« ··œ⁄„</h6>
+                <p>@(string.IsNullOrEmpty(Model.MostInNeedGroup) ? "-" : Model.MostInNeedGroup)</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">«ﬂ „«· «·√‰‘ÿ…</h6>
+                <div class="progress mt-2" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @Model.ActivityCompletionRate%">@Model.ActivityCompletionRate%</div>
+                </div>
+            </div>
+        </div>
+
+        <!--  ›«’Ì· «· €ÌÌ— -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-card-text me-2"></i>  ›«’Ì· «· €ÌÌ—</h6>
+        <div class="row mb-4 g-3">
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">„« «· €ÌÌ—ø («·„·Œ’)</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.ChangeSummary) ? "-" : Model.ChangeSummary)</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">·„«–« Â–« «· €ÌÌ— „Â„ø</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhyImportant) ? "-" : Model.WhyImportant)</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">„«–« ”Ì €Ì—ø</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhatWillChange) ? "-" : Model.WhatWillChange)</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">„«–« ·‰ Ì €Ì—ø</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhatWillNotChange) ? "-" : Model.WhatWillNotChange)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- «·„ƒ‘—«  -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-speedometer2 me-2"></i> „ƒ‘—«  «·√œ«¡ (ADKAR)</h6>
+        <div class="row mb-4">
+            <div class="col-md-7">
+                <div class="card bg-light border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2"><span>«·Ê⁄Ì (A)</span> <strong>@Model.AdkarAwareness%</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>«·—€»… (D)</span> <strong>@Model.AdkarDesire%</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>«·„⁄—›… (K)</span> <strong>@Model.AdkarKnowledge%</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>«·ﬁœ—… (A)</span> <strong>@Model.AdkarAbility%</strong></div>
+                        <div class="d-flex justify-content-between"><span>«· ⁄“Ì“ (R)</span> <strong>@Model.AdkarReinforcement%</strong></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card border-0 h-100" style="background-color: #FDF9EC;">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <div class="row">
+                            <div class="col-6">
+                                <h2 class="text-primary fw-bold mb-0">@Model.ReadinessScore%</h2>
+                                <span class="text-muted small">«·Ã«Â“Ì… «·⁄«„…</span>
+                            </div>
+                            <div class="col-6">
+                                <h2 class="text-success fw-bold mb-0">@Model.AdoptionScore%</h2>
+                                <span class="text-muted small">«· »‰Ì «·⁄«„</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- «· ÕœÌ«  Ê«·œ⁄„ -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-shield-exclamation me-2"></i> «· ÕœÌ«  Ê«·œ⁄„ Ê«·„Œ«ÿ—</h6>
+        <div class="row mb-5 g-3">
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-danger-subtle h-100">
+                    <h6 class="text-danger fw-bold">«·⁄Ê«∆ﬁ Ê«· ÕœÌ« </h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.Obstacles) ? "-" : Model.Obstacles)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-warning-subtle h-100">
+                    <h6 class="text-warning fw-bold">⁄Ê«∆ﬁ «· »‰Ì</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.AdoptionBarriers) ? "-" : Model.AdoptionBarriers)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-info-subtle h-100">
+                    <h6 class="text-info fw-bold">«·œ⁄„ «·„ÿ·Ê»</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.RequiredSupport) ? "-" : Model.RequiredSupport)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-secondary h-100">
+                    <h6 class="text-muted fw-bold">«·„Œ«ÿ—</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.Risks) ? "-" : Model.Risks)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-success-subtle h-100">
+                    <h6 class="text-success fw-bold">ﬁ’’ «·‰Ã«Õ</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.SuccessStories) ? "-" : Model.SuccessStories)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-primary-subtle h-100">
+                    <h6 class="text-primary fw-bold">«· Ê’Ì… «·√Ê·Ì… «·„ﬁ —Õ…</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.InitialRecommendation) ? "-" : Model.InitialRecommendation)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end border-top pt-3">
+            <a asp-action="Index" class="moda-btn moda-btn-outline">
+                <i class="bi bi-arrow-right"></i> «·⁄Êœ… ··”Ã·
+            </a>
+        </div>
+    </div>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Areas\Ambassador\Views\Report\Details.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Areas.Ambassador.Views.Report
+{
+    public class DetailsModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
 File: \CTP.Web\Areas\Ambassador\Views\Report\Edit.cshtml
 ======================================================
 @model CTP.Web.Areas.Ambassador.Models.EditMonthlyReportViewModel
+@using System.Security.Claims
 @{
     Layout = "_Layout";
 }
 
 @section Styles {
     <style>
-        .ctp-frm {
+        .ctp-fset {
+            border: 1px solid #D6E5EA;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 28px;
+            background: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(11, 79, 97, 0.04);
+            position: relative;
+        }
+
+            .ctp-fset legend {
+                width: auto !important;
+                float: none !important;
+                font-size: 14px;
+                font-weight: 700;
+                color: #0B4F61;
+                background: #FDF9EC;
+                border: 1px solid rgba(201, 162, 39, 0.4);
+                border-radius: 20px;
+                padding: 6px 20px;
+                margin-bottom: 0;
+            }
+
+        .ctp-form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
         }
 
-        .ctp-fld {
+        .ctp-form-group {
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
 
-            .ctp-fld label {
-                font-size: 13px;
-                color: #0B4F61;
-                font-weight: bold;
-                margin-bottom: 0;
-            }
-
-            .ctp-fld input, .ctp-fld select, .ctp-fld textarea {
-                border: 1px solid #D6E5EA;
-                border-radius: 9px;
-                padding: 10px 14px;
-                font-family: inherit;
-                font-size: 13.5px;
-                background: #FFFFFF;
-                transition: all .15s;
-                box-shadow: inset 0 1px 3px rgba(7,59,73,.05);
-                width: 100%;
-            }
-
-                .ctp-fld input:focus, .ctp-fld select:focus, .ctp-fld textarea:focus {
-                    outline: none;
-                    border-color: #C9A227;
-                    box-shadow: 0 0 0 3px rgba(201,162,39,.18);
-                }
-
-            .ctp-fld.wide {
+            .ctp-form-group.full-width {
                 grid-column: 1 / -1;
             }
 
-        fieldset.ctp-fset {
+            .ctp-form-group label {
+                font-size: 13px;
+                font-weight: 700;
+                color: #0B4F61;
+                margin: 0;
+            }
+
+        .ctp-input {
             border: 1px solid #D6E5EA;
-            border-radius: 14px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            background: linear-gradient(180deg, #FFFFFF, #F7FBFC);
-            box-shadow: 0 2px 8px rgba(7,59,73,.07);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            background: #FFFFFF;
+            transition: all 0.2s ease-in-out;
+            width: 100%;
         }
 
-            fieldset.ctp-fset legend {
-                width: auto !important;
-                float: none !important;
-                font-size: 13.5px;
-                font-weight: bold;
-                color: #0B4F61;
-                background: linear-gradient(145deg, #FBF4DE, #F6ECC9);
-                border: 1px solid rgba(201,162,39,.35);
-                border-radius: 16px;
-                padding: 6px 18px;
-                margin-bottom: 0;
+            .ctp-input:focus {
+                outline: none;
+                border-color: #C9A227;
+                box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
             }
+
+        .ctp-input-readonly {
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
+            color: #64748B;
+            cursor: not-allowed;
+            font-weight: 600;
+        }
+
+        .score-box {
+            background: #F8FAFC;
+            border: 1px dashed #CBD5E1;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
     </style>
 }
 
@@ -6312,7 +8743,7 @@ File: \CTP.Web\Areas\Ambassador\Views\Report\Edit.cshtml
         <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 12px; border-right: 5px solid #ffc107 !important; background-color: #fff8e1;">
             <i class="bi bi-chat-left-text-fill fs-3 text-warning me-3"></i>
             <div>
-                <h6 class="fw-bold mb-1">„·«ÕŸ«  ﬁ«∆œ «·ÊÕœ… / «·≈œ«—…:</h6>
+                <h6 class="fw-bold mb-1">„·«ÕŸ«  ﬁ«∆œ «·ÊÕœ… / «·≈œ«—… ··≈” ﬂ„«·:</h6>
                 <p class="mb-0 fs-6 text-dark">@Model.ApproverNotes</p>
             </div>
         </div>
@@ -6323,16 +8754,24 @@ File: \CTP.Web\Areas\Ambassador\Views\Report\Edit.cshtml
         <input type="hidden" asp-for="ReportNumber" />
 
         <fieldset class="ctp-fset">
-            <legend>»Ì«‰«  «· ﬁ—Ì— «·√”«”Ì…</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld">
-                    <label asp-for="Year">”‰… «· ﬁ—Ì— (ÂÃ—Ì)</label>
-                    <input asp-for="Year" type="number" />
+            <legend><i class="bi bi-info-circle-fill me-1"></i> »Ì«‰«  «· ﬁ—Ì—</legend>
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group">
+                    <label>«·ÃÂ… «· «»⁄ ·Â«</label>
+                    <input type="text" class="ctp-input ctp-input-readonly" value="ÊÕœ… «· ÕÊ· «·„ƒ””Ì" readonly />
+                </div>
+                <div class="ctp-form-group">
+                    <label>„ı⁄œ «· ﬁ—Ì—</label>
+                    <input type="text" class="ctp-input ctp-input-readonly" value="@User.FindFirst(ClaimTypes.GivenName)?.Value" readonly />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="Year">”‰… «· ﬁ—Ì— (ÂÃ—Ì) <span class="text-danger">*</span></label>
+                    <input asp-for="Year" type="number" class="ctp-input" required />
                     <span asp-validation-for="Year" class="text-danger small"></span>
                 </div>
-                <div class="ctp-fld">
-                    <label asp-for="Month">‘Â— «· ﬁ—Ì—</label>
-                    <select asp-for="Month">
+                <div class="ctp-form-group">
+                    <label asp-for="Month">‘Â— «· ﬁ—Ì— <span class="text-danger">*</span></label>
+                    <select asp-for="Month" class="ctp-input" required>
                         <option value="„Õ—„">„Õ—„</option>
                         <option value="’›—">’›—</option>
                         <option value="—»Ì⁄ «·√Ê·">—»Ì⁄ «·√Ê·</option>
@@ -6351,71 +8790,114 @@ File: \CTP.Web\Areas\Ambassador\Views\Report\Edit.cshtml
         </fieldset>
 
         <fieldset class="ctp-fset">
-            <legend>»Ì«‰«  «· €ÌÌ—</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld">
-                    <label asp-for="ChangeName">«”„ «· €ÌÌ—</label>
-                    <input asp-for="ChangeName" />
+            <legend><i class="bi bi-diagram-3-fill me-1"></i> «· €ÌÌ—</legend>
+            <div class="ctp-form-grid mb-3">
+                <div class="ctp-form-group">
+                    <label asp-for="ChangeName">«”„ «· €ÌÌ— <span class="text-danger">*</span></label>
+                    <input asp-for="ChangeName" class="ctp-input" required />
                     <span asp-validation-for="ChangeName" class="text-danger small"></span>
                 </div>
-                <div class="ctp-fld">
+                <div class="ctp-form-group">
                     <label asp-for="ChangeType">‰Ê⁄ «· €ÌÌ—</label>
-                    <select asp-for="ChangeType">
+                    <select asp-for="ChangeType" class="ctp-input">
+                        <option value=" ‰ŸÌ„Ì"> ‰ŸÌ„Ì</option>
                         <option value="≈Ã—«∆Ì">≈Ã—«∆Ì</option>
                         <option value=" ﬁ‰Ì"> ﬁ‰Ì</option>
-                        <option value=" ‰ŸÌ„Ì"> ‰ŸÌ„Ì</option>
                         <option value="Œœ„Ì">Œœ„Ì</option>
                         <option value="Àﬁ«›Ì">Àﬁ«›Ì</option>
                     </select>
                 </div>
-                <div class="ctp-fld">
+                <div class="ctp-form-group">
                     <label asp-for="CurrentStage">«·„—Õ·… «·Õ«·Ì…</label>
-                    <select asp-for="CurrentStage">
+                    <select asp-for="CurrentStage" class="ctp-input">
                         <option value=" ⁄—Ì›"> ⁄—Ì›</option>
                         <option value=" ÂÌ∆…"> ÂÌ∆…</option>
                         <option value=" ÿ»Ìﬁ"> ÿ»Ìﬁ</option>
                         <option value=" À»Ì "> À»Ì </option>
                     </select>
                 </div>
-                <div class="ctp-fld wide">
+                <div class="ctp-form-group">
+                    <label asp-for="ImpactScope">‰ÿ«ﬁ «·√À—</label>
+                    <select asp-for="ImpactScope" class="ctp-input">
+                        <option value="«·ÃÂ…">«·ÃÂ…</option>
+                        <option value="≈œ«—… „Õœœ…">≈œ«—… „Õœœ…</option>
+                        <option value="«·„‰ŸÊ„… ﬂ«„·…">«·„‰ŸÊ„… ﬂ«„·…</option>
+                    </select>
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="AffectedGroups">«·›∆«  «·„ √À—…</label>
+                    <input asp-for="AffectedGroups" class="ctp-input" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="MostInNeedGroup">«·›∆… «·√ﬂÀ— «Õ Ì«Ã« ··œ⁄„</label>
+                    <input asp-for="MostInNeedGroup" class="ctp-input" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="ActivityCompletionRate">‰”»… «ﬂ „«· «·√‰‘ÿ… (%)</label>
+                    <input asp-for="ActivityCompletionRate" type="number" min="0" max="100" class="ctp-input" />
+                </div>
+            </div>
+
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group full-width">
                     <label asp-for="ChangeSummary">„·Œ’ «· €ÌÌ—</label>
-                    <textarea asp-for="ChangeSummary" rows="2"></textarea>
+                    <textarea asp-for="ChangeSummary" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="WhyImportant">·„«–« Â–« «· €ÌÌ— „Â„ø</label>
+                    <textarea asp-for="WhyImportant" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="WhatWillChange">„«–« ”Ì €Ì—ø</label>
+                    <textarea asp-for="WhatWillChange" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="WhatWillNotChange">„«–« ·‰ Ì €Ì—ø</label>
+                    <textarea asp-for="WhatWillNotChange" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="ExecutedActivities">«·√‰‘ÿ… «·„‰›–…</label>
+                    <textarea asp-for="ExecutedActivities" class="ctp-input" rows="2"></textarea>
                 </div>
             </div>
         </fieldset>
 
         <fieldset class="ctp-fset">
-            <legend>„ƒ‘—«  ADKAR (‰”»… „‰ 0 ≈·Ï 100)</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld"><label asp-for="AdkarAwareness">«·Ê⁄Ì</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarDesire">«·—€»…</label><input asp-for="AdkarDesire" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarKnowledge">«·„⁄—›…</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarAbility">«·ﬁœ—… ⁄·Ï «· ÿ»Ìﬁ</label><input asp-for="AdkarAbility" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarReinforcement">«· ⁄“Ì“ Ê«·«” œ«„…</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" /></div>
+            <legend><i class="bi bi-speedometer2 me-1"></i> «·„ƒ‘—«  (‰”»… „‰ 100)</legend>
+            <div class="ctp-form-grid mb-3">
+                <div class="ctp-form-group"><label asp-for="AdkarAwareness">«·Ê⁄Ì (A)</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarA" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarDesire">«·—€»… (D)</label><input asp-for="AdkarDesire" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarD" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarKnowledge">«·„⁄—›… (K)</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarK" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarAbility">«·ﬁœ—… ⁄·Ï «· ÿ»Ìﬁ (A)</label><input asp-for="AdkarAbility" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarAb" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarReinforcement">«· ⁄“Ì“ Ê«·«” œ«„… (R)</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarR" /></div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="score-box"><span class="text-muted small d-block">«·Ã«Â“Ì… «·⁄«„…</span><h4 class="fw-bold mb-0 text-primary" id="dispReadiness">0%</h4></div></div>
+                <div class="col-md-6"><div class="score-box"><span class="text-muted small d-block">«· »‰Ì «·⁄«„</span><h4 class="fw-bold mb-0 text-success" id="dispAdoption">0%</h4></div></div>
             </div>
         </fieldset>
 
         <fieldset class="ctp-fset">
-            <legend>«· ÕœÌ«  Ê«· Ê’Ì« </legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld wide">
-                    <label asp-for="Obstacles">«·⁄Ê«∆ﬁ Ê«· ÕœÌ« </label>
-                    <textarea asp-for="Obstacles" rows="2"></textarea>
-                </div>
-                <div class="ctp-fld wide">
-                    <label asp-for="InitialRecommendation">«· Ê’Ì… «·√Ê·Ì… «·„ﬁ —Õ… „‰ «·ÃÂ…</label>
-                    <textarea asp-for="InitialRecommendation" rows="2"></textarea>
-                </div>
+            <legend><i class="bi bi-shield-exclamation me-1"></i> «· ÕœÌ«  Ê«·œ⁄„</legend>
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group full-width"><label asp-for="Obstacles">«·⁄Ê«∆ﬁ Ê«· ÕœÌ« </label><textarea asp-for="Obstacles" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="AdoptionBarriers">⁄Ê«∆ﬁ «· »‰Ì</label><textarea asp-for="AdoptionBarriers" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="RequiredSupport">«·œ⁄„ «·„ÿ·Ê»</label><textarea asp-for="RequiredSupport" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="Risks">«·„Œ«ÿ— «·„ Êﬁ⁄…</label><textarea asp-for="Risks" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group"><label asp-for="ImprovementOpportunities">›—’ «· Õ”Ì‰</label><textarea asp-for="ImprovementOpportunities" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group"><label asp-for="SuccessStories">ﬁ’’ «·‰Ã«Õ «·„‰Ã“…</label><textarea asp-for="SuccessStories" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="InitialRecommendation">«· Ê’Ì… «·√Ê·Ì… «·„ﬁ —Õ… „‰ «·ÃÂ…</label><textarea asp-for="InitialRecommendation" class="ctp-input" rows="2"></textarea></div>
             </div>
         </fieldset>
 
         <input type="hidden" asp-for="ActionType" id="ActionType" />
+
         <div class="d-flex gap-2 flex-wrap">
             <button type="submit" class="moda-btn moda-btn-gold" onclick="document.getElementById('ActionType').value='Submit';">
-                <i class="bi bi-send"></i> ≈⁄«œ… ≈—”«· ·«⁄ „«œ «·ÃÂ…
+                <i class="bi bi-send-check"></i> ≈⁄«œ… ≈—”«· ·«⁄ „«œ «·ÃÂ…
             </button>
             <button type="submit" class="moda-btn moda-btn-outline" onclick="document.getElementById('ActionType').value='Draft';">
-                <i class="bi bi-save"></i> Õ›Ÿ «· ⁄œÌ·«  ?„”Êœ…
+                <i class="bi bi-save"></i> Õ›Ÿ «· ⁄œÌ·«  ﬂ„”Êœ…
             </button>
             <a asp-action="Index" class="moda-btn moda-btn-secondary">≈·€«¡</a>
         </div>
@@ -6424,6 +8906,27 @@ File: \CTP.Web\Areas\Ambassador\Views\Report\Edit.cshtml
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputs = document.querySelectorAll('.adkar-calc');
+            const dispReadiness = document.getElementById('dispReadiness');
+            const dispAdoption = document.getElementById('dispAdoption');
+
+            function recalculateScores() {
+                const a = parseInt(document.getElementById('adkarA').value) || 0;
+                const d = parseInt(document.getElementById('adkarD').value) || 0;
+                const k = parseInt(document.getElementById('adkarK').value) || 0;
+                const ab = parseInt(document.getElementById('adkarAb').value) || 0;
+                const r = parseInt(document.getElementById('adkarR').value) || 0;
+
+                dispReadiness.textContent = Math.round((a + d + k) / 3) + "%";
+                dispAdoption.textContent = Math.round((ab + r) / 2) + "%";
+            }
+
+            inputs.forEach(input => input.addEventListener('input', recalculateScores));
+            recalculateScores(); //  ‰›Ì– √Ê·Ì ⁄‰œ  Õ„Ì· «·’›Õ…
+        });
+    </script>
 }
 
 
@@ -6746,6 +9249,7 @@ using CTP.Domain.Entities;
 using CTP.Web.Areas.UnitLeader.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CTP.Application.Helpers;
 
 namespace CTP.Web.Areas.UnitLeader.Controllers
 {
@@ -6754,15 +9258,21 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
     public class DashboardController : Controller
     {
         private readonly IMonthlyReportService _reportService;
+        private readonly INotificationService _notificationService; //  „ ≈÷«›… Œœ„… «·≈‘⁄«—«  Â‰«
 
-        public DashboardController(IMonthlyReportService reportService) => _reportService = reportService;
+        // Õﬁ‰ «·Œœ„ Ì‰ ›Ì «·»‰¯«¡
+        public DashboardController(IMonthlyReportService reportService, INotificationService notificationService)
+        {
+            _reportService = reportService;
+            _notificationService = notificationService;
+        }
 
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             ViewData["EntityTitle"] = "„”«Õ… ﬁ«∆œ «·ÊÕœ… / «·≈œ«—…";
             ViewData["EntityHeaderSubtitle"] = "„ÊÃ“ «·„Êﬁ› Ê«⁄ „«œ «· ﬁ«—Ì— «·‘Â—Ì… «·Ê«—œ… „‰ ”›—«¡ «· €ÌÌ—";
-            ViewData["ThemeColor"] = "#0B4F61"; // ·Ê‰ „Œ’’ ··ﬁÌ«œ…
+            ViewData["ThemeColor"] = "#0B4F61";
             ViewData["EntityHeaderIcon"] = "bi-building-check";
 
             var orgIdStr = User.FindFirst("OrganizationId")?.Value;
@@ -6778,7 +9288,7 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
                 PreparerName = r.Preparer?.FullName ?? "€Ì— „Õœœ",
                 ChangeName = r.ChangeName,
                 ReadinessScore = r.ReadinessScore,
-                SubmittedDate = r.SubmittedDate?.ToString("yyyy/MM/dd") ?? "-"
+                SubmittedDate = r.SubmittedDate.ToHijri()
             }).ToList();
 
             return View(viewModel);
@@ -6788,12 +9298,38 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Review(int id, bool isApproved, string? notes)
         {
+            // Ã·» «· ﬁ—Ì— √Ê·« ·„⁄—›… ’«Õ»Â («·”›Ì—) ·ﬂÌ ‰—”· ·Â «·≈‘⁄«—
+            var report = await _reportService.GetReportByIdAsync(id);
+            if (report == null) return NotFound();
+
             var success = await _reportService.ReviewReportAsync(id, isApproved, notes);
 
             if (success)
+            {
                 TempData["Success"] = isApproved ? " „ «⁄ „«œ «· ﬁ—Ì— Ê≈Õ«· Â ··Ã‰… »‰Ã«Õ." : " „ ≈⁄«œ… «· ﬁ—Ì— ··”›Ì— ··«” ﬂ„«·.";
+
+                // ≈—”«· «·≈‘⁄«— «·¬·Ì ··”›Ì— »‰«¡ ⁄·Ï «·ﬁ—«—
+                string notifTitle = isApproved ? "«⁄ „«œ  ﬁ—Ì—" : "≈⁄«œ…  ﬁ—Ì— ··«” ﬂ„«·";
+                string notifMessage = isApproved
+                    ? $" „ «⁄ „«œ  ﬁ—Ì— «· €ÌÌ— ({report.ChangeName}) „‰ ﬁ»· «·ﬁÌ«œ… »‰Ã«Õ."
+                    : $" „  ≈⁄«œ…  ﬁ—Ì— ({report.ChangeName}) ·ÊÃÊœ „·«ÕŸ« : {notes ?? "·«  ÊÃœ „·«ÕŸ«  ≈÷«›Ì…."}";
+
+                string icon = isApproved ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill";
+                string color = isApproved ? "text-success" : "text-danger";
+
+                await _notificationService.CreateNotificationAsync(
+                    userId: report.PreparerId,
+                    title: notifTitle,
+                    message: notifMessage,
+                    url: "/Ambassador/Report/Index",
+                    iconClass: icon,
+                    colorClass: color
+                );
+            }
             else
+            {
                 TempData["Error"] = "ÕœÀ Œÿ√ √À‰«¡ „⁄«·Ã… «· ﬁ—Ì—.";
+            }
 
             return RedirectToAction(nameof(Index));
         }
@@ -6806,7 +9342,6 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
 
             var report = await _reportService.GetReportByIdAsync(id);
 
-            // Õ„«Ì… (Security Check): «· √ﬂœ „‰ ÊÃÊœ «· ﬁ—Ì— Ê√‰Â Ì »⁄ ·ÃÂ… «·ﬁ«∆œ Ê√‰Â »«‰ Ÿ«— «·«⁄ „«œ
             if (report == null || report.OrganizationEntityId != orgId || report.Status != CTP.Domain.Enums.ReportStatus.Submitted)
             {
                 TempData["Error"] = "«· ﬁ—Ì— €Ì— „ «Õ √Ê ·«  „·ﬂ ’·«ÕÌ… «·Ê’Ê· ≈·ÌÂ.";
@@ -7291,6 +9826,99 @@ namespace CTP.Web.Controllers
 
 
 ======================================================
+File: \CTP.Web\Controllers\ChangeBoardController.cs
+======================================================
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using CTP.Application.Interfaces.Services;
+using CTP.Application.Helpers;
+using CTP.Web.Models;
+
+namespace CTP.Web.Controllers
+{
+    [Authorize] // „ «Õ ·Ã„Ì⁄ «·√œÊ«—
+    public class ChangeBoardController : Controller
+    {
+        private readonly IMonthlyReportService _reportService;
+
+        public ChangeBoardController(IMonthlyReportService reportService)
+        {
+            _reportService = reportService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            ViewData["EntityTitle"] = "·ÊÕ… «· €ÌÌ—«  «·Ã«—Ì…";
+            ViewData["EntityHeaderSubtitle"] = "«” ⁄—«÷ ﬂ«›… «· €ÌÌ—«  Ê«·„»«œ—«  «·„⁄ „œ… œ«Œ· ÊÕœ ﬂ";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-kanban";
+
+            var orgIdStr = User.FindFirst("OrganizationId")?.Value;
+            if (!int.TryParse(orgIdStr, out int orgId))
+            {
+                TempData["Error"] = "·„ Ì „ «· ⁄—› ⁄·Ï «·ÃÂ… «·Œ«’… »ﬂ.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var reports = await _reportService.GetUnitActiveChangesAsync(orgId);
+
+            var viewModel = reports.Select(r => new ChangeCardViewModel
+            {
+                Id = r.Id,
+                ChangeName = r.ChangeName,
+                ChangeType = r.ChangeType,
+                CurrentStage = r.CurrentStage,
+                ChangeSummary = r.ChangeSummary ?? "·« ÌÊÃœ „·Œ’ „ «Õ.",
+                ReadinessScore = r.ReadinessScore,
+                AmbassadorName = r.Preparer?.FullName ?? "€Ì— „Õœœ",
+                ApprovedDateHijri = r.ApprovedDate.ToHijri()
+            }).ToList();
+
+            return View(viewModel);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            ViewData["EntityTitle"] = "«· €ÌÌ—«  «·Ã«—Ì…";
+            ViewData["EntityHeaderSubtitle"] = "»ÿ«ﬁ«  Ê«÷Õ…  ÃÌ» ⁄‰ «·√”∆·… «·√”«”Ì… ·ﬂ·  €ÌÌ— Ã«—Ú ›Ì «·„‰ŸÊ„….";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-layout-text-window-reverse";
+
+            var orgIdStr = User.FindFirst("OrganizationId")?.Value;
+            if (!int.TryParse(orgIdStr, out int orgId)) return RedirectToAction("Index", "Home");
+
+            var report = await _reportService.GetReportByIdAsync(id);
+
+            // Õ„«Ì…: «· √ﬂœ „‰ √‰ «· ﬁ—Ì— „⁄ „œ ÊÌ »⁄ ·ÃÂ… «·„ÊŸ›
+            if (report == null || report.OrganizationEntityId != orgId || report.Status != CTP.Domain.Enums.ReportStatus.Approved)
+            {
+                TempData["Error"] = "«·»ÿ«ﬁ… €Ì— „ «Õ… √Ê ·«  „·ﬂ ’·«ÕÌ… «·Ê’Ê· ≈·ÌÂ«.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var viewModel = new ChangeCardDetailsViewModel
+            {
+                Id = report.Id,
+                ChangeName = report.ChangeName,
+                ChangeType = report.ChangeType,
+                ChangeSummary = string.IsNullOrWhiteSpace(report.ChangeSummary) ? "·«  ÊÃœ  ›«’Ì· ≈÷«›Ì…." : report.ChangeSummary,
+                WhyImportant = string.IsNullOrWhiteSpace(report.WhyImportant) ? "-" : report.WhyImportant,
+                WhatWillChange = string.IsNullOrWhiteSpace(report.WhatWillChange) ? "-" : report.WhatWillChange,
+                WhatWillNotChange = string.IsNullOrWhiteSpace(report.WhatWillNotChange) ? "-" : report.WhatWillNotChange,
+                AffectedGroups = string.IsNullOrWhiteSpace(report.AffectedGroups) ? "ﬂ«›… «·„‰”Ê»Ì‰" : report.AffectedGroups,
+                ExecutedActivities = string.IsNullOrWhiteSpace(report.ExecutedActivities) ? "«·«ÿ·«⁄ ⁄·Ï «·√œ·… «·≈—‘«œÌ…" : report.ExecutedActivities,
+                AmbassadorName = report.Preparer?.FullName ?? "≈œ«—… «· €ÌÌ—"
+            };
+
+            return View(viewModel);
+        }
+    }
+}
+
+
+
+======================================================
 File: \CTP.Web\Controllers\HomeController.cs
 ======================================================
 //using CTP.Web.Models;
@@ -7488,6 +10116,52 @@ namespace CTP.Web.Models.Navigation
 
 
 ======================================================
+File: \CTP.Web\Models\ChangeCardDetailsViewModel.cs
+======================================================
+namespace CTP.Web.Models
+{
+    public class ChangeCardDetailsViewModel
+    {
+        public int Id { get; set; }
+        public string ChangeName { get; set; } = string.Empty;
+        public string ChangeType { get; set; } = string.Empty;
+
+        // «·√”∆·… «·√”«”Ì… «·„” „œ… „‰ «· ﬁ—Ì—
+        public string? ChangeSummary { get; set; }     // „« «· €ÌÌ—ø
+        public string? WhyImportant { get; set; }      // ·„«–« Â–« «· €ÌÌ—ø
+        public string? WhatWillChange { get; set; }    // „«–« ”Ì €Ì—ø
+        public string? WhatWillNotChange { get; set; } // „«–« ·‰ Ì €Ì—ø
+        public string? AffectedGroups { get; set; }    // „‰ «·›∆«  «·„ √À—…ø
+        public string? ExecutedActivities { get; set; } // «·√‰‘ÿ… / ﬂÌ› ‰” ⁄œø
+
+        // «·œ⁄„ Êﬁ‰Ê«  «· Ê«’·
+        public string AmbassadorName { get; set; } = string.Empty; // «·ﬁ‰«… «·—”„Ì…
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Models\ChangeCardViewModel.cs
+======================================================
+namespace CTP.Web.Models
+{
+    public class ChangeCardViewModel
+    {
+        public int Id { get; set; }
+        public string ChangeName { get; set; } = string.Empty;
+        public string ChangeType { get; set; } = string.Empty;
+        public string CurrentStage { get; set; } = string.Empty;
+        public string ChangeSummary { get; set; } = string.Empty;
+        public int ReadinessScore { get; set; }
+        public string AmbassadorName { get; set; } = string.Empty;
+        public string ApprovedDateHijri { get; set; } = string.Empty;
+    }
+}
+
+
+
+======================================================
 File: \CTP.Web\Models\ErrorViewModel.cs
 ======================================================
 namespace CTP.Web.Models
@@ -7520,6 +10194,7 @@ namespace CTP.Web.ViewComponents
             // 1. ÿßŸÑŸÇÿßÿ¶ŸÖÿ© ÿßŸÑÿ£ÿ≥ÿßÿ≥Ÿäÿ© (ŸÑŸÑÿ¨ŸÖŸäÿπ)
             var mainSection = new MenuSection { Title = "ÿßŸÑÿ±ÿ¶Ÿäÿ≥Ÿäÿ©" };
             mainSection.Items.Add(new MenuItem { Title = "ŸÑŸàÿ≠ÿ© ÿßŸÑŸÇŸäÿßÿ≥", IconClass = "bi-speedometer2", Url = "/Home/Index" });
+            mainSection.Items.Add(new MenuItem { Title = "ŸÑŸàÿ≠ÿ© ÿßŸÑÿ™ÿ∫ŸäŸäÿ±ÿßÿ™", IconClass = "bi-kanban", Url = "/ChangeBoard/Index" });
             menu.Add(mainSection);
 
             // 2. ŸÖÿ≥ÿßÿ≠ÿ© ÿ±ÿ¶Ÿäÿ≥ ŸÑÿ¨ŸÜÿ© ÿ¥ÿ±ŸÉÿßÿ° ÿßŸÑÿ™ÿ∫ŸäŸäÿ± ŸàÿßŸÑŸÇŸäÿßÿØÿ©
@@ -7761,6 +10436,259 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace CTP.Web.Views.Account
 {
     public class LoginModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Views\ChangeBoard\Details.cshtml
+======================================================
+@model CTP.Web.Models.ChangeCardDetailsViewModel
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .change-card-wrapper {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-right: 4px solid var(--moda-section-accent);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 40px;
+        }
+
+        .change-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .change-card-title {
+            color: #0B4F61;
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        .change-type-badge {
+            background-color: #FBF4DE;
+            color: #C9A227;
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .q-grid {
+            display: grid;
+            /* 4 √⁄„œ… ›Ì «·‘«‘«  «·ﬂ»Ì—…° ⁄„ÊœÌ‰ ›Ì «·„ Ê”ÿ…° Ê⁄„Êœ ›Ì «·ÃÊ«· */
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .q-box {
+            background-color: #FDFDFD;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+            .q-box:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(11, 79, 97, 0.05);
+                border-color: #CBD5E1;
+            }
+
+        .q-title {
+            color: #0B4F61;
+            font-weight: 800;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .q-answer {
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4">
+
+    <div class="change-card-wrapper">
+        <div class="change-card-header">
+            <h2 class="change-card-title">@Model.ChangeName</h2>
+            <span class="change-type-badge">@Model.ChangeType</span>
+        </div>
+
+        <div class="q-grid">
+            <!-- «·’‰œÊﬁ 1 -->
+            <div class="q-box">
+                <h5 class="q-title">„« «· €ÌÌ—ø</h5>
+                <p class="q-answer">@Model.ChangeSummary</p>
+            </div>
+
+            <!-- «·’‰œÊﬁ 2 -->
+            <div class="q-box">
+                <h5 class="q-title">·„«–« Â–« «· €ÌÌ—ø</h5>
+                <p class="q-answer">@Model.WhyImportant</p>
+            </div>
+
+            <!-- «·’‰œÊﬁ 3 -->
+            <div class="q-box">
+                <h5 class="q-title">„«–« ”Ì €Ì—ø</h5>
+                <p class="q-answer">@Model.WhatWillChange</p>
+            </div>
+
+            <!-- «·’‰œÊﬁ 4 -->
+            <div class="q-box">
+                <h5 class="q-title">„«–« ·‰ Ì €Ì—ø</h5>
+                <p class="q-answer">@Model.WhatWillNotChange</p>
+            </div>
+
+            <!-- «·’‰œÊﬁ 5 -->
+            <div class="q-box">
+                <h5 class="q-title">„‰ «·›∆«  «·„ √À—…ø</h5>
+                <p class="q-answer">@Model.AffectedGroups</p>
+            </div>
+
+            <!-- «·’‰œÊﬁ 6 -->
+            <div class="q-box">
+                <h5 class="q-title">ﬂÌ› ‰” ⁄œø («·√‰‘ÿ…)</h5>
+                <p class="q-answer">@Model.ExecutedActivities</p>
+            </div>
+
+            <!-- «·’‰œÊﬁ 7 („œ„Ã ¬·Ì« ·· ﬁ·Ì· „‰ ⁄»¡ «·≈œŒ«·) -->
+            <div class="q-box">
+                <h5 class="q-title">„« «·ﬁ‰Ê«  «·—”„Ì… ··«” ›”«—ø</h5>
+                <p class="q-answer">
+                    Ì„ﬂ‰ﬂ  ÊÃÌÂ «” ›”«—« ﬂ ÕÊ· Â–« «· €ÌÌ— „»«‘—… ≈·Ï ”›Ì— «· €ÌÌ— ›Ì ÃÂ ﬂ <strong>(@Model.AmbassadorName)</strong> ··Õ’Ê· ⁄·Ï «·œ⁄„ Ê«· ÊÃÌÂ «··«“„Ì‰.
+                </p>
+            </div>
+
+            <!-- “— «·⁄Êœ… -->
+            <div class="d-flex align-items-end justify-content-end" style="grid-column: 1 / -1; margin-top: 10px;">
+                <a asp-action="Index" class="moda-btn moda-btn-outline">
+                    <i class="bi bi-arrow-right me-2"></i> «·⁄Êœ… ··ÊÕ… «· €ÌÌ—« 
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Views\ChangeBoard\Details.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Views.ChangeBoard
+{
+    public class DetailsModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Views\ChangeBoard\Index.cshtml
+======================================================
+@model IEnumerable<CTP.Web.Models.ChangeCardViewModel>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge" style="background-color: rgba(16,105,129,0.1); color: #106981;">@item.ChangeType</span>
+                                <span class="badge bg-success">@item.CurrentStage</span>
+                            </div>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none text-dark">
+                                <h5 class="card-title fw-bold mb-1" style="color: #0B4F61;">@item.ChangeName <i class="bi bi-box-arrow-in-up-left small text-muted"></i></h5>
+                            </a>
+                            <small class="text-muted"><i class="bi bi-calendar-check"></i> «⁄ ı„œ ›Ì: @item.ApprovedDateHijri</small>
+                        </div>
+
+                        <div class="card-body">
+                            <p class="card-text text-secondary" style="font-size: 0.95rem;">
+                                @item.ChangeSummary
+                            </p>
+
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-bold text-dark">„ƒ‘— «·Ã«Â“Ì…</span>
+                                    <span class="small fw-bold text-primary">@item.ReadinessScore%</span>
+                                </div>
+                                <div class="progress" style="height: 8px; border-radius: 4px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: @item.ReadinessScore%" aria-valuenow="@item.ReadinessScore" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light border-top-0 py-3 text-muted small d-flex align-items-center">
+                            <i class="bi bi-person-badge-fill me-2 fs-5"></i>
+                            <span>«·”›Ì—: <strong>@item.AmbassadorName</strong></span>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-secondary text-center py-5 border-0" style="border-radius: 16px;">
+                    <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="text-muted">·«  ÊÃœ »ÿ«ﬁ«   €ÌÌ— „⁄ „œ… Õ«·Ì« ›Ì ÊÕœ ﬂ.</h5>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Views\ChangeBoard\Index.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Views.ChangeBoard
+{
+    public class IndexModel : PageModel
     {
         public void OnGet()
         {
@@ -8086,16 +11014,15 @@ File: \CTP.Web\Views\Shared\_Layout.cshtml
 
                 <div class="moda-topbar-left align-items-center d-flex gap-3">
 
-                    <!-- Global Notifications Dropdown -->
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <div class="dropdown notification-dropdown-wrapper">
-                            <a href="javascript:void(0);" class="moda-notification-bell text-decoration-none" id="notifDropdown" role="button" aria-expanded="false" style="position: relative;">
+                        <div class="notification-dropdown-wrapper" style="position: relative;">
+                            <a href="javascript:void(0);" class="moda-notification-bell text-decoration-none" id="notifDropdown">
                                 <i class="bi bi-bell-fill"></i>
                                 <span class="moda-notification-badge" id="notificationBadge" style="display:none;">0</span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-0 pt-2 pb-2 animate-fade" aria-labelledby="notifDropdown" id="notificationList" style="width: 340px; max-height: 400px; overflow-y: auto; border-radius: 12px; display: none;">
-                                <li><div class="dropdown-item text-center text-muted small py-3"><span class="spinner-border spinner-border-sm me-2"></span> ÿ¨ÿßÿ±Ÿä ÿßŸÑÿ™ÿ≠ŸÖŸäŸÑ...</div></li>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 animate-fade" id="notificationList" style="width: 340px; max-height: 400px; overflow-y: auto; border-radius: 12px; display: none; position: absolute; right: 0; top: 100%;">
+                                <li><div class="dropdown-item text-center text-muted small py-4"><span class="spinner-border spinner-border-sm me-2"></span> ÿ¨ÿßÿ±Ÿä ÿßŸÑÿ™ÿ≠ŸÖŸäŸÑ...</div></li>
                             </ul>
                         </div>
                     }
@@ -8205,14 +11132,12 @@ File: \CTP.Web\Views\Shared\_Layout.cshtml
             }
 
             $(document).ready(function() {
-                        @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <text>
-                                loadNotifications();
-                                setInterval(loadNotifications, 60000);
-                        </text>
+                var isAuthenticated = '@(User.Identity?.IsAuthenticated == true ? "true" : "false")' === 'true';
+                if (isAuthenticated) {
+                    loadNotifications();
+                    setInterval(loadNotifications, 60000);
                 }
-                    });
+            });
 
             // 2. Hijri / Gregorian Date Renderer
             (function() {
@@ -8256,23 +11181,32 @@ File: \CTP.Web\Views\Shared\_Layout.cshtml
 
                 if (wrapper && menu) {
                     let timeout;
+                    let isMarkingAsRead = false; // ŸÖŸÅÿ™ÿßÿ≠ ÿßŸÑÿ£ŸÖÿßŸÜ ŸÑŸÖŸÜÿπ ÿ™ÿ¨ŸÖŸäÿØ ŸÇÿßÿπÿØÿ© ÿßŸÑÿ®ŸäÿßŸÜÿßÿ™ (SQLite Lock)
 
-                    // ÿ•ÿ∏Ÿáÿßÿ± ÿßŸÑŸÇÿßÿ¶ŸÖÿ© ÿπŸÜÿØ ÿ™ŸÖÿ±Ÿäÿ± ÿßŸÑŸÖÿ§ÿ¥ÿ± (Hover In)
+                    // ÿ•ÿ∏Ÿáÿßÿ± ÿßŸÑŸÇÿßÿ¶ŸÖÿ© ÿπŸÜÿØ ÿ™ŸÖÿ±Ÿäÿ± ÿßŸÑŸÖÿ§ÿ¥ÿ±
                     wrapper.addEventListener('mouseenter', function() {
                         clearTimeout(timeout);
                         menu.style.display = 'block';
 
-                        // ÿπŸÜÿØ ŸÅÿ™ÿ≠ ÿßŸÑŸÇÿßÿ¶ŸÖÿ©ÿå ŸÜÿπÿ™ÿ®ÿ± ÿ£ŸÜ ÿßŸÑŸÖÿ≥ÿ™ÿÆÿØŸÖ ÿßÿ∑ŸÑÿπ ÿπŸÑŸâ ÿßŸÑÿ•ÿ¥ÿπÿßÿ±ÿßÿ™ ŸÅŸÜŸÇŸàŸÖ ÿ®ÿ™ÿµŸÅŸäÿ± ÿßŸÑÿπÿØÿßÿØ ÿ®ÿµŸäÿ∫ÿ© ÿ∫Ÿäÿ± ŸÖÿ™ÿ≤ÿßŸÖŸÜÿ©
-                        if (badge.style.display !== 'none' && badge.textContent.trim() !== '0') {
-                            markNotificationsAsRead();
+                        // ÿßŸÑÿ™ÿ≠ŸÇŸÇ ŸÖŸÜ Ÿàÿ¨ŸàÿØ ÿ•ÿ¥ÿπÿßÿ±ÿßÿ™ ŸàÿπÿØŸÖ Ÿàÿ¨ŸàÿØ ÿ∑ŸÑÿ® ŸÇŸäÿØ ÿßŸÑÿ™ŸÜŸÅŸäÿ∞
+                        if (badge.style.display !== 'none' && badge.textContent.trim() !== '0' && !isMarkingAsRead) {
+                            isMarkingAsRead = true; // ÿ•ÿ∫ŸÑÿßŸÇ ÿßŸÑŸÖŸÅÿ™ÿßÿ≠ ŸÅŸàÿ±ÿßŸã
+
+                            $.post('/Notifications/MarkAsRead', function() {
+                                badge.style.display = 'none';
+                                badge.textContent = '0';
+                            }).fail(function() {
+                                isMarkingAsRead = false; // ÿ•ÿπÿßÿØÿ© ŸÅÿ™ÿ≠ ÿßŸÑŸÖŸÅÿ™ÿßÿ≠ ŸÅŸÇÿ∑ ŸÅŸä ÿ≠ÿßŸÑ ŸÅÿ¥ŸÑ ÿßŸÑÿÆÿßÿØŸÖ
+                                console.error("ÿ™ÿπÿ∞ÿ± ÿ™ÿ≠ÿØŸäÿ´ ÿ≠ÿßŸÑÿ© ÿßŸÑÿ•ÿ¥ÿπÿßÿ±ÿßÿ™.");
+                            });
                         }
                     });
 
-                    // ÿ•ÿÆŸÅÿßÿ° ÿßŸÑŸÇÿßÿ¶ŸÖÿ© ÿπŸÜÿØ ÿ•ÿ®ÿπÿßÿØ ÿßŸÑŸÖÿ§ÿ¥ÿ± (Hover Out) ŸÖÿπ ŸÖŸáŸÑÿ© ÿ≤ŸÖŸÜŸäÿ© ÿ®ÿ≥Ÿäÿ∑ÿ© ŸÑŸÖŸÜÿπ ÿßŸÑÿßÿÆÿ™ŸÅÿßÿ° ÿßŸÑŸÖŸÅÿßÿ¨ÿ¶
+                    // ÿ•ÿÆŸÅÿßÿ° ÿßŸÑŸÇÿßÿ¶ŸÖÿ© ÿπŸÜÿØ ÿ•ÿ®ÿπÿßÿØ ÿßŸÑŸÖÿ§ÿ¥ÿ±
                     wrapper.addEventListener('mouseleave', function() {
                         timeout = setTimeout(function() {
                             menu.style.display = 'none';
-                        }, 200);
+                        }, 250); // ŸÖŸáŸÑÿ© ÿ±ÿ®ÿπ ÿ´ÿßŸÜŸäÿ© ŸÑÿ≠ÿ±ŸÉÿ© ÿ≥ŸÑÿ≥ÿ©
                     });
                 }
             });
@@ -8344,8 +11278,8 @@ var builder = WebApplication.CreateBuilder(args);
 // ==========================================
 builder.Services.AddScoped<ICommitteeRepository, CommitteeRepository>();
 builder.Services.AddScoped<ICommitteeService, CommitteeService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-
 // ÿ•ÿ∂ÿßŸÅÿ© ÿÆÿØŸÖÿßÿ™ MVC (Controllers & Views)
 builder.Services.AddControllersWithViews();
 

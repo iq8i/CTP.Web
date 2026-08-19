@@ -107,16 +107,15 @@
 
                 <div class="moda-topbar-left align-items-center d-flex gap-3">
 
-                    <!-- Global Notifications Dropdown -->
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <div class="dropdown notification-dropdown-wrapper">
-                            <a href="javascript:void(0);" class="moda-notification-bell text-decoration-none" id="notifDropdown" role="button" aria-expanded="false" style="position: relative;">
+                        <div class="notification-dropdown-wrapper" style="position: relative;">
+                            <a href="javascript:void(0);" class="moda-notification-bell text-decoration-none" id="notifDropdown">
                                 <i class="bi bi-bell-fill"></i>
                                 <span class="moda-notification-badge" id="notificationBadge" style="display:none;">0</span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-0 pt-2 pb-2 animate-fade" aria-labelledby="notifDropdown" id="notificationList" style="width: 340px; max-height: 400px; overflow-y: auto; border-radius: 12px; display: none;">
-                                <li><div class="dropdown-item text-center text-muted small py-3"><span class="spinner-border spinner-border-sm me-2"></span> جاري التحميل...</div></li>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 animate-fade" id="notificationList" style="width: 340px; max-height: 400px; overflow-y: auto; border-radius: 12px; display: none; position: absolute; right: 0; top: 100%;">
+                                <li><div class="dropdown-item text-center text-muted small py-4"><span class="spinner-border spinner-border-sm me-2"></span> جاري التحميل...</div></li>
                             </ul>
                         </div>
                     }
@@ -275,23 +274,32 @@
 
                 if (wrapper && menu) {
                     let timeout;
+                    let isMarkingAsRead = false; // مفتاح الأمان لمنع تجميد قاعدة البيانات (SQLite Lock)
 
-                    // إظهار القائمة عند تمرير المؤشر (Hover In)
+                    // إظهار القائمة عند تمرير المؤشر
                     wrapper.addEventListener('mouseenter', function() {
                         clearTimeout(timeout);
                         menu.style.display = 'block';
 
-                        // عند فتح القائمة، نعتبر أن المستخدم اطلع على الإشعارات فنقوم بتصفير العداد بصيغة غير متزامنة
-                        if (badge.style.display !== 'none' && badge.textContent.trim() !== '0') {
-                            markNotificationsAsRead();
+                        // التحقق من وجود إشعارات وعدم وجود طلب قيد التنفيذ
+                        if (badge.style.display !== 'none' && badge.textContent.trim() !== '0' && !isMarkingAsRead) {
+                            isMarkingAsRead = true; // إغلاق المفتاح فوراً
+
+                            $.post('/Notifications/MarkAsRead', function() {
+                                badge.style.display = 'none';
+                                badge.textContent = '0';
+                            }).fail(function() {
+                                isMarkingAsRead = false; // إعادة فتح المفتاح فقط في حال فشل الخادم
+                                console.error("تعذر تحديث حالة الإشعارات.");
+                            });
                         }
                     });
 
-                    // إخفاء القائمة عند إبعاد المؤشر (Hover Out) مع مهلة زمنية بسيطة لمنع الاختفاء المفاجئ
+                    // إخفاء القائمة عند إبعاد المؤشر
                     wrapper.addEventListener('mouseleave', function() {
                         timeout = setTimeout(function() {
                             menu.style.display = 'none';
-                        }, 200);
+                        }, 250); // مهلة ربع ثانية لحركة سلسة
                     });
                 }
             });

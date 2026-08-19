@@ -5,6 +5,7 @@ using CTP.Domain.Entities;
 using CTP.Web.Areas.UnitLeader.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CTP.Application.Helpers;
 
 namespace CTP.Web.Areas.UnitLeader.Controllers
 {
@@ -43,7 +44,7 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
                 PreparerName = r.Preparer?.FullName ?? "غير محدد",
                 ChangeName = r.ChangeName,
                 ReadinessScore = r.ReadinessScore,
-                SubmittedDate = r.SubmittedDate?.ToString("yyyy/MM/dd") ?? "-"
+                SubmittedDate = r.SubmittedDate.ToHijri()
             }).ToList();
 
             return View(viewModel);

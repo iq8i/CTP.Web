@@ -1,0 +1,175 @@
+﻿@model CTP.Domain.Entities.MonthlyReport
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+    <div class="moda-card border-0 shadow-sm p-4" style="border-radius: 16px;">
+
+        <!-- قسم عرض ملاحظات القائد إن وجدت -->
+        @if (!string.IsNullOrEmpty(Model.ApproverNotes))
+        {
+            <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 12px; border-right: 5px solid #ffc107 !important; background-color: #fff8e1;">
+                <i class="bi bi-chat-left-text-fill fs-3 text-warning me-3"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">ملاحظات واعتماد القيادة:</h6>
+                    <p class="mb-0 fs-6 text-dark">@Model.ApproverNotes</p>
+                </div>
+            </div>
+        }
+
+        <!-- الترويسة الأساسية -->
+        <div class="row border-bottom pb-3 mb-4">
+            <div class="col-md-5">
+                <h6 class="text-muted mb-1">اسم التغيير</h6>
+                <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@Model.ChangeName</h4>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted mb-1">المرحلة الحالية</h6>
+                <span class="badge bg-secondary px-3 py-2">@Model.CurrentStage</span>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted mb-1">نوع التغيير</h6>
+                <span class="fw-bold text-dark">@Model.ChangeType</span>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">حالة التقرير</h6>
+                <span class="moda-badge @ViewBag.StatusBadgeClass px-3 py-2" style="font-size: 0.95rem;">
+                    @ViewBag.StatusName
+                </span>
+            </div>
+        </div>
+
+        <!-- نطاق الأثر والفئات -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">نطاق الأثر</h6>
+                <p>@Model.ImpactScope</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">الفئات المتأثرة</h6>
+                <p>@(string.IsNullOrEmpty(Model.AffectedGroups) ? "-" : Model.AffectedGroups)</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">الأكثر احتياجاً للدعم</h6>
+                <p>@(string.IsNullOrEmpty(Model.MostInNeedGroup) ? "-" : Model.MostInNeedGroup)</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted fw-bold mb-1">اكتمال الأنشطة</h6>
+                <div class="progress mt-2" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @Model.ActivityCompletionRate%">@Model.ActivityCompletionRate%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- تفاصيل التغيير -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-card-text me-2"></i> تفاصيل التغيير</h6>
+        <div class="row mb-4 g-3">
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">ما التغيير؟ (الملخص)</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.ChangeSummary) ? "-" : Model.ChangeSummary)</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">لماذا هذا التغيير مهم؟</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhyImportant) ? "-" : Model.WhyImportant)</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">ماذا سيتغير؟</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhatWillChange) ? "-" : Model.WhatWillChange)</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border h-100">
+                    <h6 class="text-muted fw-bold">ماذا لن يتغير؟</h6>
+                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhatWillNotChange) ? "-" : Model.WhatWillNotChange)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- المؤشرات -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-speedometer2 me-2"></i> مؤشرات الأداء (ADKAR)</h6>
+        <div class="row mb-4">
+            <div class="col-md-7">
+                <div class="card bg-light border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2"><span>الوعي (A)</span> <strong>@Model.AdkarAwareness%</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>الرغبة (D)</span> <strong>@Model.AdkarDesire%</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>المعرفة (K)</span> <strong>@Model.AdkarKnowledge%</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>القدرة (A)</span> <strong>@Model.AdkarAbility%</strong></div>
+                        <div class="d-flex justify-content-between"><span>التعزيز (R)</span> <strong>@Model.AdkarReinforcement%</strong></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card border-0 h-100" style="background-color: #FDF9EC;">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <div class="row">
+                            <div class="col-6">
+                                <h2 class="text-primary fw-bold mb-0">@Model.ReadinessScore%</h2>
+                                <span class="text-muted small">الجاهزية العامة</span>
+                            </div>
+                            <div class="col-6">
+                                <h2 class="text-success fw-bold mb-0">@Model.AdoptionScore%</h2>
+                                <span class="text-muted small">التبني العام</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- التحديات والدعم -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-shield-exclamation me-2"></i> التحديات والدعم والمخاطر</h6>
+        <div class="row mb-5 g-3">
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-danger-subtle h-100">
+                    <h6 class="text-danger fw-bold">العوائق والتحديات</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.Obstacles) ? "-" : Model.Obstacles)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-warning-subtle h-100">
+                    <h6 class="text-warning fw-bold">عوائق التبني</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.AdoptionBarriers) ? "-" : Model.AdoptionBarriers)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-info-subtle h-100">
+                    <h6 class="text-info fw-bold">الدعم المطلوب</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.RequiredSupport) ? "-" : Model.RequiredSupport)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-secondary h-100">
+                    <h6 class="text-muted fw-bold">المخاطر</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.Risks) ? "-" : Model.Risks)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-success-subtle h-100">
+                    <h6 class="text-success fw-bold">قصص النجاح</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.SuccessStories) ? "-" : Model.SuccessStories)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-white rounded border border-primary-subtle h-100">
+                    <h6 class="text-primary fw-bold">التوصية الأولية المقترحة</h6>
+                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.InitialRecommendation) ? "-" : Model.InitialRecommendation)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end border-top pt-3">
+            <a asp-action="Index" class="moda-btn moda-btn-outline">
+                <i class="bi bi-arrow-right"></i> العودة للسجل
+            </a>
+        </div>
+    </div>
+</div>

@@ -5,6 +5,7 @@ using CTP.Domain.Enums;
 using CTP.Web.Areas.Ambassador.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CTP.Application.Helpers;
 
 namespace CTP.Web.Areas.Ambassador.Controllers
 {
@@ -36,21 +37,20 @@ namespace CTP.Web.Areas.Ambassador.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "يرجى التأكد من تعبئة الحقول الإلزامية.";
+                TempData["Error"] = "يرجى التأكد من استكمال الحقول الإلزامية.";
                 return View(model);
             }
 
-            // استخراج هوية المستخدم وجهته من الجلسة الموثوقة (Claims)
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var orgIdStr = User.FindFirst("OrganizationId")?.Value;
 
             if (!int.TryParse(userIdStr, out int preparerId) || !int.TryParse(orgIdStr, out int orgId))
             {
-                TempData["Error"] = "حدث خطأ في قراءة بيانات المستخدم والجهة. يرجى إعادة تسجيل الدخول.";
+                TempData["Error"] = "انتهت صلاحية الجلسة، يرجى إعادة تسجيل الدخول.";
                 return RedirectToAction("Login", "Account", new { area = "" });
             }
 
-            // الحساب التلقائي لمعادلات التبني والجاهزية
+            // الحساب الرياضي للمؤشرات
             int readiness = (model.AdkarAwareness + model.AdkarDesire + model.AdkarKnowledge) / 3;
             int adoption = (model.AdkarAbility + model.AdkarReinforcement) / 2;
 
@@ -63,7 +63,15 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ChangeName = model.ChangeName,
                 ChangeType = model.ChangeType,
                 CurrentStage = model.CurrentStage,
+                AffectedGroups = model.AffectedGroups,
+                ImpactScope = model.ImpactScope,
+                MostInNeedGroup = model.MostInNeedGroup,
+                ActivityCompletionRate = model.ActivityCompletionRate,
                 ChangeSummary = model.ChangeSummary,
+                WhyImportant = model.WhyImportant,
+                WhatWillChange = model.WhatWillChange,
+                WhatWillNotChange = model.WhatWillNotChange,
+                ExecutedActivities = model.ExecutedActivities,
                 AdkarAwareness = model.AdkarAwareness,
                 AdkarDesire = model.AdkarDesire,
                 AdkarKnowledge = model.AdkarKnowledge,
@@ -72,9 +80,11 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ReadinessScore = readiness,
                 AdoptionScore = adoption,
                 Obstacles = model.Obstacles,
-                InitialRecommendation = model.InitialRecommendation,
-
-                // تحديد الحالة بناءً على الزر الذي تم الضغط عليه
+                AdoptionBarriers = model.AdoptionBarriers,
+                RequiredSupport = model.RequiredSupport,
+                Risks = model.Risks,
+                ImprovementOpportunities = model.ImprovementOpportunities,
+                SuccessStories = model.SuccessStories,
                 Status = model.ActionType == "Submit" ? ReportStatus.Submitted : ReportStatus.Draft,
                 SubmittedDate = model.ActionType == "Submit" ? DateTime.Now : null
             };
@@ -82,11 +92,10 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             await _reportService.CreateReportAsync(report);
 
             TempData["Success"] = model.ActionType == "Submit"
-                ? $"تم رفع التقرير بنجاح برقم: {report.ReportNumber}"
+                ? $"تم رفع التقرير للاعتماد بنجاح برقم: {report.ReportNumber}"
                 : $"تم حفظ المسودة بنجاح برقم: {report.ReportNumber}";
 
-            // توجيه مبدئي لنفس الصفحة (لحين بناء شاشة عرض تقارير السفير)
-            return RedirectToAction(nameof(Create));
+            return RedirectToAction(nameof(Index));
         }
         [HttpGet]
         [HttpGet]
@@ -112,7 +121,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ReportNumber = r.ReportNumber,
                 MonthYear = $"{r.Month} {r.Year}",
                 ChangeName = r.ChangeName,
-                CreatedDateFormatted = r.CreatedDate.ToString("yyyy/MM/dd"),
+                CreatedDateFormatted = r.CreatedDate.ToHijri(),
                 IsDraft = r.Status == ReportStatus.Draft || r.Status == ReportStatus.Returned, // المعاد يعامل معاملة المسودة ليتمكن من تعديله
                 StatusName = GetStatusName(r.Status),
                 StatusBadgeClass = GetStatusBadgeClass(r.Status)
@@ -142,6 +151,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
         };
 
         [HttpGet]
+        [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
             var report = await _reportService.GetReportByIdAsync(id);
@@ -153,6 +163,10 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             ViewData["EntityTitle"] = "تفاصيل التقرير";
             ViewData["EntityHeaderSubtitle"] = $"تقرير رقم {report.ReportNumber}";
             ViewData["ThemeColor"] = "#C9A227";
+
+            // استغلال الدوال الموجودة مسبقاً في المتحكم
+            ViewBag.StatusName = GetStatusName(report.Status);
+            ViewBag.StatusBadgeClass = GetStatusBadgeClass(report.Status);
 
             return View(report); // سنمرر الـ Entity مباشرة هنا للسرعة، أو استخدم ViewModel
         }
@@ -183,13 +197,26 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 ChangeName = report.ChangeName,
                 ChangeType = report.ChangeType,
                 CurrentStage = report.CurrentStage,
+                AffectedGroups = report.AffectedGroups,
+                ImpactScope = report.ImpactScope ?? "الجهة",
+                MostInNeedGroup = report.MostInNeedGroup,
+                ActivityCompletionRate = report.ActivityCompletionRate,
                 ChangeSummary = report.ChangeSummary,
+                WhyImportant = report.WhyImportant,
+                WhatWillChange = report.WhatWillChange,
+                WhatWillNotChange = report.WhatWillNotChange,
+                ExecutedActivities = report.ExecutedActivities,
                 AdkarAwareness = report.AdkarAwareness,
                 AdkarDesire = report.AdkarDesire,
                 AdkarKnowledge = report.AdkarKnowledge,
                 AdkarAbility = report.AdkarAbility,
                 AdkarReinforcement = report.AdkarReinforcement,
                 Obstacles = report.Obstacles,
+                AdoptionBarriers = report.AdoptionBarriers,
+                RequiredSupport = report.RequiredSupport,
+                Risks = report.Risks,
+                ImprovementOpportunities = report.ImprovementOpportunities,
+                SuccessStories = report.SuccessStories,
                 InitialRecommendation = report.InitialRecommendation,
                 ApproverNotes = report.ApproverNotes
             };
@@ -206,21 +233,35 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             var report = await _reportService.GetReportByIdAsync(model.Id);
             if (report == null) return NotFound();
 
-            // تحديث البيانات
+            // تحديث البيانات الشاملة
             report.Year = model.Year;
             report.Month = model.Month;
             report.ChangeName = model.ChangeName;
             report.ChangeType = model.ChangeType;
             report.CurrentStage = model.CurrentStage;
+            report.AffectedGroups = model.AffectedGroups;
+            report.ImpactScope = model.ImpactScope;
+            report.MostInNeedGroup = model.MostInNeedGroup;
+            report.ActivityCompletionRate = model.ActivityCompletionRate;
             report.ChangeSummary = model.ChangeSummary;
+            report.WhyImportant = model.WhyImportant;
+            report.WhatWillChange = model.WhatWillChange;
+            report.WhatWillNotChange = model.WhatWillNotChange;
+            report.ExecutedActivities = model.ExecutedActivities;
             report.AdkarAwareness = model.AdkarAwareness;
             report.AdkarDesire = model.AdkarDesire;
             report.AdkarKnowledge = model.AdkarKnowledge;
             report.AdkarAbility = model.AdkarAbility;
             report.AdkarReinforcement = model.AdkarReinforcement;
             report.Obstacles = model.Obstacles;
+            report.AdoptionBarriers = model.AdoptionBarriers;
+            report.RequiredSupport = model.RequiredSupport;
+            report.Risks = model.Risks;
+            report.ImprovementOpportunities = model.ImprovementOpportunities;
+            report.SuccessStories = model.SuccessStories;
             report.InitialRecommendation = model.InitialRecommendation;
 
+            // إعادة احتساب المؤشرات
             int readiness = (model.AdkarAwareness + model.AdkarDesire + model.AdkarKnowledge) / 3;
             int adoption = (model.AdkarAbility + model.AdkarReinforcement) / 2;
             report.ReadinessScore = readiness;
@@ -230,7 +271,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
 
             await _reportService.UpdateReportAsync(report);
 
-            TempData["Success"] = "تم تحديث التقرير وإرساله بنجاح.";
+            TempData["Success"] = "تم حفظ وتحديث التقرير بنجاح.";
             return RedirectToAction(nameof(Index));
         }
     }

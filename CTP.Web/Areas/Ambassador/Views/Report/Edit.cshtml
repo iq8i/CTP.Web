@@ -1,72 +1,88 @@
 ﻿@model CTP.Web.Areas.Ambassador.Models.EditMonthlyReportViewModel
+@using System.Security.Claims
 @{
     Layout = "_Layout";
 }
 
 @section Styles {
     <style>
-        .ctp-frm {
+        .ctp-fset {
+            border: 1px solid #D6E5EA;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 28px;
+            background: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(11, 79, 97, 0.04);
+            position: relative;
+        }
+
+            .ctp-fset legend {
+                width: auto !important;
+                float: none !important;
+                font-size: 14px;
+                font-weight: 700;
+                color: #0B4F61;
+                background: #FDF9EC;
+                border: 1px solid rgba(201, 162, 39, 0.4);
+                border-radius: 20px;
+                padding: 6px 20px;
+                margin-bottom: 0;
+            }
+
+        .ctp-form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
         }
 
-        .ctp-fld {
+        .ctp-form-group {
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
 
-            .ctp-fld label {
-                font-size: 13px;
-                color: #0B4F61;
-                font-weight: bold;
-                margin-bottom: 0;
-            }
-
-            .ctp-fld input, .ctp-fld select, .ctp-fld textarea {
-                border: 1px solid #D6E5EA;
-                border-radius: 9px;
-                padding: 10px 14px;
-                font-family: inherit;
-                font-size: 13.5px;
-                background: #FFFFFF;
-                transition: all .15s;
-                box-shadow: inset 0 1px 3px rgba(7,59,73,.05);
-                width: 100%;
-            }
-
-                .ctp-fld input:focus, .ctp-fld select:focus, .ctp-fld textarea:focus {
-                    outline: none;
-                    border-color: #C9A227;
-                    box-shadow: 0 0 0 3px rgba(201,162,39,.18);
-                }
-
-            .ctp-fld.wide {
+            .ctp-form-group.full-width {
                 grid-column: 1 / -1;
             }
 
-        fieldset.ctp-fset {
+            .ctp-form-group label {
+                font-size: 13px;
+                font-weight: 700;
+                color: #0B4F61;
+                margin: 0;
+            }
+
+        .ctp-input {
             border: 1px solid #D6E5EA;
-            border-radius: 14px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            background: linear-gradient(180deg, #FFFFFF, #F7FBFC);
-            box-shadow: 0 2px 8px rgba(7,59,73,.07);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            background: #FFFFFF;
+            transition: all 0.2s ease-in-out;
+            width: 100%;
         }
 
-            fieldset.ctp-fset legend {
-                width: auto !important;
-                float: none !important;
-                font-size: 13.5px;
-                font-weight: bold;
-                color: #0B4F61;
-                background: linear-gradient(145deg, #FBF4DE, #F6ECC9);
-                border: 1px solid rgba(201,162,39,.35);
-                border-radius: 16px;
-                padding: 6px 18px;
-                margin-bottom: 0;
+            .ctp-input:focus {
+                outline: none;
+                border-color: #C9A227;
+                box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
             }
+
+        .ctp-input-readonly {
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
+            color: #64748B;
+            cursor: not-allowed;
+            font-weight: 600;
+        }
+
+        .score-box {
+            background: #F8FAFC;
+            border: 1px dashed #CBD5E1;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
     </style>
 }
 
@@ -79,7 +95,7 @@
         <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 12px; border-right: 5px solid #ffc107 !important; background-color: #fff8e1;">
             <i class="bi bi-chat-left-text-fill fs-3 text-warning me-3"></i>
             <div>
-                <h6 class="fw-bold mb-1">ملاحظات قائد الوحدة / الإدارة:</h6>
+                <h6 class="fw-bold mb-1">ملاحظات قائد الوحدة / الإدارة للإستكمال:</h6>
                 <p class="mb-0 fs-6 text-dark">@Model.ApproverNotes</p>
             </div>
         </div>
@@ -90,16 +106,24 @@
         <input type="hidden" asp-for="ReportNumber" />
 
         <fieldset class="ctp-fset">
-            <legend>بيانات التقرير الأساسية</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld">
-                    <label asp-for="Year">سنة التقرير (هجري)</label>
-                    <input asp-for="Year" type="number" />
+            <legend><i class="bi bi-info-circle-fill me-1"></i> بيانات التقرير</legend>
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group">
+                    <label>الجهة التابع لها</label>
+                    <input type="text" class="ctp-input ctp-input-readonly" value="وحدة التحول المؤسسي" readonly />
+                </div>
+                <div class="ctp-form-group">
+                    <label>مُعد التقرير</label>
+                    <input type="text" class="ctp-input ctp-input-readonly" value="@User.FindFirst(ClaimTypes.GivenName)?.Value" readonly />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="Year">سنة التقرير (هجري) <span class="text-danger">*</span></label>
+                    <input asp-for="Year" type="number" class="ctp-input" required />
                     <span asp-validation-for="Year" class="text-danger small"></span>
                 </div>
-                <div class="ctp-fld">
-                    <label asp-for="Month">شهر التقرير</label>
-                    <select asp-for="Month">
+                <div class="ctp-form-group">
+                    <label asp-for="Month">شهر التقرير <span class="text-danger">*</span></label>
+                    <select asp-for="Month" class="ctp-input" required>
                         <option value="محرم">محرم</option>
                         <option value="صفر">صفر</option>
                         <option value="ربيع الأول">ربيع الأول</option>
@@ -118,71 +142,114 @@
         </fieldset>
 
         <fieldset class="ctp-fset">
-            <legend>بيانات التغيير</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld">
-                    <label asp-for="ChangeName">اسم التغيير</label>
-                    <input asp-for="ChangeName" />
+            <legend><i class="bi bi-diagram-3-fill me-1"></i> التغيير</legend>
+            <div class="ctp-form-grid mb-3">
+                <div class="ctp-form-group">
+                    <label asp-for="ChangeName">اسم التغيير <span class="text-danger">*</span></label>
+                    <input asp-for="ChangeName" class="ctp-input" required />
                     <span asp-validation-for="ChangeName" class="text-danger small"></span>
                 </div>
-                <div class="ctp-fld">
+                <div class="ctp-form-group">
                     <label asp-for="ChangeType">نوع التغيير</label>
-                    <select asp-for="ChangeType">
+                    <select asp-for="ChangeType" class="ctp-input">
+                        <option value="تنظيمي">تنظيمي</option>
                         <option value="إجرائي">إجرائي</option>
                         <option value="تقني">تقني</option>
-                        <option value="تنظيمي">تنظيمي</option>
                         <option value="خدمي">خدمي</option>
                         <option value="ثقافي">ثقافي</option>
                     </select>
                 </div>
-                <div class="ctp-fld">
+                <div class="ctp-form-group">
                     <label asp-for="CurrentStage">المرحلة الحالية</label>
-                    <select asp-for="CurrentStage">
+                    <select asp-for="CurrentStage" class="ctp-input">
                         <option value="تعريف">تعريف</option>
                         <option value="تهيئة">تهيئة</option>
                         <option value="تطبيق">تطبيق</option>
                         <option value="تثبيت">تثبيت</option>
                     </select>
                 </div>
-                <div class="ctp-fld wide">
+                <div class="ctp-form-group">
+                    <label asp-for="ImpactScope">نطاق الأثر</label>
+                    <select asp-for="ImpactScope" class="ctp-input">
+                        <option value="الجهة">الجهة</option>
+                        <option value="إدارة محددة">إدارة محددة</option>
+                        <option value="المنظومة كاملة">المنظومة كاملة</option>
+                    </select>
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="AffectedGroups">الفئات المتأثرة</label>
+                    <input asp-for="AffectedGroups" class="ctp-input" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="MostInNeedGroup">الفئة الأكثر احتياجاً للدعم</label>
+                    <input asp-for="MostInNeedGroup" class="ctp-input" />
+                </div>
+                <div class="ctp-form-group">
+                    <label asp-for="ActivityCompletionRate">نسبة اكتمال الأنشطة (%)</label>
+                    <input asp-for="ActivityCompletionRate" type="number" min="0" max="100" class="ctp-input" />
+                </div>
+            </div>
+
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group full-width">
                     <label asp-for="ChangeSummary">ملخص التغيير</label>
-                    <textarea asp-for="ChangeSummary" rows="2"></textarea>
+                    <textarea asp-for="ChangeSummary" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="WhyImportant">لماذا هذا التغيير مهم؟</label>
+                    <textarea asp-for="WhyImportant" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="WhatWillChange">ماذا سيتغير؟</label>
+                    <textarea asp-for="WhatWillChange" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="WhatWillNotChange">ماذا لن يتغير؟</label>
+                    <textarea asp-for="WhatWillNotChange" class="ctp-input" rows="2"></textarea>
+                </div>
+                <div class="ctp-form-group full-width">
+                    <label asp-for="ExecutedActivities">الأنشطة المنفذة</label>
+                    <textarea asp-for="ExecutedActivities" class="ctp-input" rows="2"></textarea>
                 </div>
             </div>
         </fieldset>
 
         <fieldset class="ctp-fset">
-            <legend>مؤشرات ADKAR (نسبة من 0 إلى 100)</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld"><label asp-for="AdkarAwareness">الوعي</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarDesire">الرغبة</label><input asp-for="AdkarDesire" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarKnowledge">المعرفة</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarAbility">القدرة على التطبيق</label><input asp-for="AdkarAbility" type="number" min="0" max="100" /></div>
-                <div class="ctp-fld"><label asp-for="AdkarReinforcement">التعزيز والاستدامة</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" /></div>
+            <legend><i class="bi bi-speedometer2 me-1"></i> المؤشرات (نسبة من 100)</legend>
+            <div class="ctp-form-grid mb-3">
+                <div class="ctp-form-group"><label asp-for="AdkarAwareness">الوعي (A)</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarA" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarDesire">الرغبة (D)</label><input asp-for="AdkarDesire" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarD" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarKnowledge">المعرفة (K)</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarK" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarAbility">القدرة على التطبيق (A)</label><input asp-for="AdkarAbility" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarAb" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarReinforcement">التعزيز والاستدامة (R)</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarR" /></div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="score-box"><span class="text-muted small d-block">الجاهزية العامة</span><h4 class="fw-bold mb-0 text-primary" id="dispReadiness">0%</h4></div></div>
+                <div class="col-md-6"><div class="score-box"><span class="text-muted small d-block">التبني العام</span><h4 class="fw-bold mb-0 text-success" id="dispAdoption">0%</h4></div></div>
             </div>
         </fieldset>
 
         <fieldset class="ctp-fset">
-            <legend>التحديات والتوصيات</legend>
-            <div class="ctp-frm">
-                <div class="ctp-fld wide">
-                    <label asp-for="Obstacles">العوائق والتحديات</label>
-                    <textarea asp-for="Obstacles" rows="2"></textarea>
-                </div>
-                <div class="ctp-fld wide">
-                    <label asp-for="InitialRecommendation">التوصية الأولية المقترحة من الجهة</label>
-                    <textarea asp-for="InitialRecommendation" rows="2"></textarea>
-                </div>
+            <legend><i class="bi bi-shield-exclamation me-1"></i> التحديات والدعم</legend>
+            <div class="ctp-form-grid">
+                <div class="ctp-form-group full-width"><label asp-for="Obstacles">العوائق والتحديات</label><textarea asp-for="Obstacles" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="AdoptionBarriers">عوائق التبني</label><textarea asp-for="AdoptionBarriers" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="RequiredSupport">الدعم المطلوب</label><textarea asp-for="RequiredSupport" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="Risks">المخاطر المتوقعة</label><textarea asp-for="Risks" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="ImprovementOpportunities">فرص التحسين</label><textarea asp-for="ImprovementOpportunities" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="SuccessStories">قصص النجاح المنجزة</label><textarea asp-for="SuccessStories" class="ctp-input" rows="2"></textarea></div>
+                <div class="ctp-form-group full-width"><label asp-for="InitialRecommendation">التوصية الأولية المقترحة من الجهة</label><textarea asp-for="InitialRecommendation" class="ctp-input" rows="2"></textarea></div>
             </div>
         </fieldset>
 
         <input type="hidden" asp-for="ActionType" id="ActionType" />
+
         <div class="d-flex gap-2 flex-wrap">
             <button type="submit" class="moda-btn moda-btn-gold" onclick="document.getElementById('ActionType').value='Submit';">
-                <i class="bi bi-send"></i> إعادة إرسال لاعتماد الجهة
+                <i class="bi bi-send-check"></i> إعادة إرسال لاعتماد الجهة
             </button>
             <button type="submit" class="moda-btn moda-btn-outline" onclick="document.getElementById('ActionType').value='Draft';">
-                <i class="bi bi-save"></i> حفظ التعديلات כمسودة
+                <i class="bi bi-save"></i> حفظ التعديلات كمسودة
             </button>
             <a asp-action="Index" class="moda-btn moda-btn-secondary">إلغاء</a>
         </div>
@@ -191,4 +258,25 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputs = document.querySelectorAll('.adkar-calc');
+            const dispReadiness = document.getElementById('dispReadiness');
+            const dispAdoption = document.getElementById('dispAdoption');
+
+            function recalculateScores() {
+                const a = parseInt(document.getElementById('adkarA').value) || 0;
+                const d = parseInt(document.getElementById('adkarD').value) || 0;
+                const k = parseInt(document.getElementById('adkarK').value) || 0;
+                const ab = parseInt(document.getElementById('adkarAb').value) || 0;
+                const r = parseInt(document.getElementById('adkarR').value) || 0;
+
+                dispReadiness.textContent = Math.round((a + d + k) / 3) + "%";
+                dispAdoption.textContent = Math.round((ab + r) / 2) + "%";
+            }
+
+            inputs.forEach(input => input.addEventListener('input', recalculateScores));
+            recalculateScores(); // تنفيذ أولي عند تحميل الصفحة
+        });
+    </script>
 }

@@ -10,7 +10,7 @@ namespace CTP.Application.Interfaces.Services
         Task<bool> ReviewReportAsync(int reportId, bool isApproved, string? notes);
         Task<MonthlyReport?> GetReportByIdAsync(int id);
         Task<bool> UpdateReportAsync(MonthlyReport report);
-
+        Task<IEnumerable<MonthlyReport>> GetUnitActiveChangesAsync(int orgId);
     }
 
 

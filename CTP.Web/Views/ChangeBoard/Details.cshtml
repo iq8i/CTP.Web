@@ -1,0 +1,144 @@
+﻿@model CTP.Web.Models.ChangeCardDetailsViewModel
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .change-card-wrapper {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-right: 4px solid var(--moda-section-accent);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 40px;
+        }
+
+        .change-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .change-card-title {
+            color: #0B4F61;
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        .change-type-badge {
+            background-color: #FBF4DE;
+            color: #C9A227;
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .q-grid {
+            display: grid;
+            /* 4 أعمدة في الشاشات الكبيرة، عمودين في المتوسطة، وعمود في الجوال */
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .q-box {
+            background-color: #FDFDFD;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+            .q-box:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(11, 79, 97, 0.05);
+                border-color: #CBD5E1;
+            }
+
+        .q-title {
+            color: #0B4F61;
+            font-weight: 800;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .q-answer {
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4">
+
+    <div class="change-card-wrapper">
+        <div class="change-card-header">
+            <h2 class="change-card-title">@Model.ChangeName</h2>
+            <span class="change-type-badge">@Model.ChangeType</span>
+        </div>
+
+        <div class="q-grid">
+            <!-- الصندوق 1 -->
+            <div class="q-box">
+                <h5 class="q-title">ما التغيير؟</h5>
+                <p class="q-answer">@Model.ChangeSummary</p>
+            </div>
+
+            <!-- الصندوق 2 -->
+            <div class="q-box">
+                <h5 class="q-title">لماذا هذا التغيير؟</h5>
+                <p class="q-answer">@Model.WhyImportant</p>
+            </div>
+
+            <!-- الصندوق 3 -->
+            <div class="q-box">
+                <h5 class="q-title">ماذا سيتغير؟</h5>
+                <p class="q-answer">@Model.WhatWillChange</p>
+            </div>
+
+            <!-- الصندوق 4 -->
+            <div class="q-box">
+                <h5 class="q-title">ماذا لن يتغير؟</h5>
+                <p class="q-answer">@Model.WhatWillNotChange</p>
+            </div>
+
+            <!-- الصندوق 5 -->
+            <div class="q-box">
+                <h5 class="q-title">من الفئات المتأثرة؟</h5>
+                <p class="q-answer">@Model.AffectedGroups</p>
+            </div>
+
+            <!-- الصندوق 6 -->
+            <div class="q-box">
+                <h5 class="q-title">كيف نستعد؟ (الأنشطة)</h5>
+                <p class="q-answer">@Model.ExecutedActivities</p>
+            </div>
+
+            <!-- الصندوق 7 (مدمج آلياً للتقليل من عبء الإدخال) -->
+            <div class="q-box">
+                <h5 class="q-title">ما القنوات الرسمية للاستفسار؟</h5>
+                <p class="q-answer">
+                    يمكنك توجيه استفساراتك حول هذا التغيير مباشرة إلى سفير التغيير في جهتك <strong>(@Model.AmbassadorName)</strong> للحصول على الدعم والتوجيه اللازمين.
+                </p>
+            </div>
+
+            <!-- زر العودة -->
+            <div class="d-flex align-items-end justify-content-end" style="grid-column: 1 / -1; margin-top: 10px;">
+                <a asp-action="Index" class="moda-btn moda-btn-outline">
+                    <i class="bi bi-arrow-right me-2"></i> العودة للوحة التغييرات
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

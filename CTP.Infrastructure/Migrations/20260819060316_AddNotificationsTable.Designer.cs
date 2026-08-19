@@ -3,6 +3,7 @@ using System;
 using CTP.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CTP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819060316_AddNotificationsTable")]
+    partial class AddNotificationsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -84,9 +87,6 @@ namespace CTP.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ActivityCompletionRate")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("AdkarAbility")
                         .HasColumnType("INTEGER");
 
@@ -102,15 +102,8 @@ namespace CTP.Infrastructure.Migrations
                     b.Property<int>("AdkarReinforcement")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AdoptionBarriers")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("AdoptionScore")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("AffectedGroups")
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ApprovedDate")
                         .HasColumnType("TEXT");
@@ -142,26 +135,12 @@ namespace CTP.Infrastructure.Migrations
                     b.Property<string>("EvidenceLinks")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ExecutedActivities")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ImpactScope")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ImprovementOpportunities")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("InitialRecommendation")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Month")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("MostInNeedGroup")
-                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Obstacles")
@@ -181,28 +160,10 @@ namespace CTP.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("RequiredSupport")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Risks")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("SubmittedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SuccessStories")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("WhatWillChange")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("WhatWillNotChange")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("WhyImportant")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Year")

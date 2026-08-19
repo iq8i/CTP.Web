@@ -13,6 +13,6 @@ namespace CTP.Application.Interfaces.Repositories
         Task<IEnumerable<MonthlyReport>> GetByOrganizationAndStatusAsync(int orgId, CTP.Domain.Enums.ReportStatus status);
 
         Task<IEnumerable<MonthlyReport>> GetSubmittedReportsAsync();
-
+        Task<IEnumerable<MonthlyReport>> GetApprovedByOrganizationAsync(int orgId);
     }
 }

@@ -69,5 +69,9 @@ namespace CTP.Application.Services
             await _repository.SaveChangesAsync();
             return true;
         }
+        public async Task<IEnumerable<MonthlyReport>> GetUnitActiveChangesAsync(int orgId)
+        {
+            return await _repository.GetApprovedByOrganizationAsync(orgId);
+        }
     }
 }

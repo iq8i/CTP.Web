@@ -1,0 +1,61 @@
+﻿@model IEnumerable<CTP.Web.Models.ChangeCardViewModel>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge" style="background-color: rgba(16,105,129,0.1); color: #106981;">@item.ChangeType</span>
+                                <span class="badge bg-success">@item.CurrentStage</span>
+                            </div>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none text-dark">
+                                <h5 class="card-title fw-bold mb-1" style="color: #0B4F61;">@item.ChangeName <i class="bi bi-box-arrow-in-up-left small text-muted"></i></h5>
+                            </a>
+                            <small class="text-muted"><i class="bi bi-calendar-check"></i> اعتُمد في: @item.ApprovedDateHijri</small>
+                        </div>
+
+                        <div class="card-body">
+                            <p class="card-text text-secondary" style="font-size: 0.95rem;">
+                                @item.ChangeSummary
+                            </p>
+
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-bold text-dark">مؤشر الجاهزية</span>
+                                    <span class="small fw-bold text-primary">@item.ReadinessScore%</span>
+                                </div>
+                                <div class="progress" style="height: 8px; border-radius: 4px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: @item.ReadinessScore%" aria-valuenow="@item.ReadinessScore" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light border-top-0 py-3 text-muted small d-flex align-items-center">
+                            <i class="bi bi-person-badge-fill me-2 fs-5"></i>
+                            <span>السفير: <strong>@item.AmbassadorName</strong></span>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-secondary text-center py-5 border-0" style="border-radius: 16px;">
+                    <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="text-muted">لا توجد بطاقات تغيير معتمدة حالياً في وحدتك.</h5>
+                </div>
+            </div>
+        }
+    </div>
+</div>

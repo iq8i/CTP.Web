@@ -57,5 +57,13 @@ namespace CTP.Infrastructure.Repositories
                 .OrderByDescending(m => m.SubmittedDate)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<MonthlyReport>> GetApprovedByOrganizationAsync(int orgId)
+        {
+            return await _context.MonthlyReports
+                .Include(m => m.Preparer)
+                .Where(m => m.OrganizationEntityId == orgId && m.Status == CTP.Domain.Enums.ReportStatus.Approved)
+                .OrderByDescending(m => m.ApprovedDate)
+                .ToListAsync();
+        }
     }
 }
