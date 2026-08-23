@@ -76,6 +76,7 @@ namespace CTP.Domain.Entities
         public string? ImprovementOpportunities { get; set; }
         public string? SuccessStories { get; set; }
         public string? InitialRecommendation { get; set; }
+        public string? CommitteeRecommendation { get; set; }
 
         // إدارة الحالة والاعتماد
         public ReportStatus Status { get; set; } = ReportStatus.Draft;

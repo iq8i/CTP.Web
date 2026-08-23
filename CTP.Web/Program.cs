@@ -18,6 +18,8 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 // إضافة خدمات MVC (Controllers & Views)
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 // إخبار النظام بوجود طبقة Infrastructure وربط قاعدة البيانات (SQLite)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

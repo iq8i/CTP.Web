@@ -38,9 +38,9 @@ namespace CTP.Application.Services
             if (report == null || report.Status != CTP.Domain.Enums.ReportStatus.Submitted)
                 return false;
 
-            report.Status = isApproved ? CTP.Domain.Enums.ReportStatus.Approved : CTP.Domain.Enums.ReportStatus.Returned;
+            // التعديل الجوهري: القائد يحيلها للجنة (تحت التحليل) بدلاً من الاعتماد النهائي
+            report.Status = isApproved ? CTP.Domain.Enums.ReportStatus.UnderAnalysis : CTP.Domain.Enums.ReportStatus.Returned;
             report.ApproverNotes = notes;
-            if (isApproved) report.ApprovedDate = DateTime.Now;
 
             await _repository.SaveChangesAsync();
             return true;
@@ -50,7 +50,8 @@ namespace CTP.Application.Services
         public async Task<IEnumerable<MonthlyReport>> GetCommitteeInboxReportsAsync()
         {
             var allReports = await _repository.GetSubmittedReportsAsync();
-            return allReports.Where(r => r.Status == CTP.Domain.Enums.ReportStatus.Approved);
+            // التعديل الجوهري: صندوق وارد اللجنة يقرأ فقط ما هو "تحت التحليل"
+            return allReports.Where(r => r.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis);
         }
 
         public async Task<MonthlyReport?> GetReportByIdAsync(int id)
@@ -72,6 +73,18 @@ namespace CTP.Application.Services
         public async Task<IEnumerable<MonthlyReport>> GetUnitActiveChangesAsync(int orgId)
         {
             return await _repository.GetApprovedByOrganizationAsync(orgId);
+        }
+        public async Task<bool> ApproveByCommitteeAsync(int reportId, string recommendation)
+        {
+            var report = await _repository.GetByIdAsync(reportId);
+            if (report == null || report.Status != CTP.Domain.Enums.ReportStatus.UnderAnalysis) return false;
+
+            report.Status = CTP.Domain.Enums.ReportStatus.Approved;
+            report.CommitteeRecommendation = recommendation;
+            report.ApprovedDate = DateTime.Now;
+
+            await _repository.SaveChangesAsync();
+            return true;
         }
     }
 }

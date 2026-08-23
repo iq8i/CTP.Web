@@ -1,0 +1,59 @@
+﻿@model IEnumerable<CTP.Domain.Entities.Recommendation>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title mb-0"><i class="bi bi-journal-text me-2"></i> قاعدة بيانات التوصيات والقرارات</h5>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th>المرجع</th>
+                            <th>المصدر (التقرير)</th>
+                            <th>الجهة المعنية</th>
+                            <th>نوع الفجوة</th>
+                            <th>الإجراء المطلوب</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var rec in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark">@rec.RecommendationNumber</td>
+                                    <td class="small text-muted">@rec.SourceReport?.ReportNumber</td>
+                                    <td class="fw-bold">@(rec.SourceReport?.Organization?.EntityName)</td>
+                                    <td><span class="badge bg-light text-dark border">@rec.GapType</span></td>
+                                    <td class="text-start" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@rec.SuggestedAction">@rec.SuggestedAction</td>
+                                    <td>
+                                        @if (rec.Status.Contains("دعم") || rec.Status.Contains("استكمال"))
+                                        {
+                                            <span class="moda-badge moda-badge-danger">@rec.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="moda-badge moda-badge-success">@rec.Status</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="py-5 text-muted">لا توجد توصيات مسجلة.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

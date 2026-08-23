@@ -1,0 +1,55 @@
+﻿@model IEnumerable<CTP.Domain.Entities.MonthlyReport>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0"><i class="bi bi-inboxes me-2"></i> التقارير الواردة للتحليل</h5>
+            <span class="badge bg-secondary px-3 py-2">@Model.Count() تقارير</span>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th>التقرير</th>
+                            <th>الجهة</th>
+                            <th>التغيير</th>
+                            <th>الجاهزية / التبني</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark">@item.ReportNumber</td>
+                                    <td><span class="badge bg-light text-dark border">@(item.Organization?.EntityName)</span></td>
+                                    <td>@item.ChangeName</td>
+                                    <td>
+                                        <span class="text-primary fw-bold">@item.ReadinessScore%</span> / <span class="text-success fw-bold">@item.AdoptionScore%</span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="moda-btn moda-btn-sm moda-btn-gold">
+                                            <i class="bi bi-eye"></i> استعراض التقرير
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="5" class="py-5 text-muted">لا توجد تقارير واردة بانتظار التحليل.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

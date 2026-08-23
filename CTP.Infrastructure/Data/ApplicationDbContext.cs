@@ -22,6 +22,7 @@ namespace CTP.Infrastructure.Data
         public DbSet<EntityInput> EntityInputs { get; set; }
         public DbSet<MonthlyReport> MonthlyReports { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Recommendation> Recommendations { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

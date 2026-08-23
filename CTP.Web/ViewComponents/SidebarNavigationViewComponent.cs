@@ -17,12 +17,12 @@ namespace CTP.Web.ViewComponents
             mainSection.Items.Add(new MenuItem { Title = "لوحة التغييرات", IconClass = "bi-kanban", Url = "/ChangeBoard/Index" });
             menu.Add(mainSection);
 
-            // 2. مساحة رئيس لجنة شركاء التغيير والقيادة
-            if (role == "COMMITTEE_CHAIR" || role == "LEADER")
+            // 2. مساحة لجنة شركاء التغيير والقيادة
+            if (role == "COMMITTEE_CHAIR" || role == "LEADER" || role == "COMMITTEE_MEMBER")
             {
-                var committeeSection = new MenuSection { Title = "إدارة اللجان" };
-                committeeSection.Items.Add(new MenuItem { Title = "مركز الأعمال", IconClass = "bi-bullseye", Url = "/Committee/Dashboard/Index" });
-                committeeSection.Items.Add(new MenuItem { Title = "التقارير المرفوعة", IconClass = "bi-file-earmark-text", Url = "#" });
+                var committeeSection = new MenuSection { Title = "مركز أعمال اللجنة" };
+                committeeSection.Items.Add(new MenuItem { Title = "صندوق الوارد (التحليل)", IconClass = "bi-inboxes", Url = "/Committee/Workspace/Inbox" });
+                committeeSection.Items.Add(new MenuItem { Title = "سجل التوصيات", IconClass = "bi-journal-check", Url = "/Committee/Workspace/Recommendations" });
                 menu.Add(committeeSection);
             }
             // 3. مساحة سفراء التغيير (التحديث الجديد)

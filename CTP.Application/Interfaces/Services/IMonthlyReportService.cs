@@ -11,6 +11,8 @@ namespace CTP.Application.Interfaces.Services
         Task<MonthlyReport?> GetReportByIdAsync(int id);
         Task<bool> UpdateReportAsync(MonthlyReport report);
         Task<IEnumerable<MonthlyReport>> GetUnitActiveChangesAsync(int orgId);
+        Task<IEnumerable<MonthlyReport>> GetCommitteeInboxReportsAsync();
+        Task<bool> ApproveByCommitteeAsync(int reportId, string recommendation);
     }
 
 
