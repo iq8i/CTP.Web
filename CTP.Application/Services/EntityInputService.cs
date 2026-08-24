@@ -17,5 +17,13 @@ namespace CTP.Application.Services
             await _repository.SaveChangesAsync();
             return input;
         }
+        public async Task<IEnumerable<EntityInput>> GetCommitteeInputsAsync()
+        {
+            return await _repository.GetAllPendingAsync();
+        }
+        public async Task<EntityInput?> GetInputByIdAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
+        }
     }
 }

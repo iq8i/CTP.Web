@@ -1,0 +1,79 @@
+﻿@model CTP.Domain.Entities.EntityInput
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- بطاقة العرض الرئيسية -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-4">
+
+        <div class="row border-bottom pb-3 mb-4">
+            <div class="col-md-5">
+                <h6 class="text-muted mb-1 small">المصدر / الجهة</h6>
+                <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@(Model.Organization?.EntityName)</h4>
+                <div class="text-muted small mt-1"><i class="bi bi-person me-1"></i> السفير: @(Model.Preparer?.FullName)</div>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1 small">تاريخ الرفع</h6>
+                <span class="fw-bold text-dark">@Model.CreatedDate.ToString("yyyy/MM/dd hh:mm tt")</span>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted mb-1 small">نوع المدخل</h6>
+                @{
+                    var badgeClass = Model.Type switch
+                    {
+                        CTP.Domain.Enums.InputType.SuccessStory => "bg-success",
+                        CTP.Domain.Enums.InputType.SupportNeed => "bg-danger",
+                        CTP.Domain.Enums.InputType.Challenge or CTP.Domain.Enums.InputType.AdoptionBarrier => "bg-warning text-dark",
+                        _ => "bg-secondary"
+                    };
+                }
+                <span class="badge @badgeClass px-4 py-2 fs-6 rounded-pill shadow-sm">@Model.Type</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);"><i class="bi bi-chat-quote-fill me-2"></i> التفاصيل والمحتوى المرفوع</h6>
+                <div class="p-4 bg-light rounded border" style="font-size: 1.1rem; line-height: 1.8; color: #334155;">
+                    @Html.Raw(Model.Content.Replace("\n", "<br/>"))
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صندوق قرار اللجنة (تغيير الحالة) -->
+    <div class="moda-card border-0 shadow-sm p-4" style="background-color: #FDF9EC; border: 1px solid rgba(201, 162, 39, 0.4) !important;">
+        <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-gear-fill me-2"></i> إجراء اللجنة (تغيير الحالة)</h5>
+        <p class="text-muted small mb-4">حدد الإجراء المناسب لإغلاق هذا المدخل من صندوق الوارد وإضافته للسجلات التنفيذية.</p>
+
+        <!-- سيتم تفعيل الـ Form لاحقاً، حالياً واجهة فقط -->
+        <form method="post" asp-action="ProcessInput">
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="row align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold text-dark small">القرار المتخذ</label>
+                    <select name="newStatus" class="form-select border-0 shadow-none px-3 py-2" style="background-color: #fff;">
+                        <option value="2">توجيه للجهة المختصة (Routed)</option>
+                        <option value="3">إصدار قرار دعم (Support Issued)</option>
+                        <option value="4">نشر وتعميم كقصة نجاح (Published)</option>
+                        <option value="5">تصعيد قيادي (Escalated)</option>
+                    </select>
+                </div>
+                <div class="col-md-7 d-flex justify-content-end gap-2 mt-3 mt-md-0">
+                    <a asp-action="Inputs" class="moda-btn moda-btn-outline">
+                        <i class="bi bi-arrow-right"></i> عودة للقائمة
+                    </a>
+                    <button type="submit" class="moda-btn moda-btn-gold px-4">
+                        <i class="bi bi-check-all"></i> تنفيذ وإغلاق المدخل
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>

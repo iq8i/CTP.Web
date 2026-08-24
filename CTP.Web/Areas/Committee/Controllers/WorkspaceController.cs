@@ -11,11 +11,13 @@ namespace CTP.Web.Areas.Committee.Controllers
     {
         private readonly IMonthlyReportService _reportService;
         private readonly IRecommendationService _recommendationService;
+        private readonly IEntityInputService _inputService;
 
-        public WorkspaceController(IMonthlyReportService reportService, IRecommendationService recommendationService)
+        public WorkspaceController(IMonthlyReportService reportService, IRecommendationService recommendationService, IEntityInputService inputService )
         {
             _reportService = reportService;
             _recommendationService = recommendationService;
+            _inputService = inputService;
         }
 
         // 1. شاشة صندوق الوارد
@@ -112,6 +114,38 @@ namespace CTP.Web.Areas.Committee.Controllers
 
             var recs = await _recommendationService.GetCommitteeRecommendationsAsync();
             return View(recs);
+        }
+        // 5. شاشة مدخلات الجهات
+        [HttpGet]
+        public async Task<IActionResult> Inputs()
+        {
+            ViewData["EntityTitle"] = "مدخلات الجهات (خارج التقرير)";
+            ViewData["EntityHeaderSubtitle"] = "قصص النجاح، التحديات، واحتياجات الدعم العاجلة";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-chat-left-dots-fill";
+
+            var inputs = await _inputService.GetCommitteeInputsAsync();
+            return View(inputs);
+        }
+
+        // 6. شاشة تفاصيل ومعالجة المدخل العاجل
+        [HttpGet]
+        public async Task<IActionResult> InputDetails(int id)
+        {
+            var input = await _inputService.GetInputByIdAsync(id);
+
+            if (input == null)
+            {
+                TempData["Error"] = "المدخل غير موجود أو تم حذفه.";
+                return RedirectToAction(nameof(Inputs));
+            }
+
+            ViewData["EntityTitle"] = "معالجة مدخل الجهة";
+            ViewData["EntityHeaderSubtitle"] = $"مراجعة {input.Type} المرفوع من {input.Organization?.EntityName}";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-chat-square-text";
+
+            return View(input);
         }
     }
 }

@@ -16,6 +16,8 @@ builder.Services.AddScoped<ICommitteeRepository, CommitteeRepository>();
 builder.Services.AddScoped<ICommitteeService, CommitteeService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IEntityInputService, EntityInputService>();
+builder.Services.AddScoped<IEntityInputRepository, EntityInputRepository>();
 // إضافة خدمات MVC (Controllers & Views)
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();

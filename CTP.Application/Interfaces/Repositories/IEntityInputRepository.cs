@@ -6,5 +6,8 @@ namespace CTP.Application.Interfaces.Repositories
     {
         Task<EntityInput> AddAsync(EntityInput input);
         Task<int> SaveChangesAsync();
+        Task<IEnumerable<EntityInput>> GetAllPendingAsync();
+
+        Task<EntityInput?> GetByIdAsync(int id);
     }
 }

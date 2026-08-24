@@ -1,0 +1,78 @@
+﻿@model IEnumerable<CTP.Domain.Entities.EntityInput>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    <!-- صندوق التوجيه -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info border-0 shadow-sm d-flex align-items-center" style="background-color: #F8FAFC; border-right: 4px solid var(--ctp-primary-olive) !important;">
+                <i class="bi bi-info-circle-fill fs-4 me-3" style="color: var(--ctp-primary-olive);"></i>
+                <div>
+                    <strong class="d-block text-dark">صندوق المدخلات الفورية</strong>
+                    <span class="small text-muted">هنا تصل المشاركات والاحتياجات العاجلة المرفوعة من سفراء التغيير والتي لا تنتظر دورة التقرير الشهري.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة Moda القياسية -->
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0"><i class="bi bi-lightning-charge me-2"></i> المدخلات بانتظار الإجراء</h5>
+            <span class="badge bg-secondary px-3 py-2">@Model.Count() مدخلات</span>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الجهة</th>
+                            <th>السفير</th>
+                            <th>نوع المدخل</th>
+                            <th>المحتوى (مقتطف)</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                var badgeClass = item.Type switch
+                                {
+                                    CTP.Domain.Enums.InputType.SuccessStory => "bg-success-subtle text-success border border-success",
+                                    CTP.Domain.Enums.InputType.SupportNeed => "bg-danger-subtle text-danger border border-danger",
+                                    CTP.Domain.Enums.InputType.Challenge or CTP.Domain.Enums.InputType.AdoptionBarrier => "bg-warning-subtle text-warning border border-warning",
+                                    _ => "bg-light text-dark border"
+                                };
+
+                                <tr>
+                                    <td class="small text-muted fw-bold">@item.CreatedDate.ToString("yyyy/MM/dd")</td>
+                                    <td class="fw-bold text-dark">@(item.Organization?.EntityName)</td>
+                                    <td class="small text-muted">@(item.Preparer?.FullName)</td>
+                                    <td><span class="badge @badgeClass px-3 py-2 rounded-pill">@item.Type</span></td>
+                                    <td class="text-start" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@item.Content">@item.Content</td>
+                                    <td>
+                                        <!-- تم ربط الزر بشاشة التفاصيل المستقلة -->
+                                        <a asp-action="InputDetails" asp-route-id="@item.Id" class="moda-btn moda-btn-sm moda-btn-gold">
+                                            <i class="bi bi-check2-circle"></i> معالجة
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="py-5 text-muted">لا توجد مدخلات جديدة بانتظار المعالجة.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
