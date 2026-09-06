@@ -58,6 +58,9 @@ namespace CTP.Application.Interfaces.Repositories
     {
         Task<EntityInput> AddAsync(EntityInput input);
         Task<int> SaveChangesAsync();
+        Task<IEnumerable<EntityInput>> GetAllPendingAsync();
+
+        Task<EntityInput?> GetByIdAsync(int id);
     }
 }
 
@@ -127,6 +130,8 @@ namespace CTP.Application.Interfaces.Repositories
 File: \CTP.Application\Interfaces\Repositories\IRecommendationRepository.cs
 ======================================================
 using CTP.Domain.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CTP.Application.Interfaces.Repositories
 {
@@ -134,6 +139,9 @@ namespace CTP.Application.Interfaces.Repositories
     {
         Task<Recommendation> AddAsync(Recommendation recommendation);
         Task<int> SaveChangesAsync();
+
+        // «·”ÿ— «·„›ﬁÊœ «·–Ì ÌÕ· Œÿ√ CS1061
+        Task<IEnumerable<Recommendation>> GetAllWithDetailsAsync();
     }
 }
 
@@ -160,7 +168,13 @@ File: \CTP.Application\Interfaces\Services\IEntityInputService.cs
 using CTP.Domain.Entities;
 namespace CTP.Application.Interfaces.Services
 {
-    public interface IEntityInputService { Task<EntityInput> SubmitInputAsync(EntityInput input); }
+    public interface IEntityInputService { 
+        Task<EntityInput> SubmitInputAsync(EntityInput input);
+        Task<IEnumerable<EntityInput>> GetCommitteeInputsAsync();
+
+        Task<EntityInput?> GetInputByIdAsync(int id);
+    }
+
 }
 
 
@@ -210,6 +224,8 @@ namespace CTP.Application.Interfaces.Services
 ======================================================
 File: \CTP.Application\Interfaces\Services\IRecommendationService.cs
 ======================================================
+using CTP.Domain.Entities;
+
 namespace CTP.Application.Interfaces.Services
 {
     public interface IRecommendationService
@@ -221,6 +237,7 @@ namespace CTP.Application.Interfaces.Services
             string owner,
             string expectedImpact,
             bool requiresSupport);
+        Task<IEnumerable<Recommendation>> GetCommitteeRecommendationsAsync();
     }
 }
 
@@ -275,6 +292,14 @@ namespace CTP.Application.Services
             await _repository.AddAsync(input);
             await _repository.SaveChangesAsync();
             return input;
+        }
+        public async Task<IEnumerable<EntityInput>> GetCommitteeInputsAsync()
+        {
+            return await _repository.GetAllPendingAsync();
+        }
+        public async Task<EntityInput?> GetInputByIdAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
         }
     }
 }
@@ -445,6 +470,11 @@ namespace CTP.Application.Services
             _recommendationRepository = recommendationRepository;
         }
 
+        // √÷› Â–Â «·œ«·… œ«Œ· «·ﬂ·«” ≈–« ·„  ﬂ‰ „ÊÃÊœ…
+        public async Task<IEnumerable<Recommendation>> GetCommitteeRecommendationsAsync()
+        {
+            return await _recommendationRepository.GetAllWithDetailsAsync();
+        }
         public async Task<string> ProcessAndSaveAnalysisAsync(
             int reportId,
             string whyItMatters,
@@ -9364,6 +9394,7 @@ File: \CTP.Infrastructure\Repositories\EntityInputRepository.cs
 using CTP.Application.Interfaces.Repositories;
 using CTP.Domain.Entities;
 using CTP.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CTP.Infrastructure.Repositories
 {
@@ -9376,6 +9407,22 @@ namespace CTP.Infrastructure.Repositories
         {
             await _context.EntityInputs.AddAsync(input);
             return input;
+        }
+        public async Task<IEnumerable<EntityInput>> GetAllPendingAsync()
+        {
+            return await _context.EntityInputs
+                .Include(e => e.Organization)
+                .Include(e => e.Preparer)
+                .OrderByDescending(e => e.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task<EntityInput?> GetByIdAsync(int id)
+        {
+            return await _context.EntityInputs
+                .Include(e => e.Organization)
+                .Include(e => e.Preparer)
+                .FirstOrDefaultAsync(e => e.Id == id);
         }
         public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
     }
@@ -9539,6 +9586,7 @@ File: \CTP.Infrastructure\Repositories\RecommendationRepository.cs
 using CTP.Application.Interfaces.Repositories;
 using CTP.Domain.Entities;
 using CTP.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CTP.Infrastructure.Repositories
 {
@@ -9560,6 +9608,14 @@ namespace CTP.Infrastructure.Repositories
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+        public async Task<IEnumerable<Recommendation>> GetAllWithDetailsAsync()
+        {
+            return await _context.Recommendations
+                .Include(r => r.SourceReport)
+                    .ThenInclude(sr => sr.Organization)
+                .OrderByDescending(r => r.CreatedDate)
+                .ToListAsync();
         }
     }
 }
@@ -11190,130 +11246,6 @@ namespace CTP.Web.Areas.Committee.Controllers
 
 
 ======================================================
-File: \CTP.Web\Areas\Committee\Controllers\ReportsController.cs
-======================================================
-using CTP.Application.Helpers;
-using CTP.Application.Interfaces.Services;
-using CTP.Domain.Constants;
-using CTP.Web.Areas.Committee.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
-namespace CTP.Web.Areas.Committee.Controllers
-{
-    [Area("Committee")]
-    [Authorize(Roles = "COMMITTEE_CHAIR,COMMITTEE_MEMBER,LEADER")]
-    public class ReportsController : Controller
-    {
-        private readonly IMonthlyReportService _reportService;
-
-        public ReportsController(IMonthlyReportService reportService)
-        {
-            _reportService = reportService;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Index()
-        {
-            ViewData["EntityTitle"] = "’‰œÊﬁ Ê«—œ «··Ã‰…";
-            ViewData["EntityHeaderSubtitle"] = "«· ﬁ«—Ì— «·„⁄ „œ… „‰ ﬁ«œ… «·ÊÕœ«  Ê«·Ã«Â“… ·· Õ·Ì·";
-            ViewData["ThemeColor"] = "#106981";
-            ViewData["EntityHeaderIcon"] = "bi-inbox-fill";
-
-            // «” œ⁄«¡ «·œ«·… «·„»‰Ì… „”»ﬁ« ·Ã·» «· ﬁ«—Ì— «·„⁄ „œ… ›ﬁÿ
-            var reports = await _reportService.GetCommitteeInboxReportsAsync();
-
-            var viewModel = reports.Select(r => new CommitteeReportListViewModel
-            {
-                Id = r.Id,
-                ReportNumber = r.ReportNumber,
-                OrganizationName = r.Organization?.EntityName ?? "€Ì— „Õœœ",
-                AmbassadorName = r.Preparer?.FullName ?? "€Ì— „Õœœ",
-                ChangeName = r.ChangeName,
-                ReadinessScore = r.ReadinessScore,
-                ApprovedDate = r.ApprovedDate.ToHijri()
-            }).ToList();
-
-            return View(viewModel);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Analyze(int id)
-        {
-            ViewData["EntityTitle"] = " Õ·Ì·  ﬁ—Ì— «· €ÌÌ—";
-            ViewData["EntityHeaderSubtitle"] = "„—«Ã⁄… Ê Õ·Ì· «· ﬁ—Ì— «·„—›Ê⁄ „‰ ﬁ«œ… «·ÊÕœ« ";
-            ViewData["ThemeColor"] = "#106981";
-            ViewData["EntityHeaderIcon"] = "bi-graph-up-arrow";
-
-            var report = await _reportService.GetReportByIdAsync(id);
-
-            // Õ„«Ì…: «· √ﬂœ „‰ ÊÃÊœ «· ﬁ—Ì— Ê√‰Â „⁄ „œ „‰ «·ﬁ«∆œ
-            if (report == null || report.Status != CTP.Domain.Enums.ReportStatus.Approved)
-            {
-                TempData["Error"] = "«· ﬁ—Ì— €Ì— „ «Õ √Ê ·„ Ì „ «⁄ „«œÂ „‰ «·ﬁÌ«œ… »⁄œ.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            var viewModel = new CommitteeReportDetailsViewModel
-            {
-                Id = report.Id,
-                ReportNumber = report.ReportNumber,
-                OrganizationName = report.Organization?.EntityName ?? "€Ì— „Õœœ",
-                PreparerName = report.Preparer?.FullName ?? "€Ì— „Õœœ",
-                MonthYear = $"{report.Month} {report.Year}",
-                ChangeName = report.ChangeName,
-                ChangeType = report.ChangeType,
-                CurrentStage = report.CurrentStage,
-                AffectedGroups = report.AffectedGroups,
-                ChangeSummary = report.ChangeSummary,
-                WhyImportant = report.WhyImportant,
-                WhatWillChange = report.WhatWillChange,
-                WhatWillNotChange = report.WhatWillNotChange,
-                ExecutedActivities = report.ExecutedActivities,
-                ReadinessScore = report.ReadinessScore,
-                AdoptionScore = report.AdoptionScore,
-                AdkarAwareness = report.AdkarAwareness,
-                AdkarDesire = report.AdkarDesire,
-                AdkarKnowledge = report.AdkarKnowledge,
-                AdkarAbility = report.AdkarAbility,
-                AdkarReinforcement = report.AdkarReinforcement,
-                Obstacles = report.Obstacles,
-                AdoptionBarriers = report.AdoptionBarriers,
-                RequiredSupport = report.RequiredSupport,
-                Risks = report.Risks,
-                ImprovementOpportunities = report.ImprovementOpportunities,
-                SuccessStories = report.SuccessStories,
-                InitialRecommendation = report.InitialRecommendation,
-                ApproverNotes = report.ApproverNotes
-            };
-
-
-            return View(viewModel);
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SubmitAnalysis(int id, string recommendation)
-        {
-            var success = await _reportService.ApproveByCommitteeAsync(id, recommendation);
-
-            if (success)
-            {
-                // Ì„ﬂ‰ Â‰« «” œ⁄«¡ NotificationService ·≈—”«· ≈‘⁄«— ··ﬁ«∆œ Ê«·”›Ì— »«·«⁄ „«œ «·‰Â«∆Ì
-                TempData["Success"] = " „ ≈÷«›…  Ê’Ì«  «··Ã‰… Ê«⁄ „«œ «· ﬁ—Ì— ‰Â«∆Ì« »‰Ã«Õ. «·»ÿ«ﬁ… „ «Õ… «·¬‰ ··„‰”Ê»Ì‰.";
-            }
-            else
-            {
-                TempData["Error"] = "ÕœÀ Œÿ√ √À‰«¡ «·«⁄ „«œ √Ê √‰ «· ﬁ—Ì— ·Ì” ›Ì Õ«·… «· Õ·Ì·.";
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-    }
-}
-
-
-
-======================================================
 File: \CTP.Web\Areas\Committee\Controllers\WorkspaceController.cs
 ======================================================
 using Microsoft.AspNetCore.Authorization;
@@ -11329,35 +11261,82 @@ namespace CTP.Web.Areas.Committee.Controllers
     {
         private readonly IMonthlyReportService _reportService;
         private readonly IRecommendationService _recommendationService;
+        private readonly IEntityInputService _inputService;
 
-        public WorkspaceController(IMonthlyReportService reportService, IRecommendationService recommendationService)
+        public WorkspaceController(IMonthlyReportService reportService, IRecommendationService recommendationService, IEntityInputService inputService )
         {
             _reportService = reportService;
             _recommendationService = recommendationService;
+            _inputService = inputService;
         }
 
+        // 1. ‘«‘… ’‰œÊﬁ «·Ê«—œ
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Inbox()
         {
-            ViewData["EntityTitle"] = "„—ﬂ“ √⁄„«· ·Ã‰… ‘—ﬂ«¡ «· €ÌÌ—";
-            ViewData["EntityHeaderSubtitle"] = "„‰ «· ﬁ«—Ì— Ê«·„œŒ·«  ≈·Ï «· Õ·Ì· Ê«· Ê’Ì« ° À„ «·œ«‘»Ê—œ Ê«·—›⁄ «·ﬁÌ«œÌ";
+            ViewData["EntityTitle"] = "’‰œÊﬁ Ê«—œ «··Ã‰…";
+            ViewData["EntityHeaderSubtitle"] = "«· ﬁ«—Ì— «·„—›Ê⁄… Ê«·Ã«Â“… ·· Õ·Ì·";
             ViewData["ThemeColor"] = "#0B4F61";
-            ViewData["EntityHeaderIcon"] = "bi-briefcase-fill";
+            ViewData["EntityHeaderIcon"] = "bi-inbox-fill";
 
             var reports = await _reportService.GetCommitteeInboxReportsAsync();
             return View(reports);
         }
+        // 1.5. ‘«‘… «” ⁄—«÷  ›«’Ì· «· ﬁ—Ì—
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var report = await _reportService.GetReportByIdAsync(id);
 
+            // «· √ﬂœ „‰ √‰ «· ﬁ—Ì— „ «Õ ··Ã‰…
+            if (report == null || report.Status != CTP.Domain.Enums.ReportStatus.UnderAnalysis)
+            {
+                TempData["Error"] = "«· ﬁ—Ì— €Ì— „ «Õ ··„—«Ã⁄… Õ«·Ì«.";
+                return RedirectToAction(nameof(Inbox));
+            }
+
+            ViewData["EntityTitle"] = "«·‰”Œ… «· Õ·Ì·Ì… ·· ﬁ—Ì—";
+            ViewData["EntityHeaderSubtitle"] = $"«” ⁄—«÷  ﬁ—Ì— «· €ÌÌ— —ﬁ„ {report.ReportNumber}";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-file-text";
+
+            return View(report);
+        }
+        // 2. ‘«‘… √œ«… «· Õ·Ì· (GET)
+        [HttpGet]
+        public async Task<IActionResult> Analyze(int id)
+        {
+            var report = await _reportService.GetReportByIdAsync(id);
+            if (report == null || report.Status != CTP.Domain.Enums.ReportStatus.UnderAnalysis)
+            {
+                TempData["Error"] = "«· ﬁ—Ì— €Ì— „ «Õ ·· Õ·Ì·.";
+                return RedirectToAction(nameof(Inbox));
+            }
+
+            ViewData["EntityTitle"] = "√œ«… «· Õ·Ì· Ê‘Ã—… «·ﬁ—«—";
+            ViewData["EntityHeaderSubtitle"] = $" Õ·Ì· «· ﬁ—Ì—: {report.ReportNumber}";
+            ViewData["ThemeColor"] = "#0B4F61";
+
+            var vm = new AnalyzeReportViewModel
+            {
+                MonthlyReportId = report.Id,
+                ReportDetails = report
+            };
+
+            return View(vm);
+        }
+
+        // 3. Õ›Ÿ «· Õ·Ì· (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveAnalysis([FromBody] AnalysisFormViewModel model)
+        public async Task<IActionResult> Analyze(AnalyzeReportViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { success = false, message = "Ì—ÃÏ  ⁄»∆… «·ÕﬁÊ· «·≈·“«„Ì… ›Ì «· Õ·Ì·." });
+                model.ReportDetails = await _reportService.GetReportByIdAsync(model.MonthlyReportId) ?? new CTP.Domain.Entities.MonthlyReport();
+                return View(model);
             }
 
-            //  ›ÊÌ÷ «·⁄„·Ì«  ·ÿ»ﬁ… «·‹ Application
             string recNumber = await _recommendationService.ProcessAndSaveAnalysisAsync(
                 model.MonthlyReportId,
                 model.WhyItMatters,
@@ -11367,7 +11346,56 @@ namespace CTP.Web.Areas.Committee.Controllers
                 model.RequiresSupport
             );
 
-            return Json(new { success = true, message = " „ Õ›Ÿ «· Õ·Ì· Ê Ê·Ìœ «· Ê’Ì… »‰Ã«Õ.", recommendationNumber = recNumber });
+            // «⁄ „«œ «· ﬁ—Ì— ·≈€·«ﬁÂ Ê≈Œ›«∆Â „‰ ’‰œÊﬁ «·Ê«—œ
+            await _reportService.ApproveByCommitteeAsync(model.MonthlyReportId, model.SuggestedAction);
+
+            TempData["Success"] = $" „ Õ›Ÿ «· Õ·Ì· Ê Ê·Ìœ «· Ê’Ì… »‰Ã«Õ »—ﬁ„ {recNumber}.";
+            return RedirectToAction(nameof(Recommendations));
+        }
+
+        // 4. ‘«‘… ”Ã· «· Ê’Ì« 
+        [HttpGet]
+        public async Task<IActionResult> Recommendations()
+        {
+            ViewData["EntityTitle"] = "”Ã· «· Ê’Ì«  Ê«·ﬁ—«—« ";
+            ViewData["EntityHeaderSubtitle"] = "ﬁ«⁄œ… »Ì«‰«  «· œŒ·«  Ê«· Ê’Ì«  «·„⁄ „œ…";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-journal-check";
+
+            var recs = await _recommendationService.GetCommitteeRecommendationsAsync();
+            return View(recs);
+        }
+        // 5. ‘«‘… „œŒ·«  «·ÃÂ« 
+        [HttpGet]
+        public async Task<IActionResult> Inputs()
+        {
+            ViewData["EntityTitle"] = "„œŒ·«  «·ÃÂ«  (Œ«—Ã «· ﬁ—Ì—)";
+            ViewData["EntityHeaderSubtitle"] = "ﬁ’’ «·‰Ã«Õ° «· ÕœÌ« ° Ê«Õ Ì«Ã«  «·œ⁄„ «·⁄«Ã·…";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-chat-left-dots-fill";
+
+            var inputs = await _inputService.GetCommitteeInputsAsync();
+            return View(inputs);
+        }
+
+        // 6. ‘«‘…  ›«’Ì· Ê„⁄«·Ã… «·„œŒ· «·⁄«Ã·
+        [HttpGet]
+        public async Task<IActionResult> InputDetails(int id)
+        {
+            var input = await _inputService.GetInputByIdAsync(id);
+
+            if (input == null)
+            {
+                TempData["Error"] = "«·„œŒ· €Ì— „ÊÃÊœ √Ê  „ Õ–›Â.";
+                return RedirectToAction(nameof(Inputs));
+            }
+
+            ViewData["EntityTitle"] = "„⁄«·Ã… „œŒ· «·ÃÂ…";
+            ViewData["EntityHeaderSubtitle"] = $"„—«Ã⁄… {input.Type} «·„—›Ê⁄ „‰ {input.Organization?.EntityName}";
+            ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-chat-square-text";
+
+            return View(input);
         }
     }
 }
@@ -11471,6 +11499,9 @@ namespace CTP.Web.Areas.Committee.Models
 ======================================================
 File: \CTP.Web\Areas\Committee\Models\CommitteeViewModel.cs
 ======================================================
+using CTP.Domain.Entities;
+using System.ComponentModel.DataAnnotations;
+
 namespace CTP.Web.Areas.Committee.Models
 {
     public class CommitteeViewModel
@@ -11480,6 +11511,29 @@ namespace CTP.Web.Areas.Committee.Models
         public string Description { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string CreatedDateFormatted { get; set; } = string.Empty;
+    }
+    // ‰„Ê–Ã ‘«‘… «· Õ·Ì·
+    public class AnalyzeReportViewModel
+    {
+        public MonthlyReport ReportDetails { get; set; } = new MonthlyReport();
+
+        [Required(ErrorMessage = "Â–« «·Õﬁ· ≈·“«„Ì")]
+        public int MonthlyReportId { get; set; }
+
+        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ „«–« ÕœÀ")]
+        public string WhatHappened { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ ·„«–« ÌÂ„ («·›ÃÊ…)")]
+        public string WhyItMatters { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ «· œŒ· („«–« ‰›⁄· «·¬‰)")]
+        public string WhatNow { get; set; } = string.Empty;
+
+        public string ExpectedImpact { get; set; } = string.Empty;
+        public string Priority { get; set; } = "„ Ê”ÿ…";
+        public string Owner { get; set; } = string.Empty;
+        public string SuggestedAction { get; set; } = string.Empty;
+        public bool RequiresSupport { get; set; }
     }
 }
 
@@ -11567,81 +11621,264 @@ namespace CTP.Web.Area.Committee.Views.Dashboard
 
 
 ======================================================
-File: \CTP.Web\Areas\Committee\Views\Reports\Analyze.cshtml
+File: \CTP.Web\Areas\Committee\Views\Workspace\Analyze.cshtml
 ======================================================
-@model CTP.Web.Areas.Committee.Models.CommitteeReportDetailsViewModel
+@model CTP.Web.Areas.Committee.Models.AnalyzeReportViewModel
+@{ Layout = "_Layout"; }
+
+@section Styles {
+    <style>
+        .insight-card {
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            background: #fff;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .insight-header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #F1F5F9;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .insight-header i { font-size: 1.5rem; color: var(--ctp-primary-olive); margin-right: 12px; }
+        .insight-header h5 { margin: 0; font-weight: 700; color: #1E293B; }
+        
+        .progress-slim { height: 8px; border-radius: 4px; background-color: #F1F5F9; overflow: hidden; margin-top: 8px;}
+        .progress-slim .bar { background-color: var(--ctp-primary-olive); height: 100%; }
+        .progress-slim .bar.danger { background-color: #EF4444; }
+
+        .system-insight-box {
+            background-color: #F0FDF4;
+            border-right: 4px solid #EF4444;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    
+    <!-- „⁄·Ê„«  √”«”Ì… -->
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@(Model.ReportDetails.Organization?.EntityName)</h4>
+            <span class="text-muted"><i class="bi bi-file-earmark-text me-1"></i>  ﬁ—Ì—: @Model.ReportDetails.ReportNumber ó @Model.ReportDetails.ChangeName</span>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-secondary px-3 py-2 fs-6 rounded-pill">‰”»… «ﬂ „«· «·√‰‘ÿ…: @Model.ReportDetails.ActivityCompletionRate%</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- «·⁄„Êœ «·√Ì„‰: «·»Ì«‰«  «·„Õ··… ¬·Ì« (Health Check) -->
+        <div class="col-lg-5">
+            <div class="insight-card h-100">
+                <div class="insight-header">
+                    <i class="bi bi-heart-pulse"></i>
+                    <h5>«· ‘ŒÌ’ «·¬·Ì (Health Check)</h5>
+                </div>
+                
+                @{
+                    // ŒÊ«—“„Ì… «” Œ—«Ã «·›ÃÊ… »—„ÃÌ« (Õ”» „⁄«ÌÌ— Prosci)
+                    var adkar = new Dictionary<string, int> {
+                        { "«·Ê⁄Ì (Awareness)", Model.ReportDetails.AdkarAwareness },
+                        { "«·—€»… (Desire)", Model.ReportDetails.AdkarDesire },
+                        { "«·„⁄—›… (Knowledge)", Model.ReportDetails.AdkarKnowledge },
+                        { "«·ﬁœ—… (Ability)", Model.ReportDetails.AdkarAbility },
+                        { "«· ⁄“Ì“ (Reinforcement)", Model.ReportDetails.AdkarReinforcement }
+                    };
+                    var barrier = adkar.OrderBy(x => x.Value).First();
+                }
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-muted small mb-3">„ƒ‘—«  ADKAR</h6>
+                    @foreach (var item in adkar)
+                    {
+                        var isBarrier = item.Key == barrier.Key;
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small fw-bold @(isBarrier ? "text-danger" : "text-dark")">
+                                <span>@item.Key</span>
+                                <span>@item.Value%</span>
+                            </div>
+                            <div class="progress-slim"><div class="bar @(isBarrier ? "danger" : "")" style="width: @item.Value%"></div></div>
+                        </div>
+                    }
+                </div>
+
+                <div class="system-insight-box">
+                    <h6 class="text-danger fw-bold"><i class="bi bi-robot me-1"></i>  Õ·Ì· «·‰Ÿ«„ «·–ﬂÌ:</h6>
+                    <p class="small text-dark mb-0">
+                        «ﬂ ‘› «·‰Ÿ«„ √‰ «·›ÃÊ… «·—∆Ì”Ì… (Barrier Point)  ﬁ⁄ ›Ì „—Õ·… <strong>@barrier.Key</strong> »‰”»… „ œ‰Ì… »·€  <strong>@barrier.Value%</strong>.
+                        Ê›ﬁ« ··„‰ÂÃÌ…° Ìı‰’Õ » ÊÃÌÂ «· Ê’Ì«  Êﬁ—«—«  «·œ⁄„ ·„⁄«·Ã… Â–« «·Õ«Ã“ ›Ê—«.
+                    </p>
+                </div>
+
+                <hr class="my-4" />
+                
+                <h6 class="fw-bold text-muted small mb-3">«·⁄Ê«∆ﬁ Ê«·„Œ«ÿ— «·„—›Ê⁄…</h6>
+                <div class="p-3 bg-light rounded border mb-2 small text-dark"><strong>«·⁄«∆ﬁ «·√»—“:</strong> @(string.IsNullOrEmpty(Model.ReportDetails.AdoptionBarriers) ? "·„ Ìı–ﬂ—" : Model.ReportDetails.AdoptionBarriers)</div>
+                <div class="p-3 bg-light rounded border small text-dark"><strong>«·Œÿ— «· ‘€Ì·Ì:</strong> @(string.IsNullOrEmpty(Model.ReportDetails.Obstacles) ? "·„ Ìı–ﬂ—" : Model.ReportDetails.Obstacles)</div>
+            </div>
+        </div>
+
+        <!-- «·⁄„Êœ «·√Ì”—: ≈œŒ«· «·ﬁ—«— (Decision Maker) -->
+        <div class="col-lg-7">
+            <div class="insight-card h-100" style="border-color: var(--moda-section-accent); background-color: #FDF9EC;">
+                <div class="insight-header">
+                    <i class="bi bi-hammer text-warning"></i>
+                    <h5>’Ì«€… «·ﬁ—«— Ê«· Ê’Ì…</h5>
+                </div>
+
+                <form method="post" asp-action="Analyze">
+                    <input type="hidden" asp-for="MonthlyReportId" />
+
+                    <!-- œ„Ã «·‹ 5 Whys ·ÌﬂÊ‰ Õﬁ·« ⁄„·Ì« Ê«Õœ« · ‘ŒÌ’ «·„‘ﬂ·… -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">«· ‘ŒÌ’ «·Ã–—Ì ··„‘ﬂ·… «·„—›Ê⁄… (Root Cause)</label>
+                        <textarea asp-for="WhatHappened" class="form-control border-0 shadow-sm p-3" rows="2" placeholder="»‰«¡ ⁄·Ï «·„⁄ÿÌ«  Ì„Ì‰ «·‘«‘…° „« ÂÊ √’· «·„‘ﬂ·…ø" required></textarea>
+                    </div>
+
+                    <!-- «·√À— Ê«·„Œ«ÿ— (So What) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">·„«–«  ‘ﬂ· Â–Â «·›ÃÊ… Œÿ—«ø (So What)</label>
+                        <textarea asp-for="WhyItMatters" class="form-control border-0 shadow-sm p-3" rows="2" placeholder=" √ÀÌ— «” „—«— Â–Â «·›ÃÊ… ⁄·Ï „”«— «· €ÌÌ—..." required></textarea>
+                    </div>
+
+                    <!-- «·≈Ã—«¡ «· ’ÕÌÕÌ (Now What) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">«· œŒ· √Ê «·≈Ã—«¡ «· ’ÕÌÕÌ (Now What)</label>
+                        <textarea asp-for="WhatNow" class="form-control border-0 shadow-sm p-3" rows="2" placeholder="„« «·–Ì ÌÃ» ⁄·Ï «·ÃÂ… √Ê «·ﬁÌ«œ… ›⁄·Â «·¬‰ø" required></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Œ·«’… «· Ê’Ì… (” ıÕ›Ÿ ›Ì «·”Ã· «·—”„Ì)</label>
+                            <input type="text" asp-for="SuggestedAction" class="form-control border-0 shadow-sm py-2 fw-bold text-primary" placeholder="«ﬂ » ﬁ—«—« „ÊÃ“« ÊÊ«÷Õ«..." required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">«·√À— «·„ Êﬁ⁄</label>
+                            <input type="text" asp-for="ExpectedImpact" class="form-control border-0 shadow-sm py-2" placeholder="„À«·: —›⁄ «·„ƒ‘— ≈·Ï 60%" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">«·ÃÂ… «·„«·ﬂ… ··Õ·</label>
+                            <input type="text" asp-for="Owner" class="form-control border-0 shadow-sm py-2" placeholder="«·≈œ«—… «·„”ƒÊ·… ⁄‰ «· ‰›Ì–..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">„” ÊÏ «·√Ê·ÊÌ…</label>
+                            <select asp-for="Priority" class="form-select border-0 shadow-sm py-2">
+                                <option value="⁄«·Ì…">⁄«·Ì…</option>
+                                <option value="„ Ê”ÿ…" selected>„ Ê”ÿ…</option>
+                                <option value="„‰Œ›÷…">„‰Œ›÷…</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-warning-subtle">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input shadow-sm" type="checkbox" asp-for="RequiresSupport" style="transform: scale(1.3); margin-left: 10px;">
+                            <label class="form-check-label fw-bold text-danger ms-2" for="RequiresSupport">Ìı—›⁄ ﬂÿ·» œ⁄„ ﬁÌ«œÌ / ”Ì«œÌ</label>
+                        </div>
+                        
+                        <div>
+                            <a asp-action="Inbox" class="btn btn-light border fw-bold me-2 px-4">≈·€«¡</a>
+                            <button type="submit" class="moda-btn moda-btn-gold px-4 py-2">
+                                <i class="bi bi-save me-2"></i> «⁄ „«œ «· Ê’Ì…
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Workspace\Analyze.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Areas.Committee.Views.Workspace
+{
+    public class AnalyzeModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Workspace\Details.cshtml
+======================================================
+@model CTP.Domain.Entities.MonthlyReport
 @{
     Layout = "_Layout";
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
-<div class="container-fluid mt-3 mb-5">
-    <div class="moda-card border-0 shadow-sm p-4" style="border-radius: 16px;">
+<div class="container-fluid mt-4 mb-5">
+    <div class="moda-card border-0 shadow-sm p-4">
 
-        <!-- «· —ÊÌ”… «·√”«”Ì… Ê„⁄·Ê„«  «·ÃÂ… -->
+        <!-- «· —ÊÌ”… -->
         <div class="row border-bottom pb-3 mb-4">
-            <div class="col-md-5">
-                <h6 class="text-muted mb-1">«·ÃÂ… / «·ÊÕœ… «· ‰ŸÌ„Ì…</h6>
-                <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@Model.OrganizationName</h4>
-                <div class="text-muted small mt-1">«·”›Ì—: @Model.PreparerName</div>
+            <div class="col-md-6">
+                <h6 class="text-muted mb-1">«·ÃÂ… «·„⁄‰Ì…</h6>
+                <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@(Model.Organization?.EntityName)</h4>
             </div>
             <div class="col-md-3">
-                <h6 class="text-muted mb-1">«”„ «· €ÌÌ— / «·„»«œ—…</h6>
-                <h5 class="fw-bold text-dark">@Model.ChangeName</h5>
+                <h6 class="text-muted mb-1">«”„ «· €ÌÌ—</h6>
+                <span class="fw-bold text-dark">@Model.ChangeName</span>
             </div>
-            <div class="col-md-2">
-                <h6 class="text-muted mb-1">«·„—Õ·… «·Õ«·Ì…</h6>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">„—Õ·… «· €ÌÌ—</h6>
                 <span class="badge bg-secondary px-3 py-2">@Model.CurrentStage</span>
-            </div>
-            <div class="col-md-2">
-                <h6 class="text-muted mb-1">—ﬁ„ «· ﬁ—Ì—</h6>
-                <span class="fw-bold text-dark">@Model.ReportNumber</span>
             </div>
         </div>
 
-        @if (!string.IsNullOrEmpty(Model.ApproverNotes))
-        {
-            <div class="alert alert-info border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 12px; border-right: 5px solid #0dcaf0 !important;">
-                <i class="bi bi-person-check-fill fs-3 text-info me-3"></i>
-                <div>
-                    <h6 class="fw-bold mb-1"> ÊÃÌÂ«  Ê«⁄ „«œ «·ﬁÌ«œ… ··ÃÂ…:</h6>
-                    <p class="mb-0 fs-6 text-dark">@Model.ApproverNotes</p>
-                </div>
-            </div>
-        }
-
-        <!-- √»⁄«œ «· €ÌÌ— -->
-        <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);"><i class="bi bi-diagram-3-fill me-2"></i> √»⁄«œ «· €ÌÌ—</h6>
-        <div class="row g-3 mb-4">
+        <!-- «·„·Œ’ Ê«·√»⁄«œ -->
+        <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);"><i class="bi bi-card-text me-2"></i> „·Œ’ «· €ÌÌ— Ê«·√À—</h6>
+        <div class="row mb-4 g-3">
             <div class="col-md-12">
                 <div class="p-3 bg-light rounded border">
-                    <h6 class="text-muted fw-bold">„·Œ’ «· €ÌÌ—</h6>
-                    <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.ChangeSummary) ? "-" : Model.ChangeSummary)</p>
+                    <p class="mb-0 text-dark">@(string.IsNullOrEmpty(Model.ChangeSummary) ? "·« ÌÊÃœ „·Œ’" : Model.ChangeSummary)</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="p-3 bg-light rounded border h-100">
-                    <h6 class="text-muted fw-bold">·„«–« Â–« «· €ÌÌ— „Â„ø</h6>
+                    <h6 class="text-muted fw-bold small">·„«–« Â–« «· €ÌÌ— „Â„ø</h6>
                     <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhyImportant) ? "-" : Model.WhyImportant)</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="p-3 bg-light rounded border h-100">
-                    <h6 class="text-muted fw-bold">„«–« ”Ì €Ì—ø</h6>
+                    <h6 class="text-muted fw-bold small">„«–« ”Ì €Ì—ø</h6>
                     <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhatWillChange) ? "-" : Model.WhatWillChange)</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="p-3 bg-light rounded border h-100">
-                    <h6 class="text-muted fw-bold">„«–« ·‰ Ì €Ì—ø</h6>
+                    <h6 class="text-muted fw-bold small">„«–« ·‰ Ì €Ì—ø</h6>
                     <p class="mb-0 small text-dark">@(string.IsNullOrEmpty(Model.WhatWillNotChange) ? "-" : Model.WhatWillNotChange)</p>
                 </div>
             </div>
         </div>
 
-        <!-- «·„ƒ‘—«  Ê«·Ã«Â“Ì… -->
-        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-speedometer2 me-2"></i> „ƒ‘—«  «·√œ«¡ Ê«·Ã«Â“Ì…</h6>
+        <!-- «·„ƒ‘—«  -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-speedometer2 me-2"></i> „ƒ‘—«  «·√œ«¡ Ê«·Ã«Â“Ì… (ADKAR)</h6>
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="card bg-light border-0 h-100">
@@ -11655,16 +11892,16 @@ File: \CTP.Web\Areas\Committee\Views\Reports\Analyze.cshtml
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card border-0 h-100" style="background-color: #F8FAFC;">
+                <div class="card bg-light border-0 h-100">
                     <div class="card-body text-center d-flex flex-column justify-content-center">
                         <div class="row">
                             <div class="col-6">
                                 <h2 class="text-primary fw-bold mb-0">@Model.ReadinessScore%</h2>
-                                <span class="text-muted small">‰”»… «·Ã«Â“Ì…</span>
+                                <span class="text-muted small">„ƒ‘— «·Ã«Â“Ì…</span>
                             </div>
                             <div class="col-6">
                                 <h2 class="text-success fw-bold mb-0">@Model.AdoptionScore%</h2>
-                                <span class="text-muted small">‰”»… «· »‰Ì</span>
+                                <span class="text-muted small">„ƒ‘— «· »‰Ì</span>
                             </div>
                         </div>
                     </div>
@@ -11672,68 +11909,46 @@ File: \CTP.Web\Areas\Committee\Views\Reports\Analyze.cshtml
             </div>
         </div>
 
-        <!-- «· ÕœÌ« ° «·„Œ«ÿ—° Ê«·œ⁄„ -->
-        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-shield-exclamation me-2"></i> „Êﬁ› «· ÕœÌ«  Ê«·œ⁄„</h6>
+        <!-- «· ÕœÌ«  Ê«·„Œ«ÿ— -->
+        <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-shield-exclamation me-2"></i> «· ÕœÌ«  Ê⁄Ê«∆ﬁ «· »‰Ì</h6>
         <div class="row mb-5 g-3">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="p-3 bg-white rounded border border-danger-subtle h-100">
-                    <h6 class="text-danger fw-bold">«·⁄Ê«∆ﬁ Ê«· ÕœÌ« </h6>
+                    <h6 class="text-danger fw-bold small">«·⁄Ê«∆ﬁ Ê«· ÕœÌ«  «· ‘€Ì·Ì…</h6>
                     <p class="mb-0 small">@(string.IsNullOrEmpty(Model.Obstacles) ? "-" : Model.Obstacles)</p>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="p-3 bg-white rounded border border-warning-subtle h-100">
-                    <h6 class="text-warning fw-bold">⁄Ê«∆ﬁ «· »‰Ì</h6>
+                    <h6 class="text-warning fw-bold small">⁄Ê«∆ﬁ «· »‰Ì ··›∆«  «·„ √À—…</h6>
                     <p class="mb-0 small">@(string.IsNullOrEmpty(Model.AdoptionBarriers) ? "-" : Model.AdoptionBarriers)</p>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="p-3 bg-white rounded border border-info-subtle h-100">
-                    <h6 class="text-info fw-bold">«·œ⁄„ «·„ÿ·Ê» ··ÃÂ…</h6>
+                    <h6 class="text-info fw-bold small">«·œ⁄„ «·„ÿ·Ê» ··ÃÂ…</h6>
                     <p class="mb-0 small">@(string.IsNullOrEmpty(Model.RequiredSupport) ? "-" : Model.RequiredSupport)</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="p-3 bg-white rounded border border-secondary h-100">
-                    <h6 class="text-muted fw-bold">«·„Œ«ÿ— «·„ Êﬁ⁄…</h6>
-                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.Risks) ? "-" : Model.Risks)</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="p-3 bg-white rounded border border-success-subtle h-100">
-                    <h6 class="text-success fw-bold">ﬁ’’ «·‰Ã«Õ «·„‰Ã“…</h6>
-                    <p class="mb-0 small">@(string.IsNullOrEmpty(Model.SuccessStories) ? "-" : Model.SuccessStories)</p>
-                </div>
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="p-3 bg-white rounded border border-primary-subtle h-100">
-                    <h6 class="text-primary fw-bold">«· Ê’Ì… «·√Ê·Ì… „‰ «·ÃÂ…</h6>
+                    <h6 class="text-primary fw-bold small">«· Ê’Ì… «·√Ê·Ì… „‰ «·ÃÂ…</h6>
                     <p class="mb-0 small">@(string.IsNullOrEmpty(Model.InitialRecommendation) ? "-" : Model.InitialRecommendation)</p>
                 </div>
             </div>
         </div>
 
-        <!-- ’‰œÊﬁ ≈Ã—«¡«  «··Ã‰… «·›⁄·Ì -->
-        <div class="p-4 rounded" style="background-color: #FDF9EC; border: 1px solid rgba(201, 162, 39, 0.4);">
-            <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-lightning-charge me-2"></i> ﬁ—«—«  ·Ã‰… ‘—ﬂ«¡ «· €ÌÌ—</h6>
+        <!-- ’‰œÊﬁ «·ﬁ—«— («·«‰ ﬁ«· ·· Õ·Ì·) -->
+        <div class="p-4 rounded text-center mt-5" style="background-color: #FDF9EC; border: 1px solid rgba(201, 162, 39, 0.4);">
+            <h5 class="fw-bold text-dark mb-3">Â· «ﬂ „·  «·’Ê—… ·œÌﬂø</h5>
+            <p class="text-muted mb-4">«‰ ﬁ· «·¬‰ ·«” Œœ«„ √œÊ«  «· Õ·Ì· (What / So What / Now What) Ê»‰«¡ «· Ê’Ì… «·‰Â«∆Ì….</p>
 
-            <form method="post" asp-action="SubmitAnalysis">
-                <input type="hidden" name="id" value="@Model.Id" />
-
-                <div class="mb-3">
-                    <label class="form-label text-muted fw-bold small"> Ê’Ì«  «··Ã‰… ( ŸÂ— ›Ì «·”Ã·«  «·—”„Ì…)</label>
-                    <textarea name="recommendation" class="form-control border-warning-subtle shadow-none" rows="3" placeholder="«ﬂ » „—∆Ì«  Ê Ê’Ì«  «··Ã‰… ÕÊ· Â–« «· ﬁ—Ì—..." required></textarea>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top border-secondary-subtle">
-                    <a asp-action="Index" class="moda-btn moda-btn-outline">
-                        ≈·€«¡
-                    </a>
-                    <button type="submit" class="moda-btn moda-btn-gold">
-                        <i class="bi bi-check-all"></i> «⁄ „«œ «· ﬁ—Ì— ‰Â«∆Ì«
-                    </button>
-                </div>
-            </form>
+            <a asp-action="Inbox" class="moda-btn moda-btn-outline me-2">
+                <i class="bi bi-arrow-right"></i> ⁄Êœ… ··’‰œÊﬁ
+            </a>
+            <a asp-action="Analyze" asp-route-id="@Model.Id" class="moda-btn moda-btn-gold px-5 py-2 fs-5">
+                <i class="bi bi-diagram-2-fill me-2"></i> «·«‰ ﬁ«· ·√œÊ«  «· Õ·Ì·
+            </a>
         </div>
 
     </div>
@@ -11742,14 +11957,14 @@ File: \CTP.Web\Areas\Committee\Views\Reports\Analyze.cshtml
 
 
 ======================================================
-File: \CTP.Web\Areas\Committee\Views\Reports\Analyze.cshtml.cs
+File: \CTP.Web\Areas\Committee\Views\Workspace\Details.cshtml.cs
 ======================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace CTP.Web.Areas.Committee.Views.Reports
+namespace CTP.Web.Areas.Committee.Views.Workspace
 {
-    public class AnalyzeModel : PageModel
+    public class DetailsModel : PageModel
     {
         public void OnGet()
         {
@@ -11760,36 +11975,31 @@ namespace CTP.Web.Areas.Committee.Views.Reports
 
 
 ======================================================
-File: \CTP.Web\Areas\Committee\Views\Reports\Index.cshtml
+File: \CTP.Web\Areas\Committee\Views\Workspace\Inbox.cshtml
 ======================================================
-@model IEnumerable<CTP.Web.Areas.Committee.Models.CommitteeReportListViewModel>
+@model IEnumerable<CTP.Domain.Entities.MonthlyReport>
 @{
     Layout = "_Layout";
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
-<div class="container-fluid mt-3 mb-5">
+<div class="container-fluid mt-4 mb-5">
     <div class="moda-card border-0 shadow-sm">
-        <div class="moda-card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h5 class="moda-card-title mb-0" style="color: var(--ctp-primary-olive);">
-                <i class="bi bi-funnel me-2"></i> «· ﬁ«—Ì— «·Ê«—œ… ·· Õ·Ì·
-            </h5>
-            <span class="badge bg-primary rounded-pill px-3 py-2">@Model.Count()  ﬁ«—Ì—</span>
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0"><i class="bi bi-inboxes me-2"></i> «· ﬁ«—Ì— «·Ê«—œ… ·· Õ·Ì·</h5>
+            <span class="badge bg-secondary px-3 py-2">@Model.Count()  ﬁ«—Ì—</span>
         </div>
-
         <div class="moda-card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="moda-table text-center align-middle">
+                    <thead>
                         <tr>
                             <th>«· ﬁ—Ì—</th>
                             <th>«·ÃÂ…</th>
-                            <th>«·”›Ì— („⁄œ «· ﬁ—Ì—)</th>
-                            <th>«”„ «· €ÌÌ—</th>
-                            <th>«·Ã«Â“Ì…</th>
-                            <th> «—ÌŒ «·«⁄ „«œ</th>
-                            <th>«·≈Ã—«¡« </th>
+                            <th>«· €ÌÌ—</th>
+                            <th>«·Ã«Â“Ì… / «· »‰Ì</th>
+                            <th>«·≈Ã—«¡</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -11799,22 +12009,14 @@ File: \CTP.Web\Areas\Committee\Views\Reports\Index.cshtml
                             {
                                 <tr>
                                     <td class="fw-bold text-dark">@item.ReportNumber</td>
-                                    <td><span class="badge bg-light text-dark border">@item.OrganizationName</span></td>
-                                    <td>@item.AmbassadorName</td>
+                                    <td><span class="badge bg-light text-dark border">@(item.Organization?.EntityName)</span></td>
                                     <td>@item.ChangeName</td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="fw-bold text-primary">@item.ReadinessScore%</span>
-                                            <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-primary" role="progressbar" style="width: @item.ReadinessScore%"></div>
-                                            </div>
-                                        </div>
+                                        <span class="text-primary fw-bold">@item.ReadinessScore%</span> / <span class="text-success fw-bold">@item.AdoptionScore%</span>
                                     </td>
-                                    <td class="text-muted small">@item.ApprovedDate</td>
                                     <td>
-                                        <!-- ”Ì „ »‰«¡ ‘«‘…  ›«’Ì· «··Ã‰… ·«Õﬁ« -->
-                                        <a asp-action="Analyze" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title=" Õ·Ì· «· ﬁ—Ì—">
-                                            <i class="bi bi-graph-up-arrow"></i>  Õ·Ì·
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="moda-btn moda-btn-sm moda-btn-gold">
+                                            <i class="bi bi-eye"></i> «” ⁄—«÷ «· ﬁ—Ì—
                                         </a>
                                     </td>
                                 </tr>
@@ -11822,12 +12024,7 @@ File: \CTP.Web\Areas\Committee\Views\Reports\Index.cshtml
                         }
                         else
                         {
-                            <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                    ·«  ÊÃœ  ﬁ«—Ì— „⁄ „œ… »«‰ Ÿ«— «· Õ·Ì· Õ«·Ì«.
-                                </td>
-                            </tr>
+                            <tr><td colspan="5" class="py-5 text-muted">·«  ÊÃœ  ﬁ«—Ì— Ê«—œ… »«‰ Ÿ«— «· Õ·Ì·.</td></tr>
                         }
                     </tbody>
                 </table>
@@ -11839,14 +12036,14 @@ File: \CTP.Web\Areas\Committee\Views\Reports\Index.cshtml
 
 
 ======================================================
-File: \CTP.Web\Areas\Committee\Views\Reports\Index.cshtml.cs
+File: \CTP.Web\Areas\Committee\Views\Workspace\Inbox.cshtml.cs
 ======================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace CTP.Web.Areas.Committee.Views.Reports
+namespace CTP.Web.Areas.Committee.Views.Workspace
 {
-    public class IndexModel : PageModel
+    public class InboxModel : PageModel
     {
         public void OnGet()
         {
@@ -11864,229 +12061,54 @@ File: \CTP.Web\Areas\Committee\Views\Workspace\Index.cshtml
     Layout = "_Layout";
 }
 
-@section Styles {
-    <style>
-        /*  ‰”Ìﬁ «· »ÊÌ»«  «·⁄·ÊÌ… «·„ÿ«»ﬁ ·· ’„Ì„ */
-        .workspace-tabs {
-            display: flex;
-            background-color: #0B4F61;
-            border-radius: 12px;
-            padding: 6px;
-            gap: 4px;
-            margin-bottom: 24px;
-            overflow-x: auto;
-        }
-
-        .workspace-tab {
-            flex: 1;
-            text-align: center;
-            padding: 12px 20px;
-            color: rgba(255,255,255,0.7);
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-
-            .workspace-tab:hover {
-                color: #fff;
-                background-color: rgba(255,255,255,0.1);
-            }
-
-            .workspace-tab.active {
-                background-color: #C9A227; /* «··Ê‰ «·–Â»Ì */
-                color: #fff;
-                box-shadow: 0 4px 10px rgba(201, 162, 39, 0.4);
-            }
-
-        /*  ‰”Ìﬁ ÃœÊ· «·‰”Œ «· Õ·Ì·Ì… */
-        .analytical-table th {
-            background-color: #0B4F61 !important;
-            color: white !important;
-            font-weight: 600;
-            border: none;
-        }
-
-        .analytical-table td {
-            vertical-align: middle;
-            font-size: 0.95rem;
-        }
-    </style>
-}
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-
-    <div class="text-center mb-4">
-        <h2 class="fw-bold" style="color: #0B4F61;">„—ﬂ“ √⁄„«· —∆Ì”/√⁄÷«¡ ·Ã‰… ‘—ﬂ«¡ «· €ÌÌ—</h2>
-        <p class="text-muted">„‰ «· ﬁ«—Ì— Ê«·„œŒ·«  ≈·Ï «· Õ·Ì· Ê«· Ê’Ì« ° À„ «·œ«‘»Ê—œ Ê«·—›⁄ «·ﬁÌ«œÌ ó »„‰ÿﬁ: „«–« ÕœÀø ·„«–« ÌÂ„ø „«–« ‰›⁄· «·¬‰ø</p>
-    </div>
-
-    <!-- «· »ÊÌ»«  (Tabs) -->
-    <div class="workspace-tabs">
-        <a class="workspace-tab active" data-bs-toggle="tab" href="#tab-reports">«· ﬁ«—Ì— «·‘Â—Ì…</a>
-        <a class="workspace-tab" data-bs-toggle="tab" href="#tab-inputs">„œŒ·«  «·ÃÂ« </a>
-        <a class="workspace-tab" data-bs-toggle="tab" href="#tab-analysis">«· Õ·Ì· Ê‘Ã—… «·ﬁ—«—</a>
-        <a class="workspace-tab" data-bs-toggle="tab" href="#tab-recommendations">«· Ê’Ì«  Ê«·ﬁ—«—« </a>
-        <a class="workspace-tab" data-bs-toggle="tab" href="#tab-dashboard">«·œ«‘»Ê—œ Ê«·—›⁄ «·ﬁÌ«œÌ</a>
-    </div>
-
-    <div class="tab-content">
-        <!-- «· »ÊÌ» «·√Ê·: «· ﬁ«—Ì— «·‘Â—Ì… -->
-        <div class="tab-pane fade show active" id="tab-reports">
-
-            <h5 class="fw-bold mb-3" style="color: #0B4F61;">
-                <i class="bi bi-file-earmark-bar-graph me-2 text-warning"></i> Ã„Ì⁄ «· ﬁ«—Ì— «·Ê«—œ… (‰”Œ  Õ·Ì·Ì… ≈·ﬂ —Ê‰Ì…)
-            </h5>
-
-            <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
-                <div class="table-responsive">
-                    <table class="table table-hover analytical-table mb-0">
-                        <thead>
-                            <tr>
-                                <th>«· ﬁ—Ì—</th>
-                                <th>«·ÃÂ…</th>
-                                <th>«·‰Ê⁄</th>
-                                <th>«· €ÌÌ—</th>
-                                <th>«·Ã«Â“Ì…</th>
-                                <th>«· »‰Ì</th>
-                                <th>⁄«∆ﬁ «· »‰Ì «·√»—“</th>
-                                <th>«·«ﬂ „«·</th>
-                                <th>«·Õ«·…</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (Model != null && Model.Any())
-                            {
-                                foreach (var item in Model)
-                                {
-                                    <tr>
-                                        <td class="fw-bold text-muted">@item.ReportNumber</td>
-                                        <td class="fw-bold text-dark">@(item.Organization?.EntityName ?? "€Ì— „Õœœ")</td>
-                                        <td>@item.ChangeType</td>
-                                        <td>@item.ChangeName</td>
-                                        <td class="fw-bold text-primary">@item.ReadinessScore%</td>
-                                        <td class="fw-bold text-success">@item.AdoptionScore%</td>
-                                        <td class="text-danger small">@(string.IsNullOrEmpty(item.AdoptionBarriers) ? "·« ÌÊÃœ" : (item.AdoptionBarriers.Length > 30 ? item.AdoptionBarriers.Substring(0, 30) + "..." : item.AdoptionBarriers))</td>
-                                        <td>
-                                            @if (item.ActivityCompletionRate >= 100)
-                                            {
-                                                <span class="badge bg-success-subtle text-success">„ﬂ „·</span>
-                                            }
-                                            else
-                                            {
-
-                                                <span class="badge bg-danger-subtle text-danger">‰«ﬁ’</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-success-subtle text-success border border-success">„⁄ „œ ·· Õ·Ì·</span>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0"><i class="bi bi-inboxes me-2"></i> «· ﬁ«—Ì— «·Ê«—œ… ·· Õ·Ì·</h5>
+            <span class="badge bg-secondary px-3 py-2">@Model.Count()  ﬁ«—Ì—</span>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th>«· ﬁ—Ì—</th>
+                            <th>«·ÃÂ…</th>
+                            <th>«· €ÌÌ—</th>
+                            <th>«·Ã«Â“Ì… / «· »‰Ì</th>
+                            <th>«·≈Ã—«¡</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
                             {
                                 <tr>
-                                    <td colspan="9" class="text-center py-5 text-muted">·«  ÊÃœ  ﬁ«—Ì— Ê«—œ… ·· Õ·Ì· Õ«·Ì«.</td>
+                                    <td class="fw-bold text-dark">@item.ReportNumber</td>
+                                    <td><span class="badge bg-light text-dark border">@(item.Organization?.EntityName)</span></td>
+                                    <td>@item.ChangeName</td>
+                                    <td>
+                                        <span class="text-primary fw-bold">@item.ReadinessScore%</span> / <span class="text-success fw-bold">@item.AdoptionScore%</span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="Analyze" asp-route-id="@item.Id" class="moda-btn moda-btn-sm moda-btn-gold">
+                                            <i class="bi bi-graph-up-arrow"></i> › Õ √œ«… «· Õ·Ì·
+                                        </a>
+                                    </td>
                                 </tr>
                             }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- »«ﬁÌ «· »ÊÌ»«  ”Ì „ »‰«ƒÂ«  »«⁄« -->
-        <div class="tab-pane fade" id="tab-inputs"><div class="p-5 text-center text-muted">Ã«—Ì »‰«¡ ‘«‘… „œŒ·«  «·ÃÂ« ...</div></div>
-        <!-- «· »ÊÌ» «·À«·À: «· Õ·Ì· Ê‘Ã—… «·ﬁ—«— -->
-        <div class="tab-pane fade" id="tab-analysis">
-            <h5 class="fw-bold mb-4" style="color: #0B4F61;">
-                <i class="bi bi-diagram-2-fill me-2 text-warning"></i> Œ·«’… «·ﬁ—«— ó What / So What / Now What
-            </h5>
-
-            <!-- ‰„Ê–Ã «· Õ·Ì· -->
-            <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid #E2E8F0;">
-                <form id="analysisForm">
-                    <input type="hidden" id="MonthlyReportId" name="MonthlyReportId" value="" /> <!-- ”Ì „ Õﬁ‰ Â–« «·—ﬁ„ ⁄»— Ã«›«”ﬂ—»  ⁄‰œ «Œ Ì«—  ﬁ—Ì— -->
-
-                    <table class="table table-bordered mb-0 analytical-table">
-                        <tbody>
-                            <!-- What -->
-                            <tr>
-                                <td class="fw-bold text-center" style="width: 15%; background-color: #0B4F61; color: #fff; vertical-align: middle;">
-                                    What ó „«–« ÕœÀø
-                                </td>
-                                <td class="p-0">
-                                    <textarea id="WhatHappened" name="WhatHappened" class="form-control border-0 shadow-none" rows="2" placeholder="«ﬂ » «·„·«ÕŸ… √Ê «·ÕœÀ Â‰«..." style="resize: none;" required></textarea>
-                                </td>
-                            </tr>
-                            <!-- So What -->
-                            <tr>
-                                <td class="fw-bold text-center" style="width: 15%; background-color: #0B4F61; color: #fff; vertical-align: middle;">
-                                    So What ó ·„«–« ÌÂ„ø
-                                </td>
-                                <td class="p-0">
-                                    <textarea id="WhyItMatters" name="WhyItMatters" class="form-control border-0 shadow-none" rows="2" placeholder="«ﬂ » «·›ÃÊ… √Ê «·√À— «·„” Âœ› Â‰«..." style="resize: none; background-color: #F8FAFC;" required></textarea>
-                                </td>
-                            </tr>
-                            <!-- Now What -->
-                            <tr>
-                                <td class="fw-bold text-center" style="width: 15%; background-color: #0B4F61; color: #fff; vertical-align: middle;">
-                                    Now What ó „«–« ‰›⁄· «·¬‰ø
-                                </td>
-                                <td class="p-0">
-                                    <textarea id="WhatNow" name="WhatNow" class="form-control border-0 shadow-none" rows="2" placeholder="«ﬂ » «· œŒ· «·„ÊÃÂ «·„ﬁ —Õ..." style="resize: none;" required></textarea>
-                                </td>
-                            </tr>
-
-                            <!-- «·Œ’«∆’ «· ‰›Ì–Ì… -->
-                            <tr>
-                                <td class="fw-bold text-center" style="background-color: #106981; color: #fff; vertical-align: middle;">«·√À— «·„ Êﬁ⁄</td>
-                                <td class="p-0"><input type="text" id="ExpectedImpact" name="ExpectedImpact" class="form-control border-0 shadow-none px-3 py-2" placeholder="„À«·: —›⁄ «·„ƒ‘— «·„” Âœ› „‰ 45% ≈·Ï 55%..." /></td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold text-center" style="background-color: #106981; color: #fff; vertical-align: middle;">«·√Ê·ÊÌ…</td>
-                                <td class="p-0">
-                                    <select id="Priority" name="Priority" class="form-select border-0 shadow-none px-3 py-2" style="background-color: #F8FAFC;">
-                                        <option value="⁄«·Ì…">⁄«·Ì…</option>
-                                        <option value="„ Ê”ÿ…" selected>„ Ê”ÿ…</option>
-                                        <option value="„‰Œ›÷…">„‰Œ›÷…</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold text-center" style="background-color: #106981; color: #fff; vertical-align: middle;">«·„«·ﬂ</td>
-                                <td class="p-0"><input type="text" id="Owner" name="Owner" class="form-control border-0 shadow-none px-3 py-2" placeholder="„„À· «·ÃÂ…..." /></td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold text-center" style="background-color: #106981; color: #fff; vertical-align: middle;">«·≈Ã—«¡ «·„ﬁ —Õ</td>
-                                <td class="p-0"><input type="text" id="SuggestedAction" name="SuggestedAction" class="form-control border-0 shadow-none px-3 py-2" style="background-color: #F8FAFC;" placeholder="«ﬂ » «·≈Ã—«¡..." /></td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold text-center" style="background-color: #106981; color: #fff; vertical-align: middle;">Â· ÌÕ «Ã ﬁ—«— œ⁄„ø</td>
-                                <td class="p-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="RequiresSupport" name="RequiresSupport">
-                                        <label class="form-check-label" for="RequiresSupport">‰⁄„° Ì ÿ·»  ’⁄Ìœ Êœ⁄„ ﬁÌ«œÌ</label>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="card-footer bg-white text-end py-3 border-top-0">
-                        <button type="button" id="btnSaveAnalysis" class="moda-btn moda-btn-gold px-4">
-                            <i class="bi bi-cpu me-2"></i>  Ê·Ìœ «· Ê’Ì… ÊÕ›Ÿ «· Õ·Ì·
-                        </button>
-                    </div>
-                </form>
+                        }
+                        else
+                        {
+                            <tr><td colspan="5" class="py-5 text-muted">·«  ÊÃœ  ﬁ«—Ì— Ê«—œ… »«‰ Ÿ«— «· Õ·Ì·.</td></tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="tab-pane fade" id="tab-recommendations"><div class="p-5 text-center text-muted">Ã«—Ì »‰«¡ »Ê«»… ÃÊœ… «· Ê’Ì« ...</div></div>
-        <div class="tab-pane fade" id="tab-dashboard"><div class="p-5 text-center text-muted">Ã«—Ì »‰«¡ ·ÊÕ… «·„ƒ‘—«  «· ‰›Ì–Ì… (Pareto)...</div></div>
     </div>
 </div>
 
@@ -12101,6 +12123,276 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace CTP.Web.Areas.Committee.Views.Workspace
 {
     public class IndexModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Workspace\InputDetails.cshtml
+======================================================
+@model CTP.Domain.Entities.EntityInput
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- »ÿ«ﬁ… «·⁄—÷ «·—∆Ì”Ì… -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-4">
+
+        <div class="row border-bottom pb-3 mb-4">
+            <div class="col-md-5">
+                <h6 class="text-muted mb-1 small">«·„’œ— / «·ÃÂ…</h6>
+                <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@(Model.Organization?.EntityName)</h4>
+                <div class="text-muted small mt-1"><i class="bi bi-person me-1"></i> «·”›Ì—: @(Model.Preparer?.FullName)</div>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1 small"> «—ÌŒ «·—›⁄</h6>
+                <span class="fw-bold text-dark">@Model.CreatedDate.ToString("yyyy/MM/dd hh:mm tt")</span>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted mb-1 small">‰Ê⁄ «·„œŒ·</h6>
+                @{
+                    var badgeClass = Model.Type switch
+                    {
+                        CTP.Domain.Enums.InputType.SuccessStory => "bg-success",
+                        CTP.Domain.Enums.InputType.SupportNeed => "bg-danger",
+                        CTP.Domain.Enums.InputType.Challenge or CTP.Domain.Enums.InputType.AdoptionBarrier => "bg-warning text-dark",
+                        _ => "bg-secondary"
+                    };
+                }
+                <span class="badge @badgeClass px-4 py-2 fs-6 rounded-pill shadow-sm">@Model.Type</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);"><i class="bi bi-chat-quote-fill me-2"></i> «· ›«’Ì· Ê«·„Õ ÊÏ «·„—›Ê⁄</h6>
+                <div class="p-4 bg-light rounded border" style="font-size: 1.1rem; line-height: 1.8; color: #334155;">
+                    @Html.Raw(Model.Content.Replace("\n", "<br/>"))
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ’‰œÊﬁ ﬁ—«— «··Ã‰… ( €ÌÌ— «·Õ«·…) -->
+    <div class="moda-card border-0 shadow-sm p-4" style="background-color: #FDF9EC; border: 1px solid rgba(201, 162, 39, 0.4) !important;">
+        <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-gear-fill me-2"></i> ≈Ã—«¡ «··Ã‰… ( €ÌÌ— «·Õ«·…)</h5>
+        <p class="text-muted small mb-4">Õœœ «·≈Ã—«¡ «·„‰«”» ·≈€·«ﬁ Â–« «·„œŒ· „‰ ’‰œÊﬁ «·Ê«—œ Ê≈÷«› Â ··”Ã·«  «· ‰›Ì–Ì….</p>
+
+        <!-- ”Ì „  ›⁄Ì· «·‹ Form ·«Õﬁ«° Õ«·Ì« Ê«ÃÂ… ›ﬁÿ -->
+        <form method="post" asp-action="ProcessInput">
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="row align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold text-dark small">«·ﬁ—«— «·„ Œ–</label>
+                    <select name="newStatus" class="form-select border-0 shadow-none px-3 py-2" style="background-color: #fff;">
+                        <option value="2"> ÊÃÌÂ ··ÃÂ… «·„Œ ’… (Routed)</option>
+                        <option value="3">≈’œ«— ﬁ—«— œ⁄„ (Support Issued)</option>
+                        <option value="4">‰‘— Ê ⁄„Ì„ ﬂﬁ’… ‰Ã«Õ (Published)</option>
+                        <option value="5"> ’⁄Ìœ ﬁÌ«œÌ (Escalated)</option>
+                    </select>
+                </div>
+                <div class="col-md-7 d-flex justify-content-end gap-2 mt-3 mt-md-0">
+                    <a asp-action="Inputs" class="moda-btn moda-btn-outline">
+                        <i class="bi bi-arrow-right"></i> ⁄Êœ… ··ﬁ«∆„…
+                    </a>
+                    <button type="submit" class="moda-btn moda-btn-gold px-4">
+                        <i class="bi bi-check-all"></i>  ‰›Ì– Ê≈€·«ﬁ «·„œŒ·
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Workspace\Inputs.cshtml
+======================================================
+@model IEnumerable<CTP.Domain.Entities.EntityInput>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    <!-- ’‰œÊﬁ «· ÊÃÌÂ -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info border-0 shadow-sm d-flex align-items-center" style="background-color: #F8FAFC; border-right: 4px solid var(--ctp-primary-olive) !important;">
+                <i class="bi bi-info-circle-fill fs-4 me-3" style="color: var(--ctp-primary-olive);"></i>
+                <div>
+                    <strong class="d-block text-dark">’‰œÊﬁ «·„œŒ·«  «·›Ê—Ì…</strong>
+                    <span class="small text-muted">Â‰«  ’· «·„‘«—ﬂ«  Ê«·«Õ Ì«Ã«  «·⁄«Ã·… «·„—›Ê⁄… „‰ ”›—«¡ «· €ÌÌ— Ê«· Ì ·«  ‰ Ÿ— œÊ—… «· ﬁ—Ì— «·‘Â—Ì.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- »ÿ«ﬁ… Moda «·ﬁÌ«”Ì… -->
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0"><i class="bi bi-lightning-charge me-2"></i> «·„œŒ·«  »«‰ Ÿ«— «·≈Ã—«¡</h5>
+            <span class="badge bg-secondary px-3 py-2">@Model.Count() „œŒ·« </span>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th>«· «—ÌŒ</th>
+                            <th>«·ÃÂ…</th>
+                            <th>«·”›Ì—</th>
+                            <th>‰Ê⁄ «·„œŒ·</th>
+                            <th>«·„Õ ÊÏ („ﬁ ÿ›)</th>
+                            <th>«·≈Ã—«¡« </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                var badgeClass = item.Type switch
+                                {
+                                    CTP.Domain.Enums.InputType.SuccessStory => "bg-success-subtle text-success border border-success",
+                                    CTP.Domain.Enums.InputType.SupportNeed => "bg-danger-subtle text-danger border border-danger",
+                                    CTP.Domain.Enums.InputType.Challenge or CTP.Domain.Enums.InputType.AdoptionBarrier => "bg-warning-subtle text-warning border border-warning",
+                                    _ => "bg-light text-dark border"
+                                };
+
+                                <tr>
+                                    <td class="small text-muted fw-bold">@item.CreatedDate.ToString("yyyy/MM/dd")</td>
+                                    <td class="fw-bold text-dark">@(item.Organization?.EntityName)</td>
+                                    <td class="small text-muted">@(item.Preparer?.FullName)</td>
+                                    <td><span class="badge @badgeClass px-3 py-2 rounded-pill">@item.Type</span></td>
+                                    <td class="text-start" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@item.Content">@item.Content</td>
+                                    <td>
+                                        <!--  „ —»ÿ «·“— »‘«‘… «· ›«’Ì· «·„” ﬁ·… -->
+                                        <a asp-action="InputDetails" asp-route-id="@item.Id" class="moda-btn moda-btn-sm moda-btn-gold">
+                                            <i class="bi bi-check2-circle"></i> „⁄«·Ã…
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="py-5 text-muted">·«  ÊÃœ „œŒ·«  ÃœÌœ… »«‰ Ÿ«— «·„⁄«·Ã….</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Workspace\Inputs.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Areas.Committee.Views.Workspace
+{
+    public class InputsModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+    }
+}
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Workspace\Recommendations.cshtml
+======================================================
+@model IEnumerable<CTP.Domain.Entities.Recommendation>
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title mb-0"><i class="bi bi-journal-text me-2"></i> ﬁ«⁄œ… »Ì«‰«  «· Ê’Ì«  Ê«·ﬁ—«—« </h5>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th>«·„—Ã⁄</th>
+                            <th>«·„’œ— («· ﬁ—Ì—)</th>
+                            <th>«·ÃÂ… «·„⁄‰Ì…</th>
+                            <th>‰Ê⁄ «·›ÃÊ…</th>
+                            <th>«·≈Ã—«¡ «·„ÿ·Ê»</th>
+                            <th>«·Õ«·…</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var rec in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark">@rec.RecommendationNumber</td>
+                                    <td class="small text-muted">@rec.SourceReport?.ReportNumber</td>
+                                    <td class="fw-bold">@(rec.SourceReport?.Organization?.EntityName)</td>
+                                    <td><span class="badge bg-light text-dark border">@rec.GapType</span></td>
+                                    <td class="text-start" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@rec.SuggestedAction">@rec.SuggestedAction</td>
+                                    <td>
+                                        @if (rec.Status.Contains("œ⁄„") || rec.Status.Contains("«” ﬂ„«·"))
+                                        {
+                                            <span class="moda-badge moda-badge-danger">@rec.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="moda-badge moda-badge-success">@rec.Status</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="py-5 text-muted">·«  ÊÃœ  Ê’Ì«  „”Ã·….</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+======================================================
+File: \CTP.Web\Areas\Committee\Views\Workspace\Recommendations.cshtml.cs
+======================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace CTP.Web.Areas.Committee.Views.Workspace
+{
+    public class RecommendationsModel : PageModel
     {
         public void OnGet()
         {
@@ -13096,11 +13388,13 @@ namespace CTP.Web.ViewComponents
             mainSection.Items.Add(new MenuItem { Title = "ŸÑŸàÿ≠ÿ© ÿßŸÑÿ™ÿ∫ŸäŸäÿ±ÿßÿ™", IconClass = "bi-kanban", Url = "/ChangeBoard/Index" });
             menu.Add(mainSection);
 
-            // 2. ŸÖÿ≥ÿßÿ≠ÿ© ÿ±ÿ¶Ÿäÿ≥ ŸÑÿ¨ŸÜÿ© ÿ¥ÿ±ŸÉÿßÿ° ÿßŸÑÿ™ÿ∫ŸäŸäÿ± ŸàÿßŸÑŸÇŸäÿßÿØÿ©
+            // 2. ŸÖÿ≥ÿßÿ≠ÿ© ŸÑÿ¨ŸÜÿ© ÿ¥ÿ±ŸÉÿßÿ° ÿßŸÑÿ™ÿ∫ŸäŸäÿ± ŸàÿßŸÑŸÇŸäÿßÿØÿ©
             if (role == "COMMITTEE_CHAIR" || role == "LEADER" || role == "COMMITTEE_MEMBER")
             {
-                var committeeSection = new MenuSection { Title = "ÿ•ÿØÿßÿ±ÿ© ÿßŸÑŸÑÿ¨ÿßŸÜ" };
-                committeeSection.Items.Add(new MenuItem { Title = "ŸÖÿ±ŸÉÿ≤ ÿßŸÑÿ£ÿπŸÖÿßŸÑ (ÿßŸÑŸÑÿ¨ŸÜÿ©)", IconClass = "bi-bullseye", Url = "/Committee/Workspace/Index" });
+                var committeeSection = new MenuSection { Title = "ŸÖÿ±ŸÉÿ≤ ÿ£ÿπŸÖÿßŸÑ ÿßŸÑŸÑÿ¨ŸÜÿ©" };
+                committeeSection.Items.Add(new MenuItem { Title = "ÿµŸÜÿØŸàŸÇ ÿßŸÑŸàÿßÿ±ÿØ (ÿßŸÑÿ™ÿ≠ŸÑŸäŸÑ)", IconClass = "bi-inboxes", Url = "/Committee/Workspace/Inbox" });
+                committeeSection.Items.Add(new MenuItem { Title = "ÿ≥ÿ¨ŸÑ ÿßŸÑÿ™ŸàÿµŸäÿßÿ™", IconClass = "bi-journal-check", Url = "/Committee/Workspace/Recommendations" });
+                committeeSection.Items.Add(new MenuItem { Title = "ŸÖÿØÿÆŸÑÿßÿ™ ÿßŸÑÿ¨Ÿáÿßÿ™", IconClass = "bi-chat-left-dots", Url = "/Committee/Workspace/Inputs" });
                 menu.Add(committeeSection);
             }
             // 3. ŸÖÿ≥ÿßÿ≠ÿ© ÿ≥ŸÅÿ±ÿßÿ° ÿßŸÑÿ™ÿ∫ŸäŸäÿ± (ÿßŸÑÿ™ÿ≠ÿØŸäÿ´ ÿßŸÑÿ¨ÿØŸäÿØ)
@@ -14178,6 +14472,8 @@ builder.Services.AddScoped<ICommitteeRepository, CommitteeRepository>();
 builder.Services.AddScoped<ICommitteeService, CommitteeService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IEntityInputService, EntityInputService>();
+builder.Services.AddScoped<IEntityInputRepository, EntityInputRepository>();
 // ÿ•ÿ∂ÿßŸÅÿ© ÿÆÿØŸÖÿßÿ™ MVC (Controllers & Views)
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();

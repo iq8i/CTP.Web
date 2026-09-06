@@ -12,5 +12,6 @@ namespace CTP.Application.Interfaces.Services
             string expectedImpact,
             bool requiresSupport);
         Task<IEnumerable<Recommendation>> GetCommitteeRecommendationsAsync();
+
     }
 }

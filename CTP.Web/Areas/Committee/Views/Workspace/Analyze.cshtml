@@ -1,152 +1,102 @@
 ﻿@model CTP.Web.Areas.Committee.Models.AnalyzeReportViewModel
-@{ Layout = "_Layout"; }
-
-@section Styles {
-    <style>
-        .insight-card {
-            border: 1px solid #E2E8F0;
-            border-radius: 12px;
-            background: #fff;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-        .insight-header {
-            display: flex;
-            align-items: center;
-            border-bottom: 2px solid #F1F5F9;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
-        }
-        .insight-header i { font-size: 1.5rem; color: var(--ctp-primary-olive); margin-right: 12px; }
-        .insight-header h5 { margin: 0; font-weight: 700; color: #1E293B; }
-        
-        .progress-slim { height: 8px; border-radius: 4px; background-color: #F1F5F9; overflow: hidden; margin-top: 8px;}
-        .progress-slim .bar { background-color: var(--ctp-primary-olive); height: 100%; }
-        .progress-slim .bar.danger { background-color: #EF4444; }
-
-        .system-insight-box {
-            background-color: #F0FDF4;
-            border-right: 4px solid #EF4444;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-    </style>
+@{
+    Layout = "_Layout";
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    
-    <!-- معلومات أساسية -->
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <div>
-            <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@(Model.ReportDetails.Organization?.EntityName)</h4>
-            <span class="text-muted"><i class="bi bi-file-earmark-text me-1"></i> تقرير: @Model.ReportDetails.ReportNumber — @Model.ReportDetails.ChangeName</span>
-        </div>
-        <div class="text-end">
-            <span class="badge bg-secondary px-3 py-2 fs-6 rounded-pill">نسبة اكتمال الأنشطة: @Model.ReportDetails.ActivityCompletionRate%</span>
-        </div>
-    </div>
+    <div class="row g-4">
 
-    <div class="row">
-        <!-- العمود الأيمن: البيانات المحللة آلياً (Health Check) -->
-        <div class="col-lg-5">
-            <div class="insight-card h-100">
-                <div class="insight-header">
-                    <i class="bi bi-heart-pulse"></i>
-                    <h5>التشخيص الآلي (Health Check)</h5>
-                </div>
-                
+        <!-- التشخيص الآلي (ADKAR) -->
+        <div class="col-lg-4">
+            <div class="moda-card border-0 shadow-sm p-4 h-100 bg-light">
+                <h6 class="fw-bold text-dark mb-4">
+                    <i class="bi bi-heart-pulse text-danger me-2"></i> التشخيص الآلي (ADKAR)
+                </h6>
+
                 @{
-                    // خوارزمية استخراج الفجوة برمجياً (حسب معايير Prosci)
-                    var adkar = new Dictionary<string, int> {
-                        { "الوعي (Awareness)", Model.ReportDetails.AdkarAwareness },
-                        { "الرغبة (Desire)", Model.ReportDetails.AdkarDesire },
-                        { "المعرفة (Knowledge)", Model.ReportDetails.AdkarKnowledge },
-                        { "القدرة (Ability)", Model.ReportDetails.AdkarAbility },
-                        { "التعزيز (Reinforcement)", Model.ReportDetails.AdkarReinforcement }
+                    var adkar = new Dictionary<string, int>
+                    {
+                        { "الوعي (Awareness)", Model.ReportDetails?.AdkarAwareness ?? 0 },
+                        { "الرغبة (Desire)", Model.ReportDetails?.AdkarDesire ?? 0 },
+                        { "المعرفة (Knowledge)", Model.ReportDetails?.AdkarKnowledge ?? 0 },
+                        { "القدرة (Ability)", Model.ReportDetails?.AdkarAbility ?? 0 },
+                        { "التعزيز (Reinforcement)", Model.ReportDetails?.AdkarReinforcement ?? 0 }
                     };
-                    var barrier = adkar.OrderBy(x => x.Value).First();
+
+                    var barrier = adkar.OrderBy(x => x.Value).FirstOrDefault();
                 }
 
-                <div class="mb-4">
-                    <h6 class="fw-bold text-muted small mb-3">مؤشرات ADKAR</h6>
-                    @foreach (var item in adkar)
-                    {
-                        var isBarrier = item.Key == barrier.Key;
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between small fw-bold @(isBarrier ? "text-danger" : "text-dark")">
-                                <span>@item.Key</span>
-                                <span>@item.Value%</span>
-                            </div>
-                            <div class="progress-slim"><div class="bar @(isBarrier ? "danger" : "")" style="width: @item.Value%"></div></div>
-                        </div>
-                    }
+                @foreach (var item in adkar)
+                {
+                    <div class="mb-2 small fw-bold d-flex justify-content-between">
+                        <span>@item.Key</span>
+                        <span>@item.Value%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar @(item.Key == barrier.Key ? "bg-danger" : "bg-primary")"
+                             style="width: @item.Value%"></div>
+                    </div>
+                }
+
+                <div class="alert alert-danger mt-4 small border-0 shadow-sm">
+                    نقطة الحاجز الآلية: <strong>@barrier.Key</strong> (@barrier.Value%)
                 </div>
 
-                <div class="system-insight-box">
-                    <h6 class="text-danger fw-bold"><i class="bi bi-robot me-1"></i> تحليل النظام الذكي:</h6>
-                    <p class="small text-dark mb-0">
-                        اكتشف النظام أن الفجوة الرئيسية (Barrier Point) تقع في مرحلة <strong>@barrier.Key</strong> بنسبة متدنية بلغت <strong>@barrier.Value%</strong>.
-                        وفقاً للمنهجية، يُنصح بتوجيه التوصيات وقرارات الدعم لمعالجة هذا الحاجز فوراً.
-                    </p>
+                <div class="alert alert-warning small border-0 shadow-sm">
+                    عائق التبني المرفوع من الجهة:
+                    <br />
+                    <strong>@(string.IsNullOrEmpty(Model.ReportDetails?.AdoptionBarriers) ? "لم يُرفع عائق محدد" : Model.ReportDetails.AdoptionBarriers)</strong>
                 </div>
-
-                <hr class="my-4" />
-                
-                <h6 class="fw-bold text-muted small mb-3">العوائق والمخاطر المرفوعة</h6>
-                <div class="p-3 bg-light rounded border mb-2 small text-dark"><strong>العائق الأبرز:</strong> @(string.IsNullOrEmpty(Model.ReportDetails.AdoptionBarriers) ? "لم يُذكر" : Model.ReportDetails.AdoptionBarriers)</div>
-                <div class="p-3 bg-light rounded border small text-dark"><strong>الخطر التشغيلي:</strong> @(string.IsNullOrEmpty(Model.ReportDetails.Obstacles) ? "لم يُذكر" : Model.ReportDetails.Obstacles)</div>
             </div>
         </div>
 
-        <!-- العمود الأيسر: إدخال القرار (Decision Maker) -->
-        <div class="col-lg-7">
-            <div class="insight-card h-100" style="border-color: var(--moda-section-accent); background-color: #FDF9EC;">
-                <div class="insight-header">
-                    <i class="bi bi-hammer text-warning"></i>
-                    <h5>صياغة القرار والتوصية</h5>
-                </div>
+        <!-- صياغة القرار والتوصية -->
+        <div class="col-lg-8">
+            <div class="moda-card border-0 shadow-sm p-4 h-100" style="border-right: 4px solid var(--moda-section-accent) !important; background-color: #FDF9EC;">
+                <h5 class="fw-bold mb-4"><i class="bi bi-hammer me-2 text-warning"></i> صياغة القرار والتوصية</h5>
 
                 <form method="post" asp-action="Analyze">
-                    <input type="hidden" asp-for="MonthlyReportId" />
+                    <input type="hidden" asp-for="MonthlyReportId" value="@Model.MonthlyReportId" />
 
-                    <!-- دمج الـ 5 Whys ليكون حقلاً عملياً واحداً لتشخيص المشكلة -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">التشخيص الجذري للمشكلة المرفوعة (Root Cause)</label>
-                        <textarea asp-for="WhatHappened" class="form-control border-0 shadow-sm p-3" rows="2" placeholder="بناءً على المعطيات يمين الشاشة، ما هو أصل المشكلة؟" required></textarea>
+                        <label class="form-label fw-bold small text-dark">التشخيص الجذري للمشكلة المرفوعة (Root Cause)</label>
+                        <textarea asp-for="WhatHappened" class="form-control border-0 shadow-sm p-3" rows="2" required></textarea>
+                        <span asp-validation-for="WhatHappened" class="text-danger small"></span>
                     </div>
 
-                    <!-- الأثر والمخاطر (So What) -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">لماذا تشكل هذه الفجوة خطراً؟ (So What)</label>
-                        <textarea asp-for="WhyItMatters" class="form-control border-0 shadow-sm p-3" rows="2" placeholder="تأثير استمرار هذه الفجوة على مسار التغيير..." required></textarea>
+                        <label class="form-label fw-bold small text-dark">لماذا تشكل هذه الفجوة خطراً؟ (So What)</label>
+                        <textarea asp-for="WhyItMatters" class="form-control border-0 shadow-sm p-3" rows="2" required></textarea>
+                        <span asp-validation-for="WhyItMatters" class="text-danger small"></span>
                     </div>
 
-                    <!-- الإجراء التصحيحي (Now What) -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">التدخل أو الإجراء التصحيحي (Now What)</label>
-                        <textarea asp-for="WhatNow" class="form-control border-0 shadow-sm p-3" rows="2" placeholder="ما الذي يجب على الجهة أو القيادة فعله الآن؟" required></textarea>
+                        <label class="form-label fw-bold small text-dark">التدخل أو الإجراء التصحيحي (Now What)</label>
+                        <textarea asp-for="WhatNow" class="form-control border-0 shadow-sm p-3" rows="2" required></textarea>
+                        <span asp-validation-for="WhatNow" class="text-danger small"></span>
                     </div>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-4 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">خلاصة التوصية (ستُحفظ في السجل الرسمي)</label>
-                            <input type="text" asp-for="SuggestedAction" class="form-control border-0 shadow-sm py-2 fw-bold text-primary" placeholder="اكتب قراراً موجزاً وواضحاً..." required />
+                            <label class="form-label fw-bold small text-dark">خلاصة التوصية (ستُحفظ في السجل الرسمي)</label>
+                            <input type="text" asp-for="SuggestedAction" class="form-control border-0 shadow-sm p-3 fw-bold text-primary" required />
+                            <span asp-validation-for="SuggestedAction" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">الأثر المتوقع</label>
-                            <input type="text" asp-for="ExpectedImpact" class="form-control border-0 shadow-sm py-2" placeholder="مثال: رفع المؤشر إلى 60%" />
+                            <label class="form-label fw-bold small text-dark">الأثر المتوقع</label>
+                            <input type="text" asp-for="ExpectedImpact" class="form-control border-0 shadow-sm p-3" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">الجهة المالكة للحل</label>
-                            <input type="text" asp-for="Owner" class="form-control border-0 shadow-sm py-2" placeholder="الإدارة المسؤولة عن التنفيذ..." />
+                            <label class="form-label fw-bold small text-dark">الجهة المالكة للحل</label>
+                            <input type="text" asp-for="Owner" class="form-control border-0 shadow-sm p-2" required />
+                            <span asp-validation-for="Owner" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">مستوى الأولوية</label>
-                            <select asp-for="Priority" class="form-select border-0 shadow-sm py-2">
+                            <label class="form-label fw-bold small text-dark">مستوى الأولوية</label>
+                            <select asp-for="Priority" class="form-select border-0 shadow-sm p-2">
+                                <option value="عالية جداً">عالية جداً</option>
                                 <option value="عالية">عالية</option>
                                 <option value="متوسطة" selected>متوسطة</option>
                                 <option value="منخفضة">منخفضة</option>
@@ -154,23 +104,27 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-warning-subtle">
+                    <div class="d-flex justify-content-between align-items-center border-top pt-4">
                         <div class="form-check form-switch">
-                            <input class="form-check-input shadow-sm" type="checkbox" asp-for="RequiresSupport" style="transform: scale(1.3); margin-left: 10px;">
-                            <label class="form-check-label fw-bold text-danger ms-2" for="RequiresSupport">يُرفع كطلب دعم قيادي / سيادي</label>
+                            <input class="form-check-input" type="checkbox" asp-for="RequiresSupport" id="RequiresSupport">
+                            <label class="form-check-label fw-bold text-danger small ms-2" for="RequiresSupport">
+                                يُرفع كطلب دعم قيادي / سيادي
+                            </label>
                         </div>
-                        
                         <div>
-                            <a asp-action="Inbox" class="btn btn-light border fw-bold me-2 px-4">إلغاء</a>
-                            <button type="submit" class="moda-btn moda-btn-gold px-4 py-2">
-                                <i class="bi bi-save me-2"></i> اعتماد التوصية
+                            <a asp-action="Inbox" class="moda-btn moda-btn-outline me-2 px-4">إلغاء</a>
+                            <button type="submit" class="moda-btn moda-btn-gold px-4 fw-bold">
+                                <i class="bi bi-send me-1"></i> إرسال التوصية لرئيس اللجنة
                             </button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
+
     </div>
 </div>
 
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -21,17 +21,29 @@ namespace CTP.Web.Areas.Committee.Controllers
         }
 
         // 1. شاشة صندوق الوارد
+        #region مسار العضو (التحليل)
         [HttpGet]
         public async Task<IActionResult> Inbox()
         {
-            ViewData["EntityTitle"] = "صندوق وارد اللجنة";
-            ViewData["EntityHeaderSubtitle"] = "التقارير المرفوعة والجاهزة للتحليل";
+            ViewData["EntityTitle"] = "صندوق الوارد (التحليل)";
             ViewData["ThemeColor"] = "#0B4F61";
-            ViewData["EntityHeaderIcon"] = "bi-inbox-fill";
 
-            var reports = await _reportService.GetCommitteeInboxReportsAsync();
-            return View(reports);
+            // جلب التقارير التي بحالة UnderAnalysis
+            var allReports = await _reportService.GetCommitteeInboxReportsAsync();
+            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+
+            // الفلتر الصارم والآمن: استخراج أي تقرير له توصية مسجلة مسبقاً (بغض النظر عن حالتها النصية)
+            var reportsWithRecs = allRecs
+                .Select(r => r.MonthlyReportId)
+                .Distinct()
+                .ToList();
+
+            // استبعاد التقارير التي لها توصيات
+            var inboxReports = allReports.Where(r => !reportsWithRecs.Contains(r.Id)).ToList();
+
+            return View(inboxReports);
         }
+        #endregion
         // 1.5. شاشة استعراض تفاصيل التقرير
         [HttpGet]
         public async Task<IActionResult> Details(int id)
@@ -87,19 +99,14 @@ namespace CTP.Web.Areas.Committee.Controllers
                 return View(model);
             }
 
-            string recNumber = await _recommendationService.ProcessAndSaveAnalysisAsync(
-                model.MonthlyReportId,
-                model.WhyItMatters,
-                model.SuggestedAction,
-                model.Owner,
-                model.ExpectedImpact,
-                model.RequiresSupport
-            );
+            // توليد التوصية بحالة "جاهزة لاعتماد رئيس اللجنة" مع بقاء التقرير UnderAnalysis
+            string recNum = await _recommendationService.ProcessAndSaveAnalysisAsync(
+                model.MonthlyReportId, model.WhyItMatters, model.SuggestedAction,
+                model.Owner, model.ExpectedImpact, model.RequiresSupport);
 
-            // اعتماد التقرير لإغلاقه وإخفائه من صندوق الوارد
-            await _reportService.ApproveByCommitteeAsync(model.MonthlyReportId, model.SuggestedAction);
+            TempData["Success"] = $"تم إرسال التوصية ({recNum}) بنجاح وهي الآن بانتظار اعتماد رئيس اللجنة.";
 
-            TempData["Success"] = $"تم حفظ التحليل وتوليد التوصية بنجاح برقم {recNumber}.";
+            // التوجيه المعماري الصارم: نقل العضو لسجل التوصيات
             return RedirectToAction(nameof(Recommendations));
         }
 
@@ -147,5 +154,40 @@ namespace CTP.Web.Areas.Committee.Controllers
 
             return View(input);
         }
+
+        #region مسار الرئيس (الاعتماد)
+        [HttpGet]
+        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        public async Task<IActionResult> ChairBoard()
+        {
+            ViewData["EntityTitle"] = "منصة الاعتماد القيادي";
+            ViewData["ThemeColor"] = "#0B4F61";
+
+            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+
+            // الفلتر الصارم: اعرض التوصيات التي لا يزال تقريرها قيد التحليل (بمعنى أن الرئيس لم يُغلقه بعد)
+            var pendingApprovals = allRecs
+                .Where(r => r.SourceReport?.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis)
+                .OrderByDescending(r => r.CreatedDate).ToList();
+
+            return View(pendingApprovals);
+        }
+        [HttpGet]
+        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        public async Task<IActionResult> ChairReview(int reportId)
+        {
+            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+
+            // جلب التوصية بناءً على حالة التقرير بدلاً من مطابقة النص
+            var draftRec = allRecs.FirstOrDefault(r => r.MonthlyReportId == reportId && r.SourceReport?.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis);
+
+            if (draftRec == null) return RedirectToAction(nameof(ChairBoard));
+
+            ViewData["EntityTitle"] = "مراجعة واعتماد التوصية";
+            ViewData["ThemeColor"] = "#0B4F61";
+
+            return View(draftRec);
+        }
+        #endregion
     }
 }
