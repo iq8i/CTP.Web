@@ -13,11 +13,89 @@ namespace CTP.Application.Services
             _recommendationRepository = recommendationRepository;
         }
 
-        // أضف هذه الدالة داخل الكلاس إذا لم تكن موجودة
         public async Task<IEnumerable<Recommendation>> GetCommitteeRecommendationsAsync()
         {
             return await _recommendationRepository.GetAllWithDetailsAsync();
         }
+
+        public async Task<IEnumerable<Recommendation>> GetPendingChairApprovalsAsync()
+        {
+            return await _recommendationRepository.GetPendingChairApprovalsAsync();
+        }
+
+        public async Task<Recommendation?> GetRecommendationByReportIdAsync(int reportId)
+        {
+            return await _recommendationRepository.GetByMonthlyReportIdAsync(reportId);
+        }
+
+        public async Task<IEnumerable<Recommendation>> GetApprovedRecommendationsAsync()
+        {
+            return await _recommendationRepository.GetApprovedRecommendationsAsync();
+        }
+
+        public async Task<IEnumerable<Recommendation>> GetApprovedForInstitutionalReportAsync()
+        {
+            return await _recommendationRepository.GetApprovedForInstitutionalReportAsync();
+        }
+
+        public async Task<IEnumerable<Recommendation>> GetApprovedForImpactDashboardAsync()
+        {
+            return await _recommendationRepository.GetApprovedForImpactDashboardAsync();
+        }
+
+        public async Task<IEnumerable<Recommendation>> GetApprovedForExecutiveSummaryAsync()
+        {
+            return await _recommendationRepository.GetApprovedForExecutiveSummaryAsync();
+        }
+
+        public async Task<bool> ApproveForChairAsync(
+            int reportId,
+            bool includeInInstitutionalReport,
+            bool includeInImpactDashboard,
+            bool includeInExecutiveSummary,
+            string? chairReviewNotes)
+        {
+            var recommendation = await _recommendationRepository.GetByMonthlyReportIdAsync(reportId);
+            if (recommendation == null)
+            {
+                return false;
+            }
+
+            recommendation.Status = "معتمدة";
+            recommendation.IncludeInInstitutionalReport = includeInInstitutionalReport;
+            recommendation.IncludeInImpactDashboard = includeInImpactDashboard;
+            recommendation.IncludeInExecutiveSummary = includeInExecutiveSummary;
+            recommendation.ChairReviewNotes = chairReviewNotes;
+            recommendation.ReviewedDate = DateTime.Now;
+
+            await _recommendationRepository.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RejectChairRecommendationAsync(int reportId, string? chairReviewNotes)
+        {
+            var recommendation = await _recommendationRepository.GetByMonthlyReportIdAsync(reportId);
+            if (recommendation == null)
+            {
+                return false;
+            }
+
+            recommendation.Status = "مرفوضة";
+            recommendation.ChairReviewNotes = chairReviewNotes;
+            recommendation.ReviewedDate = DateTime.Now;
+            recommendation.IncludeInInstitutionalReport = false;
+            recommendation.IncludeInImpactDashboard = false;
+            recommendation.IncludeInExecutiveSummary = false;
+
+            await _recommendationRepository.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateRecommendationPlacementAsync(int reportId, string placement, bool enabled)
+        {
+            return await _recommendationRepository.UpdatePlacementAsync(reportId, placement, enabled);
+        }
+
         public async Task<string> ProcessAndSaveAnalysisAsync(
             int reportId,
             string whyItMatters,

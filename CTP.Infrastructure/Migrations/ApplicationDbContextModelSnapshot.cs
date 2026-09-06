@@ -314,12 +314,28 @@ namespace CTP.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ChairReviewNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Duration")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IncludeInExecutiveSummary")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IncludeInImpactDashboard")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IncludeInInstitutionalReport")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ReviewedDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ExpectedImpact")

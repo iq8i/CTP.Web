@@ -24,6 +24,12 @@ namespace CTP.Web.ViewComponents
                 committeeSection.Items.Add(new MenuItem { Title = "صندوق الوارد (التحليل)", IconClass = "bi-inboxes", Url = "/Committee/Workspace/Inbox" });
                 committeeSection.Items.Add(new MenuItem { Title = "سجل التوصيات", IconClass = "bi-journal-check", Url = "/Committee/Workspace/Recommendations" });
                 committeeSection.Items.Add(new MenuItem { Title = "مدخلات الجهات", IconClass = "bi-chat-left-dots", Url = "/Committee/Workspace/Inputs" });
+
+                if (role == "COMMITTEE_CHAIR" || role == "LEADER")
+                {
+                    committeeSection.Items.Add(new MenuItem { Title = "منصة الاعتماد", IconClass = "bi-shield-check", Url = "/Committee/Workspace/ChairBoard" });
+                }
+
                 menu.Add(committeeSection);
             }
             // 3. مساحة سفراء التغيير (التحديث الجديد)

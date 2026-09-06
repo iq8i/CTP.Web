@@ -86,7 +86,7 @@
 
         <!-- التحديات والمخاطر -->
         <h6 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive); border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;"><i class="bi bi-shield-exclamation me-2"></i> التحديات وعوائق التبني</h6>
-        <div class="row mb-5 g-3">
+        <div class="row mb-4 g-3">
             <div class="col-md-6">
                 <div class="p-3 bg-white rounded border border-danger-subtle h-100">
                     <h6 class="text-danger fw-bold small">العوائق والتحديات التشغيلية</h6>
@@ -112,6 +112,14 @@
                 </div>
             </div>
         </div>
+
+        @if (!string.IsNullOrEmpty(Model.CommitteeRecommendation))
+        {
+            <div class="mb-4 p-4 rounded border border-success-subtle" style="background-color: #f0fdf4;">
+                <h6 class="fw-bold text-success mb-2"><i class="bi bi-check2-circle me-2"></i> التوصية المعتمدة من اللجنة</h6>
+                <p class="mb-0 text-dark">@Model.CommitteeRecommendation</p>
+            </div>
+        }
 
         <!-- صندوق القرار (الانتقال للتحليل) -->
         <div class="p-4 rounded text-center mt-5" style="background-color: #FDF9EC; border: 1px solid rgba(201, 162, 39, 0.4);">

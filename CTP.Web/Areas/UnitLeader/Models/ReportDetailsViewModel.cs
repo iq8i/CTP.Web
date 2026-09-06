@@ -19,6 +19,7 @@
         public int AdkarReinforcement { get; set; }
         public string? Obstacles { get; set; }
         public string? InitialRecommendation { get; set; }
+        public string? CommitteeRecommendation { get; set; }
         public string? EvidenceLinks { get; set; }
     }
 }

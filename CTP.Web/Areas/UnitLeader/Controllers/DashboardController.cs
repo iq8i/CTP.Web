@@ -128,6 +128,7 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
                 AdkarReinforcement = report.AdkarReinforcement,
                 Obstacles = report.Obstacles,
                 InitialRecommendation = report.InitialRecommendation,
+                CommitteeRecommendation = report.CommitteeRecommendation,
                 EvidenceLinks = report.EvidenceLinks
             };
 

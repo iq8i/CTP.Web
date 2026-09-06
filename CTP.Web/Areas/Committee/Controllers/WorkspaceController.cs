@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CTP.Application.Interfaces.Services;
+using CTP.Domain.Entities;
 using CTP.Web.Areas.Committee.Models;
 
 namespace CTP.Web.Areas.Committee.Controllers
@@ -13,7 +14,7 @@ namespace CTP.Web.Areas.Committee.Controllers
         private readonly IRecommendationService _recommendationService;
         private readonly IEntityInputService _inputService;
 
-        public WorkspaceController(IMonthlyReportService reportService, IRecommendationService recommendationService, IEntityInputService inputService )
+        public WorkspaceController(IMonthlyReportService reportService, IRecommendationService recommendationService, IEntityInputService inputService)
         {
             _reportService = reportService;
             _recommendationService = recommendationService;
@@ -32,14 +33,14 @@ namespace CTP.Web.Areas.Committee.Controllers
             var allReports = await _reportService.GetCommitteeInboxReportsAsync();
             var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
 
-            // الفلتر الصارم والآمن: استخراج أي تقرير له توصية مسجلة مسبقاً (بغض النظر عن حالتها النصية)
-            var reportsWithRecs = allRecs
+            // استبعاد فقط التقارير التي لديها توصيات نشطة أو معتمدة؛ المرفوضة تعود للوارد
+            var reportsWithActiveRecs = allRecs
+                .Where(r => r.Status != "مرفوضة")
                 .Select(r => r.MonthlyReportId)
                 .Distinct()
                 .ToList();
 
-            // استبعاد التقارير التي لها توصيات
-            var inboxReports = allReports.Where(r => !reportsWithRecs.Contains(r.Id)).ToList();
+            var inboxReports = allReports.Where(r => !reportsWithActiveRecs.Contains(r.Id)).ToList();
 
             return View(inboxReports);
         }
@@ -160,33 +161,126 @@ namespace CTP.Web.Areas.Committee.Controllers
         [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
         public async Task<IActionResult> ChairBoard()
         {
-            ViewData["EntityTitle"] = "منصة الاعتماد القيادي";
+            ViewData["EntityTitle"] = "منصة الاعتماد";
+            ViewData["EntityHeaderSubtitle"] = "اعتماد التوصيات ثم إدراجها في المخرجات المؤسسية";
             ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-shield-check";
 
-            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+            var pendingRecommendations = (await _recommendationService.GetPendingChairApprovalsAsync())
+                .OrderByDescending(r => r.CreatedDate)
+                .ToList();
 
-            // الفلتر الصارم: اعرض التوصيات التي لا يزال تقريرها قيد التحليل (بمعنى أن الرئيس لم يُغلقه بعد)
-            var pendingApprovals = allRecs
-                .Where(r => r.SourceReport?.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis)
-                .OrderByDescending(r => r.CreatedDate).ToList();
+            var approvedRecommendations = (await _recommendationService.GetApprovedRecommendationsAsync())
+                .OrderByDescending(r => r.ReviewedDate ?? r.CreatedDate)
+                .ToList();
 
-            return View(pendingApprovals);
+            var vm = new ChairBoardViewModel
+            {
+                PendingRecommendations = pendingRecommendations,
+                ApprovedRecommendations = approvedRecommendations
+            };
+
+            return View(vm);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        public async Task<IActionResult> UpdateRecommendationPlacement(int reportId, string placement, bool enabled)
+        {
+            var updated = await _recommendationService.UpdateRecommendationPlacementAsync(reportId, placement, enabled);
+            if (updated)
+            {
+                TempData["Success"] = enabled ? "تم إدراج التوصية بنجاح." : "تمت إزالة التوصية من الوجهة المحددة.";
+            }
+            else
+            {
+                TempData["Error"] = "تعذر تحديث حالة الإدراج للتوصية.";
+            }
+
+            return RedirectToAction(nameof(ChairBoard));
+        }
+
         [HttpGet]
         [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
         public async Task<IActionResult> ChairReview(int reportId)
         {
-            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+            var draftRec = await _recommendationService.GetRecommendationByReportIdAsync(reportId);
 
-            // جلب التوصية بناءً على حالة التقرير بدلاً من مطابقة النص
-            var draftRec = allRecs.FirstOrDefault(r => r.MonthlyReportId == reportId && r.SourceReport?.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis);
+            if (draftRec == null || draftRec.SourceReport == null || draftRec.SourceReport.Status != CTP.Domain.Enums.ReportStatus.UnderAnalysis)
+            {
+                TempData["Error"] = "التقرير أو التوصية غير متاحين للمراجعة حالياً.";
+                return RedirectToAction(nameof(ChairBoard));
+            }
 
-            if (draftRec == null) return RedirectToAction(nameof(ChairBoard));
+            draftRec.IncludeInInstitutionalReport = true;
+            draftRec.IncludeInImpactDashboard = true;
+            draftRec.IncludeInExecutiveSummary = true;
 
             ViewData["EntityTitle"] = "مراجعة واعتماد التوصية";
+            ViewData["EntityHeaderSubtitle"] = $"التقرير رقم {draftRec.SourceReport.ReportNumber}";
             ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-file-earmark-check";
 
             return View(draftRec);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        public async Task<IActionResult> ApproveRecommendation(
+            int reportId,
+            bool includeInInstitutionalReport,
+            bool includeInImpactDashboard,
+            bool includeInExecutiveSummary,
+            string? chairReviewNotes)
+        {
+            var draftRec = await _recommendationService.GetRecommendationByReportIdAsync(reportId);
+            if (draftRec?.SourceReport == null)
+            {
+                TempData["Error"] = "تعذر العثور على التوصية المراد اعتمادها.";
+                return RedirectToAction(nameof(ChairBoard));
+            }
+
+            var reportApproved = await _reportService.ApproveByCommitteeAsync(reportId, draftRec.SuggestedAction);
+            var recommendationApproved = await _recommendationService.ApproveForChairAsync(
+                reportId,
+                includeInInstitutionalReport,
+                includeInImpactDashboard,
+                includeInExecutiveSummary,
+                chairReviewNotes);
+
+            if (reportApproved && recommendationApproved)
+            {
+                TempData["Success"] = $"تم اعتماد التوصية المرتبطة بالتقرير {draftRec.SourceReport.ReportNumber} بنجاح.";
+                return RedirectToAction(nameof(ChairBoard));
+            }
+
+            TempData["Error"] = "لم يتمكن النظام من اعتماد التوصية. حاول مرة أخرى.";
+            return RedirectToAction(nameof(ChairReview), new { reportId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        public async Task<IActionResult> RejectRecommendation(int reportId, string? chairReviewNotes)
+        {
+            var draftRec = await _recommendationService.GetRecommendationByReportIdAsync(reportId);
+            if (draftRec?.SourceReport == null)
+            {
+                TempData["Error"] = "تعذر العثور على التوصية المراد إرجاعها.";
+                return RedirectToAction(nameof(ChairBoard));
+            }
+
+            var rejected = await _recommendationService.RejectChairRecommendationAsync(reportId, chairReviewNotes);
+            if (rejected)
+            {
+                TempData["Success"] = $"تم إرجاع التوصية المرتبطة بالتقرير {draftRec.SourceReport.ReportNumber} للمراجعة.";
+                return RedirectToAction(nameof(ChairBoard));
+            }
+
+            TempData["Error"] = "لم يتمكن النظام من إرجاع التوصية. حاول مرة أخرى.";
+            return RedirectToAction(nameof(ChairReview), new { reportId });
         }
         #endregion
     }

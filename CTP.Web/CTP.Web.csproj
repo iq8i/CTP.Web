@@ -24,6 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include=".temp-migrator\" />
+    <Folder Include=".temp\" />
     <Folder Include="Models\NewFolder\" />
   </ItemGroup>
 

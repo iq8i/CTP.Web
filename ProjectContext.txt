@@ -238,6 +238,7 @@ namespace CTP.Application.Interfaces.Services
             string expectedImpact,
             bool requiresSupport);
         Task<IEnumerable<Recommendation>> GetCommitteeRecommendationsAsync();
+
     }
 }
 
@@ -11271,17 +11272,29 @@ namespace CTP.Web.Areas.Committee.Controllers
         }
 
         // 1. ‘«‘… ’‰œÊﬁ «·Ê«—œ
+        #region „”«— «·⁄÷Ê («· Õ·Ì·)
         [HttpGet]
         public async Task<IActionResult> Inbox()
         {
-            ViewData["EntityTitle"] = "’‰œÊﬁ Ê«—œ «··Ã‰…";
-            ViewData["EntityHeaderSubtitle"] = "«· ﬁ«—Ì— «·„—›Ê⁄… Ê«·Ã«Â“… ·· Õ·Ì·";
+            ViewData["EntityTitle"] = "’‰œÊﬁ «·Ê«—œ («· Õ·Ì·)";
             ViewData["ThemeColor"] = "#0B4F61";
-            ViewData["EntityHeaderIcon"] = "bi-inbox-fill";
 
-            var reports = await _reportService.GetCommitteeInboxReportsAsync();
-            return View(reports);
+            // Ã·» «· ﬁ«—Ì— «· Ì »Õ«·… UnderAnalysis
+            var allReports = await _reportService.GetCommitteeInboxReportsAsync();
+            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+
+            // «·›· — «·’«—„ Ê«·¬„‰: «” Œ—«Ã √Ì  ﬁ—Ì— ·Â  Ê’Ì… „”Ã·… „”»ﬁ« (»€÷ «·‰Ÿ— ⁄‰ Õ«· Â« «·‰’Ì…)
+            var reportsWithRecs = allRecs
+                .Select(r => r.MonthlyReportId)
+                .Distinct()
+                .ToList();
+
+            // «” »⁄«œ «· ﬁ«—Ì— «· Ì ·Â«  Ê’Ì« 
+            var inboxReports = allReports.Where(r => !reportsWithRecs.Contains(r.Id)).ToList();
+
+            return View(inboxReports);
         }
+        #endregion
         // 1.5. ‘«‘… «” ⁄—«÷  ›«’Ì· «· ﬁ—Ì—
         [HttpGet]
         public async Task<IActionResult> Details(int id)
@@ -11337,19 +11350,14 @@ namespace CTP.Web.Areas.Committee.Controllers
                 return View(model);
             }
 
-            string recNumber = await _recommendationService.ProcessAndSaveAnalysisAsync(
-                model.MonthlyReportId,
-                model.WhyItMatters,
-                model.SuggestedAction,
-                model.Owner,
-                model.ExpectedImpact,
-                model.RequiresSupport
-            );
+            //  Ê·Ìœ «· Ê’Ì… »Õ«·… "Ã«Â“… ·«⁄ „«œ —∆Ì” «··Ã‰…" „⁄ »ﬁ«¡ «· ﬁ—Ì— UnderAnalysis
+            string recNum = await _recommendationService.ProcessAndSaveAnalysisAsync(
+                model.MonthlyReportId, model.WhyItMatters, model.SuggestedAction,
+                model.Owner, model.ExpectedImpact, model.RequiresSupport);
 
-            // «⁄ „«œ «· ﬁ—Ì— ·≈€·«ﬁÂ Ê≈Œ›«∆Â „‰ ’‰œÊﬁ «·Ê«—œ
-            await _reportService.ApproveByCommitteeAsync(model.MonthlyReportId, model.SuggestedAction);
+            TempData["Success"] = $" „ ≈—”«· «· Ê’Ì… ({recNum}) »‰Ã«Õ ÊÂÌ «·¬‰ »«‰ Ÿ«— «⁄ „«œ —∆Ì” «··Ã‰….";
 
-            TempData["Success"] = $" „ Õ›Ÿ «· Õ·Ì· Ê Ê·Ìœ «· Ê’Ì… »‰Ã«Õ »—ﬁ„ {recNumber}.";
+            // «· ÊÃÌÂ «·„⁄„«—Ì «·’«—„: ‰ﬁ· «·⁄÷Ê ·”Ã· «· Ê’Ì« 
             return RedirectToAction(nameof(Recommendations));
         }
 
@@ -11397,6 +11405,41 @@ namespace CTP.Web.Areas.Committee.Controllers
 
             return View(input);
         }
+
+        #region „”«— «·—∆Ì” («·«⁄ „«œ)
+        [HttpGet]
+        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        public async Task<IActionResult> ChairBoard()
+        {
+            ViewData["EntityTitle"] = "„‰’… «·«⁄ „«œ «·ﬁÌ«œÌ";
+            ViewData["ThemeColor"] = "#0B4F61";
+
+            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+
+            // «·›· — «·’«—„: «⁄—÷ «· Ê’Ì«  «· Ì ·« Ì“«·  ﬁ—Ì—Â« ﬁÌœ «· Õ·Ì· (»„⁄‰Ï √‰ «·—∆Ì” ·„ Ìı€·ﬁÂ »⁄œ)
+            var pendingApprovals = allRecs
+                .Where(r => r.SourceReport?.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis)
+                .OrderByDescending(r => r.CreatedDate).ToList();
+
+            return View(pendingApprovals);
+        }
+        [HttpGet]
+        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        public async Task<IActionResult> ChairReview(int reportId)
+        {
+            var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+
+            // Ã·» «· Ê’Ì… »‰«¡ ⁄·Ï Õ«·… «· ﬁ—Ì— »œ·« „‰ „ÿ«»ﬁ… «·‰’
+            var draftRec = allRecs.FirstOrDefault(r => r.MonthlyReportId == reportId && r.SourceReport?.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis);
+
+            if (draftRec == null) return RedirectToAction(nameof(ChairBoard));
+
+            ViewData["EntityTitle"] = "„—«Ã⁄… Ê«⁄ „«œ «· Ê’Ì…";
+            ViewData["ThemeColor"] = "#0B4F61";
+
+            return View(draftRec);
+        }
+        #endregion
     }
 }
 
@@ -11500,6 +11543,7 @@ namespace CTP.Web.Areas.Committee.Models
 File: \CTP.Web\Areas\Committee\Models\CommitteeViewModel.cs
 ======================================================
 using CTP.Domain.Entities;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace CTP.Web.Areas.Committee.Models
@@ -11515,26 +11559,63 @@ namespace CTP.Web.Areas.Committee.Models
     // ‰„Ê–Ã ‘«‘… «· Õ·Ì·
     public class AnalyzeReportViewModel
     {
-        public MonthlyReport ReportDetails { get; set; } = new MonthlyReport();
+        [ValidateNever] public MonthlyReport ReportDetails { get; set; } = new MonthlyReport();
 
-        [Required(ErrorMessage = "Â–« «·Õﬁ· ≈·“«„Ì")]
-        public int MonthlyReportId { get; set; }
+        [Required] public int MonthlyReportId { get; set; }
 
-        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ „«–« ÕœÀ")]
+        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ «· ‘ŒÌ’ «·Ã–—Ì")]
         public string WhatHappened { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ ·„«–« ÌÂ„ («·›ÃÊ…)")]
+        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ ·„«–«  ‘ﬂ· «·›ÃÊ… Œÿ—«")]
         public string WhyItMatters { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ «· œŒ· („«–« ‰›⁄· «·¬‰)")]
+        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ «· œŒ· √Ê «·≈Ã—«¡ «· ’ÕÌÕÌ")]
         public string WhatNow { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "„ÿ·Ê» ﬂ «»… Œ·«’… «· Ê’Ì…")]
+        public string SuggestedAction { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "„ÿ·Ê»  ÕœÌœ «·ÃÂ… «·„«·ﬂ… ··Õ·")]
+        public string Owner { get; set; } = string.Empty;
 
         public string ExpectedImpact { get; set; } = string.Empty;
         public string Priority { get; set; } = "„ Ê”ÿ…";
-        public string Owner { get; set; } = string.Empty;
-        public string SuggestedAction { get; set; } = string.Empty;
         public bool RequiresSupport { get; set; }
     }
+
+    // 3. ‰„Ê–Ã «· Ê’Ì… «·ÌœÊÌ… (Œ«’ »—∆Ì” «··Ã‰…)
+    public class ManualRecommendationViewModel
+    {
+        [Required(ErrorMessage = "Ì—ÃÏ «Œ Ì«— «· ﬁ—Ì— «·„’œ—")] public int MonthlyReportId { get; set; }
+        [Required(ErrorMessage = "Ì—ÃÏ  ÕœÌœ «·›ÃÊ…")] public string GapType { get; set; } = string.Empty;
+        [Required(ErrorMessage = "«·≈Ã—«¡ «·„ﬁ —Õ ≈·“«„Ì")] public string SuggestedAction { get; set; } = string.Empty;
+        [Required(ErrorMessage = "„«·ﬂ «·≈Ã—«¡ ≈·“«„Ì")] public string ActionOwner { get; set; } = string.Empty;
+        [Required(ErrorMessage = "«·„œ… ≈·“«„Ì…")] public string Duration { get; set; } = string.Empty;
+        [Required(ErrorMessage = "„ƒ‘— «·‰Ã«Õ ≈·“«„Ì")] public string SuccessIndicator { get; set; } = string.Empty;
+        public string ExpectedImpact { get; set; } = string.Empty;
+    }
+
+    // 4. ‰„«–Ã «· ﬁ—Ì— «·„ƒ””Ì (Dashboard)
+    public class InstitutionalReportViewModel
+    {
+        public string ReportMonth { get; set; } = string.Empty;
+        public int TotalReports { get; set; }
+        public int TotalEntities { get; set; }
+        public int AverageReadiness { get; set; }
+        public int AverageAdoption { get; set; }
+        public int AverageReinforcement { get; set; }
+        public List<ParetoItem> TopBarriers { get; set; } = new();
+        public List<Recommendation> ApprovedRecommendations { get; set; } = new();
+    }
+
+    public class ParetoItem
+    {
+        public string Barrier { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public int Percentage { get; set; }
+        public int CumulativePercentage { get; set; }
+    }
+
 }
 
 
@@ -11624,154 +11705,104 @@ namespace CTP.Web.Area.Committee.Views.Dashboard
 File: \CTP.Web\Areas\Committee\Views\Workspace\Analyze.cshtml
 ======================================================
 @model CTP.Web.Areas.Committee.Models.AnalyzeReportViewModel
-@{ Layout = "_Layout"; }
-
-@section Styles {
-    <style>
-        .insight-card {
-            border: 1px solid #E2E8F0;
-            border-radius: 12px;
-            background: #fff;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-        .insight-header {
-            display: flex;
-            align-items: center;
-            border-bottom: 2px solid #F1F5F9;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
-        }
-        .insight-header i { font-size: 1.5rem; color: var(--ctp-primary-olive); margin-right: 12px; }
-        .insight-header h5 { margin: 0; font-weight: 700; color: #1E293B; }
-        
-        .progress-slim { height: 8px; border-radius: 4px; background-color: #F1F5F9; overflow: hidden; margin-top: 8px;}
-        .progress-slim .bar { background-color: var(--ctp-primary-olive); height: 100%; }
-        .progress-slim .bar.danger { background-color: #EF4444; }
-
-        .system-insight-box {
-            background-color: #F0FDF4;
-            border-right: 4px solid #EF4444;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-    </style>
+@{
+    Layout = "_Layout";
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    
-    <!-- „⁄·Ê„«  √”«”Ì… -->
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <div>
-            <h4 class="fw-bold" style="color: var(--ctp-primary-olive);">@(Model.ReportDetails.Organization?.EntityName)</h4>
-            <span class="text-muted"><i class="bi bi-file-earmark-text me-1"></i>  ﬁ—Ì—: @Model.ReportDetails.ReportNumber ó @Model.ReportDetails.ChangeName</span>
-        </div>
-        <div class="text-end">
-            <span class="badge bg-secondary px-3 py-2 fs-6 rounded-pill">‰”»… «ﬂ „«· «·√‰‘ÿ…: @Model.ReportDetails.ActivityCompletionRate%</span>
-        </div>
-    </div>
+    <div class="row g-4">
 
-    <div class="row">
-        <!-- «·⁄„Êœ «·√Ì„‰: «·»Ì«‰«  «·„Õ··… ¬·Ì« (Health Check) -->
-        <div class="col-lg-5">
-            <div class="insight-card h-100">
-                <div class="insight-header">
-                    <i class="bi bi-heart-pulse"></i>
-                    <h5>«· ‘ŒÌ’ «·¬·Ì (Health Check)</h5>
-                </div>
-                
+        <!-- «· ‘ŒÌ’ «·¬·Ì (ADKAR) -->
+        <div class="col-lg-4">
+            <div class="moda-card border-0 shadow-sm p-4 h-100 bg-light">
+                <h6 class="fw-bold text-dark mb-4">
+                    <i class="bi bi-heart-pulse text-danger me-2"></i> «· ‘ŒÌ’ «·¬·Ì (ADKAR)
+                </h6>
+
                 @{
-                    // ŒÊ«—“„Ì… «” Œ—«Ã «·›ÃÊ… »—„ÃÌ« (Õ”» „⁄«ÌÌ— Prosci)
-                    var adkar = new Dictionary<string, int> {
-                        { "«·Ê⁄Ì (Awareness)", Model.ReportDetails.AdkarAwareness },
-                        { "«·—€»… (Desire)", Model.ReportDetails.AdkarDesire },
-                        { "«·„⁄—›… (Knowledge)", Model.ReportDetails.AdkarKnowledge },
-                        { "«·ﬁœ—… (Ability)", Model.ReportDetails.AdkarAbility },
-                        { "«· ⁄“Ì“ (Reinforcement)", Model.ReportDetails.AdkarReinforcement }
+                    var adkar = new Dictionary<string, int>
+                    {
+                        { "«·Ê⁄Ì (Awareness)", Model.ReportDetails?.AdkarAwareness ?? 0 },
+                        { "«·—€»… (Desire)", Model.ReportDetails?.AdkarDesire ?? 0 },
+                        { "«·„⁄—›… (Knowledge)", Model.ReportDetails?.AdkarKnowledge ?? 0 },
+                        { "«·ﬁœ—… (Ability)", Model.ReportDetails?.AdkarAbility ?? 0 },
+                        { "«· ⁄“Ì“ (Reinforcement)", Model.ReportDetails?.AdkarReinforcement ?? 0 }
                     };
-                    var barrier = adkar.OrderBy(x => x.Value).First();
+
+                    var barrier = adkar.OrderBy(x => x.Value).FirstOrDefault();
                 }
 
-                <div class="mb-4">
-                    <h6 class="fw-bold text-muted small mb-3">„ƒ‘—«  ADKAR</h6>
-                    @foreach (var item in adkar)
-                    {
-                        var isBarrier = item.Key == barrier.Key;
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between small fw-bold @(isBarrier ? "text-danger" : "text-dark")">
-                                <span>@item.Key</span>
-                                <span>@item.Value%</span>
-                            </div>
-                            <div class="progress-slim"><div class="bar @(isBarrier ? "danger" : "")" style="width: @item.Value%"></div></div>
-                        </div>
-                    }
+                @foreach (var item in adkar)
+                {
+                    <div class="mb-2 small fw-bold d-flex justify-content-between">
+                        <span>@item.Key</span>
+                        <span>@item.Value%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar @(item.Key == barrier.Key ? "bg-danger" : "bg-primary")"
+                             style="width: @item.Value%"></div>
+                    </div>
+                }
+
+                <div class="alert alert-danger mt-4 small border-0 shadow-sm">
+                    ‰ﬁÿ… «·Õ«Ã“ «·¬·Ì…: <strong>@barrier.Key</strong> (@barrier.Value%)
                 </div>
 
-                <div class="system-insight-box">
-                    <h6 class="text-danger fw-bold"><i class="bi bi-robot me-1"></i>  Õ·Ì· «·‰Ÿ«„ «·–ﬂÌ:</h6>
-                    <p class="small text-dark mb-0">
-                        «ﬂ ‘› «·‰Ÿ«„ √‰ «·›ÃÊ… «·—∆Ì”Ì… (Barrier Point)  ﬁ⁄ ›Ì „—Õ·… <strong>@barrier.Key</strong> »‰”»… „ œ‰Ì… »·€  <strong>@barrier.Value%</strong>.
-                        Ê›ﬁ« ··„‰ÂÃÌ…° Ìı‰’Õ » ÊÃÌÂ «· Ê’Ì«  Êﬁ—«—«  «·œ⁄„ ·„⁄«·Ã… Â–« «·Õ«Ã“ ›Ê—«.
-                    </p>
+                <div class="alert alert-warning small border-0 shadow-sm">
+                    ⁄«∆ﬁ «· »‰Ì «·„—›Ê⁄ „‰ «·ÃÂ…:
+                    <br />
+                    <strong>@(string.IsNullOrEmpty(Model.ReportDetails?.AdoptionBarriers) ? "·„ Ìı—›⁄ ⁄«∆ﬁ „Õœœ" : Model.ReportDetails.AdoptionBarriers)</strong>
                 </div>
-
-                <hr class="my-4" />
-                
-                <h6 class="fw-bold text-muted small mb-3">«·⁄Ê«∆ﬁ Ê«·„Œ«ÿ— «·„—›Ê⁄…</h6>
-                <div class="p-3 bg-light rounded border mb-2 small text-dark"><strong>«·⁄«∆ﬁ «·√»—“:</strong> @(string.IsNullOrEmpty(Model.ReportDetails.AdoptionBarriers) ? "·„ Ìı–ﬂ—" : Model.ReportDetails.AdoptionBarriers)</div>
-                <div class="p-3 bg-light rounded border small text-dark"><strong>«·Œÿ— «· ‘€Ì·Ì:</strong> @(string.IsNullOrEmpty(Model.ReportDetails.Obstacles) ? "·„ Ìı–ﬂ—" : Model.ReportDetails.Obstacles)</div>
             </div>
         </div>
 
-        <!-- «·⁄„Êœ «·√Ì”—: ≈œŒ«· «·ﬁ—«— (Decision Maker) -->
-        <div class="col-lg-7">
-            <div class="insight-card h-100" style="border-color: var(--moda-section-accent); background-color: #FDF9EC;">
-                <div class="insight-header">
-                    <i class="bi bi-hammer text-warning"></i>
-                    <h5>’Ì«€… «·ﬁ—«— Ê«· Ê’Ì…</h5>
-                </div>
+        <!-- ’Ì«€… «·ﬁ—«— Ê«· Ê’Ì… -->
+        <div class="col-lg-8">
+            <div class="moda-card border-0 shadow-sm p-4 h-100" style="border-right: 4px solid var(--moda-section-accent) !important; background-color: #FDF9EC;">
+                <h5 class="fw-bold mb-4"><i class="bi bi-hammer me-2 text-warning"></i> ’Ì«€… «·ﬁ—«— Ê«· Ê’Ì…</h5>
 
                 <form method="post" asp-action="Analyze">
-                    <input type="hidden" asp-for="MonthlyReportId" />
+                    <input type="hidden" asp-for="MonthlyReportId" value="@Model.MonthlyReportId" />
 
-                    <!-- œ„Ã «·‹ 5 Whys ·ÌﬂÊ‰ Õﬁ·« ⁄„·Ì« Ê«Õœ« · ‘ŒÌ’ «·„‘ﬂ·… -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">«· ‘ŒÌ’ «·Ã–—Ì ··„‘ﬂ·… «·„—›Ê⁄… (Root Cause)</label>
-                        <textarea asp-for="WhatHappened" class="form-control border-0 shadow-sm p-3" rows="2" placeholder="»‰«¡ ⁄·Ï «·„⁄ÿÌ«  Ì„Ì‰ «·‘«‘…° „« ÂÊ √’· «·„‘ﬂ·…ø" required></textarea>
+                        <label class="form-label fw-bold small text-dark">«· ‘ŒÌ’ «·Ã–—Ì ··„‘ﬂ·… «·„—›Ê⁄… (Root Cause)</label>
+                        <textarea asp-for="WhatHappened" class="form-control border-0 shadow-sm p-3" rows="2" required></textarea>
+                        <span asp-validation-for="WhatHappened" class="text-danger small"></span>
                     </div>
 
-                    <!-- «·√À— Ê«·„Œ«ÿ— (So What) -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">·„«–«  ‘ﬂ· Â–Â «·›ÃÊ… Œÿ—«ø (So What)</label>
-                        <textarea asp-for="WhyItMatters" class="form-control border-0 shadow-sm p-3" rows="2" placeholder=" √ÀÌ— «” „—«— Â–Â «·›ÃÊ… ⁄·Ï „”«— «· €ÌÌ—..." required></textarea>
+                        <label class="form-label fw-bold small text-dark">·„«–«  ‘ﬂ· Â–Â «·›ÃÊ… Œÿ—«ø (So What)</label>
+                        <textarea asp-for="WhyItMatters" class="form-control border-0 shadow-sm p-3" rows="2" required></textarea>
+                        <span asp-validation-for="WhyItMatters" class="text-danger small"></span>
                     </div>
 
-                    <!-- «·≈Ã—«¡ «· ’ÕÌÕÌ (Now What) -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">«· œŒ· √Ê «·≈Ã—«¡ «· ’ÕÌÕÌ (Now What)</label>
-                        <textarea asp-for="WhatNow" class="form-control border-0 shadow-sm p-3" rows="2" placeholder="„« «·–Ì ÌÃ» ⁄·Ï «·ÃÂ… √Ê «·ﬁÌ«œ… ›⁄·Â «·¬‰ø" required></textarea>
+                        <label class="form-label fw-bold small text-dark">«· œŒ· √Ê «·≈Ã—«¡ «· ’ÕÌÕÌ (Now What)</label>
+                        <textarea asp-for="WhatNow" class="form-control border-0 shadow-sm p-3" rows="2" required></textarea>
+                        <span asp-validation-for="WhatNow" class="text-danger small"></span>
                     </div>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-4 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">Œ·«’… «· Ê’Ì… (” ıÕ›Ÿ ›Ì «·”Ã· «·—”„Ì)</label>
-                            <input type="text" asp-for="SuggestedAction" class="form-control border-0 shadow-sm py-2 fw-bold text-primary" placeholder="«ﬂ » ﬁ—«—« „ÊÃ“« ÊÊ«÷Õ«..." required />
+                            <label class="form-label fw-bold small text-dark">Œ·«’… «· Ê’Ì… (” ıÕ›Ÿ ›Ì «·”Ã· «·—”„Ì)</label>
+                            <input type="text" asp-for="SuggestedAction" class="form-control border-0 shadow-sm p-3 fw-bold text-primary" required />
+                            <span asp-validation-for="SuggestedAction" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">«·√À— «·„ Êﬁ⁄</label>
-                            <input type="text" asp-for="ExpectedImpact" class="form-control border-0 shadow-sm py-2" placeholder="„À«·: —›⁄ «·„ƒ‘— ≈·Ï 60%" />
+                            <label class="form-label fw-bold small text-dark">«·√À— «·„ Êﬁ⁄</label>
+                            <input type="text" asp-for="ExpectedImpact" class="form-control border-0 shadow-sm p-3" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">«·ÃÂ… «·„«·ﬂ… ··Õ·</label>
-                            <input type="text" asp-for="Owner" class="form-control border-0 shadow-sm py-2" placeholder="«·≈œ«—… «·„”ƒÊ·… ⁄‰ «· ‰›Ì–..." />
+                            <label class="form-label fw-bold small text-dark">«·ÃÂ… «·„«·ﬂ… ··Õ·</label>
+                            <input type="text" asp-for="Owner" class="form-control border-0 shadow-sm p-2" required />
+                            <span asp-validation-for="Owner" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">„” ÊÏ «·√Ê·ÊÌ…</label>
-                            <select asp-for="Priority" class="form-select border-0 shadow-sm py-2">
+                            <label class="form-label fw-bold small text-dark">„” ÊÏ «·√Ê·ÊÌ…</label>
+                            <select asp-for="Priority" class="form-select border-0 shadow-sm p-2">
+                                <option value="⁄«·Ì… Ãœ«">⁄«·Ì… Ãœ«</option>
                                 <option value="⁄«·Ì…">⁄«·Ì…</option>
                                 <option value="„ Ê”ÿ…" selected>„ Ê”ÿ…</option>
                                 <option value="„‰Œ›÷…">„‰Œ›÷…</option>
@@ -11779,26 +11810,30 @@ File: \CTP.Web\Areas\Committee\Views\Workspace\Analyze.cshtml
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-warning-subtle">
+                    <div class="d-flex justify-content-between align-items-center border-top pt-4">
                         <div class="form-check form-switch">
-                            <input class="form-check-input shadow-sm" type="checkbox" asp-for="RequiresSupport" style="transform: scale(1.3); margin-left: 10px;">
-                            <label class="form-check-label fw-bold text-danger ms-2" for="RequiresSupport">Ìı—›⁄ ﬂÿ·» œ⁄„ ﬁÌ«œÌ / ”Ì«œÌ</label>
+                            <input class="form-check-input" type="checkbox" asp-for="RequiresSupport" id="RequiresSupport">
+                            <label class="form-check-label fw-bold text-danger small ms-2" for="RequiresSupport">
+                                Ìı—›⁄ ﬂÿ·» œ⁄„ ﬁÌ«œÌ / ”Ì«œÌ
+                            </label>
                         </div>
-                        
                         <div>
-                            <a asp-action="Inbox" class="btn btn-light border fw-bold me-2 px-4">≈·€«¡</a>
-                            <button type="submit" class="moda-btn moda-btn-gold px-4 py-2">
-                                <i class="bi bi-save me-2"></i> «⁄ „«œ «· Ê’Ì…
+                            <a asp-action="Inbox" class="moda-btn moda-btn-outline me-2 px-4">≈·€«¡</a>
+                            <button type="submit" class="moda-btn moda-btn-gold px-4 fw-bold">
+                                <i class="bi bi-send me-1"></i> ≈—”«· «· Ê’Ì… ·—∆Ì” «··Ã‰…
                             </button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
+
     </div>
 </div>
 
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
 
 
 
@@ -12331,20 +12366,23 @@ File: \CTP.Web\Areas\Committee\Views\Workspace\Recommendations.cshtml
 
 <div class="container-fluid mt-4 mb-5">
     <div class="moda-card border-0 shadow-sm">
-        <div class="moda-card-header">
-            <h5 class="moda-card-title mb-0"><i class="bi bi-journal-text me-2"></i> ﬁ«⁄œ… »Ì«‰«  «· Ê’Ì«  Ê«·ﬁ—«—« </h5>
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-journal-text me-2 text-warning"></i> ”Ã· «· Ê’Ì«  Ê«·ﬁ—«—« 
+            </h5>
+            <span class="badge bg-primary px-3 py-2">≈Ã„«·Ì «·”Ã·: @(Model?.Count() ?? 0)</span>
         </div>
         <div class="moda-card-body p-0">
             <div class="table-responsive">
-                <table class="moda-table text-center align-middle">
+                <table class="moda-table text-center align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>«·„—Ã⁄</th>
-                            <th>«·„’œ— («· ﬁ—Ì—)</th>
-                            <th>«·ÃÂ… «·„⁄‰Ì…</th>
-                            <th>‰Ê⁄ «·›ÃÊ…</th>
-                            <th>«·≈Ã—«¡ «·„ÿ·Ê»</th>
-                            <th>«·Õ«·…</th>
+                            <th>—ﬁ„ «· Ê’Ì…</th>
+                            <th>«· ﬁ—Ì— «·„’œ—</th>
+                            <th>Œ·«’… «· Ê’Ì…</th>
+                            <th>„«·ﬂ «·≈Ã—«¡</th>
+                            <th> «—ÌŒ «·—›⁄</th>
+                            <th>Õ«·… «· Ê’Ì…</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -12354,18 +12392,45 @@ File: \CTP.Web\Areas\Committee\Views\Workspace\Recommendations.cshtml
                             {
                                 <tr>
                                     <td class="fw-bold text-dark">@rec.RecommendationNumber</td>
-                                    <td class="small text-muted">@rec.SourceReport?.ReportNumber</td>
-                                    <td class="fw-bold">@(rec.SourceReport?.Organization?.EntityName)</td>
-                                    <td><span class="badge bg-light text-dark border">@rec.GapType</span></td>
-                                    <td class="text-start" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@rec.SuggestedAction">@rec.SuggestedAction</td>
+
                                     <td>
-                                        @if (rec.Status.Contains("œ⁄„") || rec.Status.Contains("«” ﬂ„«·"))
+                                        <span class="badge bg-light text-dark border">
+                                            @(rec.SourceReport?.ReportNumber ?? "€Ì— „ Ê›—")
+                                        </span>
+                                    </td>
+
+                                    <td class="text-start small fw-bold text-primary"
+                                        style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                        title="@rec.SuggestedAction">
+                                        @rec.SuggestedAction
+                                    </td>
+
+                                    <td class="small">@rec.ActionOwner</td>
+
+                                    <td class="small text-muted">@rec.CreatedDate.ToString("yyyy/MM/dd")</td>
+
+                                    <td>
+                                        @if (rec.Status.Contains("Ã«Â“…") || rec.Status.Contains("»«‰ Ÿ«—"))
                                         {
-                                            <span class="moda-badge moda-badge-danger">@rec.Status</span>
+                                            <span class="badge bg-warning text-dark border px-3 py-2">
+                                                <i class="bi bi-hourglass-split me-1"></i> »«‰ Ÿ«— «⁄ „«œ «·—∆Ì”
+                                            </span>
+                                        }
+                                        else if (rec.Status.Contains("„⁄ „œ…"))
+                                        {
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="bi bi-check-circle-fill me-1"></i> „⁄ „œ…
+                                            </span>
+                                        }
+                                        else if (rec.Status.Contains("„” »œ·…"))
+                                        {
+                                            <span class="badge bg-danger px-3 py-2">
+                                                <i class="bi bi-x-circle-fill me-1"></i> „” »œ·… » Ê’Ì… ÌœÊÌ…
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="moda-badge moda-badge-success">@rec.Status</span>
+                                            <span class="badge bg-secondary px-3 py-2">@rec.Status</span>
                                         }
                                     </td>
                                 </tr>
@@ -12373,7 +12438,12 @@ File: \CTP.Web\Areas\Committee\Views\Workspace\Recommendations.cshtml
                         }
                         else
                         {
-                            <tr><td colspan="6" class="py-5 text-muted">·«  ÊÃœ  Ê’Ì«  „”Ã·….</td></tr>
+                            <tr>
+                                <td colspan="6" class="py-5 text-muted">
+                                    <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                                    ·«  ÊÃœ  Ê’Ì«  „”Ã·… Õ«·Ì« ›Ì «·‰Ÿ«„.
+                                </td>
+                            </tr>
                         }
                     </tbody>
                 </table>

@@ -9,7 +9,13 @@ namespace CTP.Application.Interfaces.Repositories
         Task<Recommendation> AddAsync(Recommendation recommendation);
         Task<int> SaveChangesAsync();
 
-        // السطر المفقود الذي يحل خطأ CS1061
         Task<IEnumerable<Recommendation>> GetAllWithDetailsAsync();
+        Task<IEnumerable<Recommendation>> GetPendingChairApprovalsAsync();
+        Task<Recommendation?> GetByMonthlyReportIdAsync(int reportId);
+        Task<IEnumerable<Recommendation>> GetApprovedRecommendationsAsync();
+        Task<IEnumerable<Recommendation>> GetApprovedForInstitutionalReportAsync();
+        Task<IEnumerable<Recommendation>> GetApprovedForImpactDashboardAsync();
+        Task<IEnumerable<Recommendation>> GetApprovedForExecutiveSummaryAsync();
+        Task<bool> UpdatePlacementAsync(int reportId, string placement, bool enabled);
     }
 }

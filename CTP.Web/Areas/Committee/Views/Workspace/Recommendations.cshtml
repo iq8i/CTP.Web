@@ -21,9 +21,9 @@
                             <th>رقم التوصية</th>
                             <th>التقرير المصدر</th>
                             <th>خلاصة التوصية</th>
-                            <th>مالك الإجراء</th>
-                            <th>تاريخ الرفع</th>
-                            <th>حالة التوصية</th>
+                            <th>وجهات الظهور</th>
+                            <th>تاريخ المراجعة</th>
+                            <th>الحالة</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -46,9 +46,37 @@
                                         @rec.SuggestedAction
                                     </td>
 
-                                    <td class="small">@rec.ActionOwner</td>
+                                    <td class="text-start small">
+                                        @if (rec.Status.Contains("معتمدة"))
+                                        {
+                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                                @if (rec.IncludeInInstitutionalReport)
+                                                {
+                                                    <span class="badge bg-primary-subtle text-primary border">التقرير الشهري</span>
+                                                }
+                                                @if (rec.IncludeInImpactDashboard)
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border">لوحة الأثر</span>
+                                                }
+                                                @if (rec.IncludeInExecutiveSummary)
+                                                {
+                                                    <span class="badge bg-warning-subtle text-dark border">الملخص التنفيذي</span>
+                                                }
+                                                @if (!rec.IncludeInInstitutionalReport && !rec.IncludeInImpactDashboard && !rec.IncludeInExecutiveSummary)
+                                                {
+                                                    <span class="text-muted">لم يتم تحديد وجهة عرض</span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
 
-                                    <td class="small text-muted">@rec.CreatedDate.ToString("yyyy/MM/dd")</td>
+                                    <td class="small text-muted">
+                                        @(rec.ReviewedDate?.ToString("yyyy/MM/dd") ?? rec.CreatedDate.ToString("yyyy/MM/dd"))
+                                    </td>
 
                                     <td>
                                         @if (rec.Status.Contains("جاهزة") || rec.Status.Contains("بانتظار"))
@@ -63,15 +91,19 @@
                                                 <i class="bi bi-check-circle-fill me-1"></i> معتمدة
                                             </span>
                                         }
-                                        else if (rec.Status.Contains("مستبدلة"))
+                                        else if (rec.Status.Contains("مرفوضة"))
                                         {
                                             <span class="badge bg-danger px-3 py-2">
-                                                <i class="bi bi-x-circle-fill me-1"></i> مستبدلة بتوصية يدوية
+                                                <i class="bi bi-x-circle-fill me-1"></i> مرفوضة وإرجاعها للمراجعة
                                             </span>
                                         }
                                         else
                                         {
                                             <span class="badge bg-secondary px-3 py-2">@rec.Status</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(rec.ChairReviewNotes))
+                                        {
+                                            <div class="small text-muted mt-2" title="@rec.ChairReviewNotes">@rec.ChairReviewNotes</div>
                                         }
                                     </td>
                                 </tr>

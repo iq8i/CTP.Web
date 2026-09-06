@@ -34,10 +34,17 @@ namespace CTP.Domain.Entities
         [StringLength(500)]
         public string ExpectedImpact { get; set; } = string.Empty; // الأثر المتوقع
 
-        // حالة بوابة الجودة
         [StringLength(100)]
-        public string Status { get; set; } = "تحتاج استكمال قبل الاعتماد"; // جاهزة لاعتماد رئيس اللجنة، معتمدة
+        public string Status { get; set; } = "تحتاج استكمال قبل الاعتماد"; // جاهزة لاعتماد رئيس اللجنة، معتمدة، مرفوضة
 
+        [StringLength(1000)]
+        public string? ChairReviewNotes { get; set; }
+
+        public bool IncludeInInstitutionalReport { get; set; }
+        public bool IncludeInImpactDashboard { get; set; }
+        public bool IncludeInExecutiveSummary { get; set; }
+
+        public DateTime? ReviewedDate { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
 }
