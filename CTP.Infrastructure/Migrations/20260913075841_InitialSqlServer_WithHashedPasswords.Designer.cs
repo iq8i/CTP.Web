@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CTP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260910053008_SeedMassiveStagingData")]
-    partial class SeedMassiveStagingData
+    [Migration("20260913075841_InitialSqlServer_WithHashedPasswords")]
+    partial class InitialSqlServer_WithHashedPasswords
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2103,10 +2103,8 @@ namespace CTP.Infrastructure.Migrations
                     b.Property<DateTime?>("ReviewedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("SuccessIndicator")
                         .IsRequired()
@@ -2138,7 +2136,7 @@ namespace CTP.Infrastructure.Migrations
                             IncludeInInstitutionalReport = false,
                             MonthlyReportId = 36,
                             RecommendationNumber = "REC-036",
-                            Status = "جاهزة لاعتماد رئيس اللجنة",
+                            Status = 3,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2155,7 +2153,7 @@ namespace CTP.Infrastructure.Migrations
                             IncludeInInstitutionalReport = false,
                             MonthlyReportId = 37,
                             RecommendationNumber = "REC-037",
-                            Status = "جاهزة لاعتماد رئيس اللجنة",
+                            Status = 3,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2172,7 +2170,7 @@ namespace CTP.Infrastructure.Migrations
                             IncludeInInstitutionalReport = false,
                             MonthlyReportId = 38,
                             RecommendationNumber = "REC-038",
-                            Status = "جاهزة لاعتماد رئيس اللجنة",
+                            Status = 3,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2189,7 +2187,7 @@ namespace CTP.Infrastructure.Migrations
                             IncludeInInstitutionalReport = false,
                             MonthlyReportId = 39,
                             RecommendationNumber = "REC-039",
-                            Status = "جاهزة لاعتماد رئيس اللجنة",
+                            Status = 3,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2206,7 +2204,7 @@ namespace CTP.Infrastructure.Migrations
                             IncludeInInstitutionalReport = false,
                             MonthlyReportId = 40,
                             RecommendationNumber = "REC-040",
-                            Status = "جاهزة لاعتماد رئيس اللجنة",
+                            Status = 3,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2223,7 +2221,7 @@ namespace CTP.Infrastructure.Migrations
                             IncludeInInstitutionalReport = false,
                             MonthlyReportId = 41,
                             RecommendationNumber = "REC-041",
-                            Status = "جاهزة لاعتماد رئيس اللجنة",
+                            Status = 3,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2240,7 +2238,7 @@ namespace CTP.Infrastructure.Migrations
                             IncludeInInstitutionalReport = false,
                             MonthlyReportId = 42,
                             RecommendationNumber = "REC-042",
-                            Status = "جاهزة لاعتماد رئيس اللجنة",
+                            Status = 3,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2258,7 +2256,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 43,
                             RecommendationNumber = "REC-043",
                             ReviewedDate = new DateTime(2026, 7, 31, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2276,7 +2274,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 44,
                             RecommendationNumber = "REC-044",
                             ReviewedDate = new DateTime(2026, 7, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2294,7 +2292,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 45,
                             RecommendationNumber = "REC-045",
                             ReviewedDate = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2312,7 +2310,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 46,
                             RecommendationNumber = "REC-046",
                             ReviewedDate = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2330,7 +2328,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 47,
                             RecommendationNumber = "REC-047",
                             ReviewedDate = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2348,7 +2346,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 48,
                             RecommendationNumber = "REC-048",
                             ReviewedDate = new DateTime(2026, 7, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2366,7 +2364,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 49,
                             RecommendationNumber = "REC-049",
                             ReviewedDate = new DateTime(2026, 7, 31, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         },
@@ -2384,7 +2382,7 @@ namespace CTP.Infrastructure.Migrations
                             MonthlyReportId = 50,
                             RecommendationNumber = "REC-050",
                             ReviewedDate = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "معتمدة",
+                            Status = 4,
                             SuccessIndicator = "تجاوب 80% من المستهدفين",
                             SuggestedAction = "عقد اجتماعات مكثفة مع الموظفين المتأثرين وتوضيح المكاسب."
                         });
@@ -2583,7 +2581,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "staff"
                         },
                         new
@@ -2595,7 +2593,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "manager"
                         },
                         new
@@ -2607,7 +2605,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "ambassador1"
                         },
                         new
@@ -2619,7 +2617,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "unitleader"
                         },
                         new
@@ -2631,7 +2629,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "member"
                         },
                         new
@@ -2643,7 +2641,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 1,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "chair"
                         },
                         new
@@ -2655,7 +2653,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 2,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "ambassador2"
                         },
                         new
@@ -2667,7 +2665,7 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 2,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "unitleader2"
                         },
                         new
@@ -2679,8 +2677,56 @@ namespace CTP.Infrastructure.Migrations
                             IsActive = true,
                             MustChangePassword = false,
                             OrganizationEntityId = 3,
-                            PasswordHash = "123456",
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
                             Username = "ambassador3"
+                        },
+                        new
+                        {
+                            UserId = 10,
+                            CreatedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "رئيس فريق عمل القائد",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
+                            Username = "chief"
+                        },
+                        new
+                        {
+                            UserId = 11,
+                            CreatedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "نائب القائد",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
+                            Username = "deputy"
+                        },
+                        new
+                        {
+                            UserId = 12,
+                            CreatedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "معالي القائد",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
+                            Username = "leader"
+                        },
+                        new
+                        {
+                            UserId = 13,
+                            CreatedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FailedLoginAttempts = 0,
+                            FullName = "الاتصال المؤسسي",
+                            IsActive = true,
+                            MustChangePassword = false,
+                            OrganizationEntityId = 1,
+                            PasswordHash = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy",
+                            Username = "comms"
                         });
                 });
 
@@ -2782,6 +2828,38 @@ namespace CTP.Infrastructure.Migrations
                             AssignedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             UserRoleId = 9
+                        },
+                        new
+                        {
+                            UserId = 10,
+                            RoleId = 7,
+                            AssignedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 10
+                        },
+                        new
+                        {
+                            UserId = 11,
+                            RoleId = 8,
+                            AssignedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 11
+                        },
+                        new
+                        {
+                            UserId = 12,
+                            RoleId = 9,
+                            AssignedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 12
+                        },
+                        new
+                        {
+                            UserId = 13,
+                            RoleId = 10,
+                            AssignedDate = new DateTime(2026, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            UserRoleId = 13
                         });
                 });
 

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CTP.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CTP.Domain.Entities
@@ -34,9 +35,7 @@ namespace CTP.Domain.Entities
         [StringLength(500)]
         public string ExpectedImpact { get; set; } = string.Empty; // الأثر المتوقع
 
-        [StringLength(100)]
-        public string Status { get; set; } = "تحتاج استكمال قبل الاعتماد"; // جاهزة لاعتماد رئيس اللجنة، معتمدة، مرفوضة
-
+        public RecommendationStatus Status { get; set; } = RecommendationStatus.RequiresCompletion;
         [StringLength(1000)]
         public string? ChairReviewNotes { get; set; }
 

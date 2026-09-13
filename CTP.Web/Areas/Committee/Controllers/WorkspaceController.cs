@@ -7,7 +7,7 @@ using CTP.Web.Areas.Committee.Models;
 namespace CTP.Web.Areas.Committee.Controllers
 {
     [Area("Committee")]
-    [Authorize(Roles = "COMMITTEE_CHAIR,COMMITTEE_MEMBER,LEADER")]
+    [Authorize(Roles = "COMMITTEE_CHAIR,COMMITTEE_MEMBER")]
     public class WorkspaceController : Controller
     {
         private readonly IMonthlyReportService _reportService;
@@ -35,7 +35,7 @@ namespace CTP.Web.Areas.Committee.Controllers
 
             // استبعاد فقط التقارير التي لديها توصيات نشطة أو معتمدة؛ المرفوضة تعود للوارد
             var reportsWithActiveRecs = allRecs
-                .Where(r => r.Status != "مرفوضة")
+                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.Rejected)
                 .Select(r => r.MonthlyReportId)
                 .Distinct()
                 .ToList();
@@ -158,7 +158,7 @@ namespace CTP.Web.Areas.Committee.Controllers
 
         #region مسار الرئيس (الاعتماد)
         [HttpGet]
-        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        [Authorize(Roles = "COMMITTEE_CHAIR")]
         public async Task<IActionResult> ChairBoard()
         {
             ViewData["EntityTitle"] = "منصة الاعتماد";
@@ -185,7 +185,7 @@ namespace CTP.Web.Areas.Committee.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        [Authorize(Roles = "COMMITTEE_CHAIR")]
         public async Task<IActionResult> UpdateRecommendationPlacement(int reportId, string placement, bool enabled)
         {
             var updated = await _recommendationService.UpdateRecommendationPlacementAsync(reportId, placement, enabled);
@@ -202,7 +202,7 @@ namespace CTP.Web.Areas.Committee.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        [Authorize(Roles = "COMMITTEE_CHAIR")]
         public async Task<IActionResult> ChairReview(int reportId)
         {
             var draftRec = await _recommendationService.GetRecommendationByReportIdAsync(reportId);
@@ -227,7 +227,7 @@ namespace CTP.Web.Areas.Committee.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        [Authorize(Roles = "COMMITTEE_CHAIR")]
         public async Task<IActionResult> ApproveRecommendation(
             int reportId,
             bool includeInInstitutionalReport,
@@ -262,7 +262,7 @@ namespace CTP.Web.Areas.Committee.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")]
+        [Authorize(Roles = "COMMITTEE_CHAIR")]
         public async Task<IActionResult> RejectRecommendation(int reportId, string? chairReviewNotes)
         {
             var draftRec = await _recommendationService.GetRecommendationByReportIdAsync(reportId);

@@ -1,5 +1,6 @@
 ﻿using CTP.Application.Interfaces.Repositories;
 using CTP.Domain.Entities;
+using CTP.Domain.Enums;
 using CTP.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,9 +41,10 @@ namespace CTP.Infrastructure.Repositories
                 .Include(r => r.SourceReport!)
                     .ThenInclude(sr => sr.Organization)
                 .Where(r =>
-                    (r.Status == "جاهزة لاعتماد رئيس اللجنة" || r.Status == "بانتظار قرار الدعم") &&
-                    r.SourceReport != null &&
-                    r.SourceReport.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis)
+    (r.Status == CTP.Domain.Enums.RecommendationStatus.ReadyForChair ||
+     r.Status == CTP.Domain.Enums.RecommendationStatus.AwaitingSupport) &&
+    r.SourceReport != null &&
+    r.SourceReport.Status == CTP.Domain.Enums.ReportStatus.UnderAnalysis)
                 .OrderByDescending(r => r.CreatedDate)
                 .ToListAsync();
         }
@@ -60,7 +62,7 @@ namespace CTP.Infrastructure.Repositories
             return await _context.Recommendations
                 .Include(r => r.SourceReport!)
                     .ThenInclude(sr => sr.Organization)
-                .Where(r => r.Status == "معتمدة")
+                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
                 .OrderByDescending(r => r.ReviewedDate ?? r.CreatedDate)
                 .ToListAsync();
         }
@@ -70,7 +72,7 @@ namespace CTP.Infrastructure.Repositories
             return await _context.Recommendations
                 .Include(r => r.SourceReport!)
                     .ThenInclude(sr => sr.Organization)
-                .Where(r => r.Status == "معتمدة" && r.IncludeInInstitutionalReport)
+                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
                 .OrderByDescending(r => r.ReviewedDate ?? r.CreatedDate)
                 .ToListAsync();
         }
@@ -80,7 +82,7 @@ namespace CTP.Infrastructure.Repositories
             return await _context.Recommendations
                 .Include(r => r.SourceReport!)
                     .ThenInclude(sr => sr.Organization)
-                .Where(r => r.Status == "معتمدة" && r.IncludeInImpactDashboard)
+                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
                 .OrderByDescending(r => r.ReviewedDate ?? r.CreatedDate)
                 .ToListAsync();
         }
@@ -90,7 +92,7 @@ namespace CTP.Infrastructure.Repositories
             return await _context.Recommendations
                 .Include(r => r.SourceReport!)
                     .ThenInclude(sr => sr.Organization)
-                .Where(r => r.Status == "معتمدة" && r.IncludeInExecutiveSummary)
+                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
                 .OrderByDescending(r => r.ReviewedDate ?? r.CreatedDate)
                 .ToListAsync();
         }
@@ -98,7 +100,7 @@ namespace CTP.Infrastructure.Repositories
         public async Task<bool> UpdatePlacementAsync(int reportId, string placement, bool enabled)
         {
             var recommendation = await _context.Recommendations.FirstOrDefaultAsync(r => r.MonthlyReportId == reportId);
-            if (recommendation == null || recommendation.Status != "معتمدة")
+            if (recommendation == null || recommendation.Status != CTP.Domain.Enums.RecommendationStatus.Approved)
             {
                 return false;
             }

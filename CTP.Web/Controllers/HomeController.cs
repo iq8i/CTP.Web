@@ -1,74 +1,45 @@
-//using CTP.Web.Models;
-//using Microsoft.AspNetCore.Mvc;
-//using System.Diagnostics;
-
-//namespace CTP.Web.Controllers
-//{
-//    public class HomeController : Controller
-//    {
-//        private readonly ILogger<HomeController> _logger;
-
-//        public HomeController(ILogger<HomeController> logger)
-//        {
-//            _logger = logger;
-//        }
-
-//        public IActionResult Index()
-//        {
-//            return View();
-//        }
-
-//        public IActionResult Privacy()
-//        {
-//            return View();
-//        }
-
-//        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-//        public IActionResult Error()
-//        {
-//            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-//        }
-//    }
-//}
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-// using MediatR; // سنستخدمها لاحقاً للاتصال بطبقة الـ Application
+using System.Security.Claims;
+using CTP.Domain.Constants;
 
 namespace CTP.Web.Controllers
 {
-    // [Authorize] // سنقوم بتفعيلها بعد الانتهاء من نظام تسجيل الدخول
+    [Authorize]
     public class HomeController : Controller
     {
-        // private readonly ISender _mediator;
-
-        public HomeController()
-        {
-            // _mediator = mediator; // حقن مكتبة MediatR
-        }
-
-        // 1. عرض الشاشة الرئيسية
         public IActionResult Index()
         {
-            // مستقبلاً: يمكننا جلب اسم المستخدم وصلاحياته وتمريرها للـ View
+            var fullName = User.FindFirst(ClaimTypes.GivenName)?.Value ?? "مستخدم";
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? AppRoles.Staff;
+            var roleArabic = AppRolesHelper.GetArabicName(role);
+
+            ViewData["Title"] = "لوحة القياس";
+            ViewData["EntityTitle"] = "لوحة القياس";
+            ViewData["EntityHeaderSubtitle"] = $"مرحباً {fullName} — {roleArabic}";
+            ViewData["EntityHeaderIcon"] = "bi-speedometer2";
+            ViewData["ThemeColor"] = "#106981";
+
+            ViewBag.FullName = fullName;
+            ViewBag.RoleCode = role;
+            ViewBag.RoleArabic = roleArabic;
+
             return View();
         }
-
-        // ==========================================
-        // Endpoints (APIs) لتغذية الشاشة بالبيانات
-        // ==========================================
 
         [HttpGet]
         public IActionResult DashboardStats()
         {
-            // مستقبلاً: var stats = await _mediator.Send(new GetDashboardStatsQuery());
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? AppRoles.Staff;
 
-            // بيانات تجريبية مؤقتة
+            // بيانات تجريبية حسب الدور (سنستبدلها بـ Service لاحقاً)
             return Json(new
             {
-                totalReports = 24,
+                totalReports = role == AppRoles.Ambassador ? 12 : 24,
                 avgAdkar = 76,
                 totalRecommendations = 18,
-                totalChallenges = 5
+                totalChallenges = 5,
+                pendingApprovals = role == AppRoles.UnitLeader ? 3 : 0
             });
         }
 
@@ -79,9 +50,9 @@ namespace CTP.Web.Controllers
             {
                 new { title = "تم رفع تقرير (هيئة العمليات)", time = "منذ 10 دقائق", icon = "bi-arrow-up-circle-fill", color = "#10b981" },
                 new { title = "اعتماد توصية لدعم الاتصال", time = "منذ ساعة", icon = "bi-check-circle", color = "#10b981" },
-                new { title = "تعليق من مدير الإدارة", time = "منذ 3 ساعات", icon = "bi-chat-dots", color = "#f59e0b" }
+                new { title = "تعليق من مدير الإدارة", time = "منذ 3 ساعات", icon = "bi-chat-dots", color = "#f59e0b" },
+                new { title = "توصية جديدة بانتظار الاعتماد", time = "منذ 5 ساعات", icon = "bi-hourglass-split", color = "#f59e0b" }
             };
-
             return Json(activities);
         }
 
@@ -94,8 +65,13 @@ namespace CTP.Web.Controllers
                 new { status = "بانتظار الاعتماد", count = 12 },
                 new { status = "معتمد", count = 7 }
             };
-
             return Json(data);
+        }
+
+        [AllowAnonymous]
+        public IActionResult Error()
+        {
+            return View();
         }
     }
 }

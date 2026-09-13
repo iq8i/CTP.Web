@@ -1,8 +1,121 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    Layout = "_Layout";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- ترحيب -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-4" style="background: linear-gradient(135deg, #0B4F61, #106981); color: white;">
+        <h4 class="fw-bold mb-2">مرحباً @ViewBag.FullName 👋</h4>
+        <p class="mb-0" style="opacity: 0.9;">
+            أنت مسجل الدخول بصفة <strong>@ViewBag.RoleArabic</strong> — هذه لوحة القياس الخاصة بك.
+        </p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4" id="kpiRow">
+        <div class="col-md-3">
+            <div class="moda-card border-0 shadow-sm p-3 text-center">
+                <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0" id="kpiReports">—</h3>
+                <small class="text-muted">إجمالي التقارير</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="moda-card border-0 shadow-sm p-3 text-center">
+                <i class="bi bi-speedometer2 fs-1 text-success"></i>
+                <h3 class="fw-bold mt-2 mb-0" id="kpiAdkar">—</h3>
+                <small class="text-muted">متوسط ADKAR</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="moda-card border-0 shadow-sm p-3 text-center">
+                <i class="bi bi-journal-check fs-1 text-warning"></i>
+                <h3 class="fw-bold mt-2 mb-0" id="kpiRecs">—</h3>
+                <small class="text-muted">التوصيات</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="moda-card border-0 shadow-sm p-3 text-center">
+                <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                <h3 class="fw-bold mt-2 mb-0" id="kpiChallenges">—</h3>
+                <small class="text-muted">تحديات مفتوحة</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- آخر النشاطات -->
+    <div class="row g-3">
+        <div class="col-md-7">
+            <div class="moda-card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-activity me-2"></i> آخر النشاطات
+                </h5>
+                <ul class="list-unstyled mb-0" id="activitiesList">
+                    <li class="text-muted text-center py-4">
+                        <span class="spinner-border spinner-border-sm me-2"></span> جاري التحميل...
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="moda-card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-graph-up me-2"></i> توزيع حالات التقارير
+                </h5>
+                <div id="chartContainer">
+                    <ul class="list-unstyled mb-0" id="chartList">
+                        <li class="text-muted text-center py-4">
+                            <span class="spinner-border spinner-border-sm me-2"></span> جاري التحميل...
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            // KPI Stats
+            $.get('/Home/DashboardStats', function(d) {
+                $('#kpiReports').text(d.totalReports);
+                $('#kpiAdkar').text(d.avgAdkar + '%');
+                $('#kpiRecs').text(d.totalRecommendations);
+                $('#kpiChallenges').text(d.totalChallenges);
+            });
+
+            // Recent Activities
+            $.get('/Home/RecentActivities', function(items) {
+                var html = '';
+                items.forEach(function(a) {
+                    html += '<li class="d-flex align-items-start py-2 border-bottom">' +
+                        '<i class="bi ' + a.icon + ' fs-4 me-3" style="color:' + a.color + '"></i>' +
+                        '<div><div class="fw-bold">' + a.title + '</div>' +
+                        '<small class="text-muted">' + a.time + '</small></div></li>';
+                });
+                $('#activitiesList').html(html);
+            });
+
+            // Chart Data
+            $.get('/Home/ChartData', function(items) {
+                var total = items.reduce(function(s, i) { return s + i.count; }, 0);
+                var html = '';
+                items.forEach(function(i) {
+                    var pct = total > 0 ? Math.round(i.count / total * 100) : 0;
+                    html += '<li class="mb-3">' +
+                        '<div class="d-flex justify-content-between mb-1">' +
+                        '<span class="fw-bold small">' + i.status + '</span>' +
+                        '<span class="small">' + i.count + ' (' + pct + '%)</span></div>' +
+                        '<div class="progress" style="height: 10px;">' +
+                        '<div class="progress-bar" style="width:' + pct + '%"></div></div></li>';
+                });
+                $('#chartList').html(html);
+            });
+        });
+    </script>
+}

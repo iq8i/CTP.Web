@@ -6,7 +6,7 @@ using CTP.Web.Areas.Committee.Models;
 namespace CTP.Web.Areas.Committee.Controllers
 {
     [Area("Committee")]
-    [Authorize(Roles = "COMMITTEE_CHAIR,LEADER")] // تم إضافة LEADER لتوافق القائمة الجانبية
+    [Authorize(Roles = "COMMITTEE_CHAIR")] // تم إضافة LEADER لتوافق القائمة الجانبية
     public class DashboardController : Controller
     {
         private readonly ICommitteeService _committeeService;

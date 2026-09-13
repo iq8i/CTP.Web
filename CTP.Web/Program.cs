@@ -1,121 +1,130 @@
-using CTP.Infrastructure.Data;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
 using CTP.Application.Interfaces.Repositories;
 using CTP.Application.Interfaces.Services;
-using CTP.Infrastructure.Repositories;
 using CTP.Application.Services;
+using CTP.Infrastructure.Data;
+using CTP.Infrastructure.Repositories;
+using CTP.Web;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
 
-
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/ctp-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+try{
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================
-// 1. تسجيل الخدمات (Dependency Injection)
+// 1. طبقة البيانات
 // ==========================================
-builder.Services.AddScoped<ICommitteeRepository, CommitteeRepository>();
-builder.Services.AddScoped<ICommitteeService, CommitteeService>();
-builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IEntityInputService, EntityInputService>();
-builder.Services.AddScoped<IEntityInputRepository, EntityInputRepository>();
-// إضافة خدمات MVC (Controllers & Views)
-builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
-builder.Services.AddScoped<IRecommendationService, RecommendationService>();
-
-// إخبار النظام بوجود طبقة Infrastructure وربط قاعدة البيانات (SQLite)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.MigrationsAssembly("CTP.Infrastructure")
-    );
+        sqlOptions => sqlOptions.MigrationsAssembly("CTP.Infrastructure"));
+});
 
-    // السطر السحري لتجاهل التدقيق الصارم وإجبار تحديث قاعدة البيانات
-    options.ConfigureWarnings(warnings =>
-        warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
-}
-);
 // ==========================================
-// 2. إعداد نظام المصادقة والحماية (Authentication & Security)
+// 2. تسجيل المستودعات والخدمات
 // ==========================================
+builder.Services.AddScoped<ICommitteeRepository, CommitteeRepository>();
+builder.Services.AddScoped<ICommitteeService, CommitteeService>();
 
-// إعداد المصادقة عبر ملفات الارتباط (Cookies)
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+builder.Services.AddScoped<IEntityInputRepository, EntityInputRepository>();
+builder.Services.AddScoped<IEntityInputService, EntityInputService>();
+
+builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
+builder.Services.AddScoped<IMonthlyReportService, MonthlyReportService>();
+
+builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+
+builder.Services.AddScoped<IPasswordHasher, CTP.Infrastructure.Security.BCryptPasswordHasher>();
+    builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
+    // ==========================================
+    // 3. MVC
+    // ==========================================
+    builder.Services.AddControllersWithViews();
+
+// ==========================================
+// 4. المصادقة
+// ==========================================
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account/Login";          // مسار شاشة تسجيل الدخول
-        options.AccessDeniedPath = "/Account/AccessDenied"; // مسار شاشة رفض الوصول
-        options.ExpireTimeSpan = TimeSpan.FromHours(8); // مدة الجلسة
-        options.SlidingExpiration = true;              // تجديد الجلسة إذا كان المستخدم نشطاً
-        options.Cookie.Name = "CTP_Auth_Cookie";       // اسم الـ Cookie
-        options.Cookie.HttpOnly = true;                // حماية من هجمات XSS
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.Cookie.Name = "CTP_Auth_Cookie";
+        options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.Cookie.SameSite = SameSiteMode.Lax;
     });
-// إعداد سياسات الوصول (Authorization Policies)
+
 builder.Services.AddAuthorization(options =>
 {
-    // سياسة "المساحة العامة" تشمل المنسوبين وكل من يعلوهم للوصول للمواد التعليمية وبطاقات التغيير
     options.AddPolicy("StaffAreaPolicy", policy =>
         policy.RequireRole(
             CTP.Domain.Constants.AppRoles.Staff,
             CTP.Domain.Constants.AppRoles.Manager,
             CTP.Domain.Constants.AppRoles.Ambassador,
-            CTP.Domain.Constants.AppRoles.CorporateComms
-        // يمكن إضافة المزيد من الأدوار التي يحق لها دخول شاشة المنسوبين
-        ));
+            CTP.Domain.Constants.AppRoles.CorporateComms));
 });
-builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
-builder.Services.AddScoped<IMonthlyReportService, MonthlyReportService>();// بناء التطبيق
-builder.Services.AddScoped<IEntityInputRepository, EntityInputRepository>();
-builder.Services.AddScoped<IEntityInputService, EntityInputService>();
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.ExpireTimeSpan = TimeSpan.FromHours(8);
-    options.LoginPath = "/Account/Login";
-    options.AccessDeniedPath = "/Account/AccessDenied";
-    options.SlidingExpiration = true;
-    // إذا كنت لا تستخدم شهادة SSL رسمية حالياً في الستيج/الإنتاج، اجعل الـ Cookie لا يشترط HTTPS حصرياً لتجنب ضياع الجلسة:
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-});
+
 var app = builder.Build();
+    {
+        var hash = BCrypt.Net.BCrypt.HashPassword("123456", 12);
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("\n\n============================================");
+        Console.WriteLine("BCrypt Hash for '123456':");
+        Console.WriteLine(hash);
+        Console.WriteLine("============================================\n\n");
+        Console.ForegroundColor = ConsoleColor.White;
+    }
 
-// ==========================================
-// 3. إعداد خط أنابيب الطلبات (HTTP Request Pipeline)
-// ==========================================
-
-// التعامل مع الأخطاء في بيئة الإنتاج
-if (!app.Environment.IsDevelopment())
+    // ==========================================
+    // 5. Middleware Pipeline
+    // ==========================================
+    if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection(); // توجيه جميع الطلبات إلى HTTPS
-app.UseStaticFiles();      // تفعيل ملفات wwwroot (CSS, JS, Images)
 
-app.UseRouting();          // تفعيل التوجيه
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
-});
-// الترتيب هنا حساس جداً: يجب أن تكون المصادقة قبل الصلاحيات
-app.UseAuthentication();   // من أنت؟ (التحقق من الهوية)
-app.UseAuthorization();    // ماذا يحق لك أن تفعل؟ (التحقق من الصلاحيات)
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
-// ==========================================
-// 4. إعداد مسارات الصفحات (Routing)
-// ==========================================
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
-// 2. التوجيه الافتراضي (للشاشات العامة وتسجيل الدخول)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
 
-app.Run();
+app.Run(); }
+catch (Exception ex)
+{
+    Log.Fatal(ex, "التطبيق فشل في البدء");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

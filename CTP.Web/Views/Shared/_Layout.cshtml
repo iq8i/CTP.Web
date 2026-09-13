@@ -1,3 +1,4 @@
+@using CTP.Domain.Constants
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
     var __afTokens = Antiforgery.GetAndStoreTokens(Context);
@@ -7,9 +8,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <div style="background: yellow; color: black; padding: 5px; z-index: 99999; position: relative;">
-        [DEBUG Auth: @User.Identity.IsAuthenticated | Name: @User.Identity.Name | Claims Count: @User.Claims.Count()]
-    </div>
+   
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -131,7 +130,11 @@
                                 <div class="moda-user-avatar"><i class="bi bi-person"></i></div>
                                 <div class="moda-user-info text-start">
                                     <span class="moda-user-name">@User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value</span>
-                                    <span class="moda-user-role">@(ViewData["UserRoleDisplay"] ?? User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)</span>
+                                    @{
+                                        var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                                        var roleNameArabic = AppRolesHelper.GetArabicName(currentRole);
+                                    }
+                                    <span class="moda-user-role">@roleNameArabic</span>
                                 </div>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="userDropdown" style="border-radius: 12px;">

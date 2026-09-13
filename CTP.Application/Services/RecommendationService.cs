@@ -1,6 +1,7 @@
 ﻿using CTP.Application.Interfaces.Repositories;
 using CTP.Application.Interfaces.Services;
 using CTP.Domain.Entities;
+using CTP.Domain.Enums;
 
 namespace CTP.Application.Services
 {
@@ -61,7 +62,7 @@ namespace CTP.Application.Services
                 return false;
             }
 
-            recommendation.Status = "معتمدة";
+            recommendation.Status = CTP.Domain.Enums.RecommendationStatus.Approved;
             recommendation.IncludeInInstitutionalReport = includeInInstitutionalReport;
             recommendation.IncludeInImpactDashboard = includeInImpactDashboard;
             recommendation.IncludeInExecutiveSummary = includeInExecutiveSummary;
@@ -80,7 +81,7 @@ namespace CTP.Application.Services
                 return false;
             }
 
-            recommendation.Status = "مرفوضة";
+            recommendation.Status = CTP.Domain.Enums.RecommendationStatus.Rejected;
             recommendation.ChairReviewNotes = chairReviewNotes;
             recommendation.ReviewedDate = DateTime.Now;
             recommendation.IncludeInInstitutionalReport = false;
@@ -108,7 +109,9 @@ namespace CTP.Application.Services
             string recNumber = $"R-{DateTime.Now:MMdd}-{new Random().Next(100, 999)}";
 
             // 2. تطبيق قواعد جودة التوصية (Business Rules)
-            string status = requiresSupport ? "بانتظار قرار الدعم" : "جاهزة لاعتماد رئيس اللجنة";
+            var status = requiresSupport
+    ? CTP.Domain.Enums.RecommendationStatus.AwaitingSupport
+    : CTP.Domain.Enums.RecommendationStatus.ReadyForChair;
             string gapType = whyItMatters.Length > 90 ? whyItMatters.Substring(0, 90) : whyItMatters;
 
             // 3. بناء الكيان

@@ -36,7 +36,7 @@ namespace CTP.Infrastructure.Data
             modelBuilder.Entity<EntityInput>().HasOne(e => e.Preparer).WithMany().HasForeignKey(e => e.PreparerId).OnDelete(DeleteBehavior.Restrict);
 
             var fixedDate = new DateTime(2026, 8, 1);
-            var defaultPassword = "123456";
+            var defaultPassword = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy";
 
             // 1. الأساسيات (الجهات واللجان والأدوار)
             modelBuilder.Entity<OrganizationEntity>().HasData(
@@ -69,7 +69,11 @@ namespace CTP.Infrastructure.Data
                 new User { UserId = 6, Username = "chair", PasswordHash = defaultPassword, FullName = "رئيس اللجنة", OrganizationEntityId = 1, IsActive = true, CreatedDate = fixedDate },
                 new User { UserId = 7, Username = "ambassador2", PasswordHash = defaultPassword, FullName = "سفير التغيير 2", OrganizationEntityId = 2, IsActive = true, CreatedDate = fixedDate },
                 new User { UserId = 8, Username = "unitleader2", PasswordHash = defaultPassword, FullName = "قائد وحدة 2", OrganizationEntityId = 2, IsActive = true, CreatedDate = fixedDate },
-                new User { UserId = 9, Username = "ambassador3", PasswordHash = defaultPassword, FullName = "سفير التغيير 3", OrganizationEntityId = 3, IsActive = true, CreatedDate = fixedDate }
+                new User { UserId = 9, Username = "ambassador3", PasswordHash = defaultPassword, FullName = "سفير التغيير 3", OrganizationEntityId = 3, IsActive = true, CreatedDate = fixedDate },
+                new User { UserId = 10, Username = "chief", PasswordHash = defaultPassword, FullName = "رئيس فريق عمل القائد", OrganizationEntityId = 1, IsActive = true, CreatedDate = fixedDate },
+                new User { UserId = 11, Username = "deputy", PasswordHash = defaultPassword, FullName = "نائب القائد", OrganizationEntityId = 1, IsActive = true, CreatedDate = fixedDate },
+                new User { UserId = 12, Username = "leader", PasswordHash = defaultPassword, FullName = "معالي القائد", OrganizationEntityId = 1, IsActive = true, CreatedDate = fixedDate },
+                new User { UserId = 13, Username = "comms", PasswordHash = defaultPassword, FullName = "الاتصال المؤسسي", OrganizationEntityId = 1, IsActive = true, CreatedDate = fixedDate }
             );
 
             modelBuilder.Entity<UserRole>().HasData(
@@ -81,7 +85,11 @@ namespace CTP.Infrastructure.Data
                 new UserRole { UserRoleId = 6, UserId = 6, RoleId = 6, AssignedDate = fixedDate },
                 new UserRole { UserRoleId = 7, UserId = 7, RoleId = 3, AssignedDate = fixedDate },
                 new UserRole { UserRoleId = 8, UserId = 8, RoleId = 4, AssignedDate = fixedDate },
-                new UserRole { UserRoleId = 9, UserId = 9, RoleId = 3, AssignedDate = fixedDate }
+                new UserRole { UserRoleId = 9, UserId = 9, RoleId = 3, AssignedDate = fixedDate },
+                new UserRole { UserRoleId = 10, UserId = 10, RoleId = 7, AssignedDate = fixedDate },
+                new UserRole { UserRoleId = 11, UserId = 11, RoleId = 8, AssignedDate = fixedDate },
+                new UserRole { UserRoleId = 12, UserId = 12, RoleId = 9, AssignedDate = fixedDate },
+                new UserRole { UserRoleId = 13, UserId = 13, RoleId = 10, AssignedDate = fixedDate }
             );
 
             // ============================================================
@@ -148,7 +156,9 @@ namespace CTP.Infrastructure.Data
                 // توليد توصيات للتقارير المخصصة لرئيس اللجنة (36-42) والأرشيف (43-50)
                 if (i >= 36)
                 {
-                    string recStatus = i <= 42 ? "جاهزة لاعتماد رئيس اللجنة" : "معتمدة";
+                    CTP.Domain.Enums.RecommendationStatus recStatus = i <= 42
+    ? CTP.Domain.Enums.RecommendationStatus.ReadyForChair
+    : CTP.Domain.Enums.RecommendationStatus.Approved;
                     recommendations.Add(new Recommendation
                     {
                         Id = i, // استخدام نفس الـ ID للتسهيل
@@ -162,7 +172,9 @@ namespace CTP.Infrastructure.Data
                         ExpectedImpact = "تسريع تبني النظام الجديد",
                         Status = recStatus,
                         CreatedDate = report.CreatedDate.AddDays(1),
-                        ReviewedDate = recStatus == "معتمدة" ? report.ApprovedDate : null
+                        ReviewedDate = recStatus == CTP.Domain.Enums.RecommendationStatus.Approved
+    ? report.ApprovedDate
+    : null
                     });
                 }
             }

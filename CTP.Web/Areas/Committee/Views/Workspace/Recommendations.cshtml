@@ -1,4 +1,5 @@
-﻿@model IEnumerable<CTP.Domain.Entities.Recommendation>
+﻿@using CTP.Application.Helpers
+@model IEnumerable<CTP.Domain.Entities.Recommendation>
 @{
     Layout = "_Layout";
 }
@@ -47,7 +48,7 @@
                                     </td>
 
                                     <td class="text-start small">
-                                        @if (rec.Status.Contains("معتمدة"))
+                                        @if (rec.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
                                         {
                                             <div class="d-flex flex-wrap gap-1 justify-content-center">
                                                 @if (rec.IncludeInInstitutionalReport)
@@ -79,27 +80,28 @@
                                     </td>
 
                                     <td>
-                                        @if (rec.Status.Contains("جاهزة") || rec.Status.Contains("بانتظار"))
+                                        @if (rec.Status == CTP.Domain.Enums.RecommendationStatus.ReadyForChair
+     || rec.Status == CTP.Domain.Enums.RecommendationStatus.AwaitingSupport)
                                         {
                                             <span class="badge bg-warning text-dark border px-3 py-2">
-                                                <i class="bi bi-hourglass-split me-1"></i> بانتظار اعتماد الرئيس
+                                                <i class="bi bi-hourglass-split me-1"></i> @rec.Status.ToArabic()
                                             </span>
                                         }
-                                        else if (rec.Status.Contains("معتمدة"))
+                                        else if (rec.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
                                         {
                                             <span class="badge bg-success px-3 py-2">
-                                                <i class="bi bi-check-circle-fill me-1"></i> معتمدة
+                                                <i class="bi bi-check-circle-fill me-1"></i> @rec.Status.ToArabic()
                                             </span>
                                         }
-                                        else if (rec.Status.Contains("مرفوضة"))
+                                        else if (rec.Status == CTP.Domain.Enums.RecommendationStatus.Rejected)
                                         {
                                             <span class="badge bg-danger px-3 py-2">
-                                                <i class="bi bi-x-circle-fill me-1"></i> مرفوضة وإرجاعها للمراجعة
+                                                <i class="bi bi-x-circle-fill me-1"></i> @rec.Status.ToArabic()
                                             </span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary px-3 py-2">@rec.Status</span>
+                                            <span class="badge bg-secondary px-3 py-2">@rec.Status.ToArabic()</span>
                                         }
                                         @if (!string.IsNullOrWhiteSpace(rec.ChairReviewNotes))
                                         {
