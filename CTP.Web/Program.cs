@@ -26,7 +26,10 @@ builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 // إخبار النظام بوجود طبقة Infrastructure وربط قاعدة البيانات (SQLite)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.MigrationsAssembly("CTP.Infrastructure")
+    );
 
     // السطر السحري لتجاهل التدقيق الصارم وإجبار تحديث قاعدة البيانات
     options.ConfigureWarnings(warnings =>
@@ -47,7 +50,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;              // تجديد الجلسة إذا كان المستخدم نشطاً
         options.Cookie.Name = "CTP_Auth_Cookie";       // اسم الـ Cookie
         options.Cookie.HttpOnly = true;                // حماية من هجمات XSS
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // يعمل على HTTPS فقط
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax;
     });
 // إعداد سياسات الوصول (Authorization Policies)
 builder.Services.AddAuthorization(options =>
@@ -66,6 +70,16 @@ builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
 builder.Services.AddScoped<IMonthlyReportService, MonthlyReportService>();// بناء التطبيق
 builder.Services.AddScoped<IEntityInputRepository, EntityInputRepository>();
 builder.Services.AddScoped<IEntityInputService, EntityInputService>();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.SlidingExpiration = true;
+    // إذا كنت لا تستخدم شهادة SSL رسمية حالياً في الستيج/الإنتاج، اجعل الـ Cookie لا يشترط HTTPS حصرياً لتجنب ضياع الجلسة:
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
 var app = builder.Build();
 
 // ==========================================
@@ -84,6 +98,10 @@ app.UseStaticFiles();      // تفعيل ملفات wwwroot (CSS, JS, Images)
 
 app.UseRouting();          // تفعيل التوجيه
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
 // الترتيب هنا حساس جداً: يجب أن تكون المصادقة قبل الصلاحيات
 app.UseAuthentication();   // من أنت؟ (التحقق من الهوية)
 app.UseAuthorization();    // ماذا يحق لك أن تفعل؟ (التحقق من الصلاحيات)

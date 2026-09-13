@@ -81,13 +81,13 @@ namespace CTP.Web.Controllers
         private async Task<IActionResult> SignInUserAsync(CTP.Domain.Entities.User user, bool rememberMe, string? returnUrl)
         {
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.GivenName, user.FullName)
-            };
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.GivenName, user.FullName ?? user.Username),
+        new Claim("FullName", user.FullName ?? user.Username) // Explicit fallback claim
+    };
 
-            // جلب الأدوار الفعالة للمستخدم
             var activeRoles = user.UserRoles
                 .Where(ur => ur.IsActive && (ur.ExpiresDate == null || ur.ExpiresDate > DateTime.Now))
                 .ToList();
@@ -95,6 +95,7 @@ namespace CTP.Web.Controllers
             foreach (var ur in activeRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, ur.Role.RoleCode));
+                claims.Add(new Claim("RoleName", ur.Role.RoleName)); // Explicit fallback role name
             }
 
             if (user.OrganizationEntityId.HasValue)
@@ -119,7 +120,7 @@ namespace CTP.Web.Controllers
                 return Redirect(returnUrl);
             }
 
-            return RedirectToAction("Index", "Home"); // توجيه للشاشة الرئيسية الجديدة
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]
