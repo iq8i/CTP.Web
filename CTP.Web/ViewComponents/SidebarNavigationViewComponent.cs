@@ -78,10 +78,21 @@ namespace CTP.Web.ViewComponents
             // 4. مساحة لجنة شركاء التغيير
             // ==========================================
             else if (role == AppRoles.CommitteeChair
-                  || role == AppRoles.CommitteeMember
-                  )
+      || role == AppRoles.CommitteeMember)
             {
                 var section = new MenuSection { Title = "مركز أعمال اللجنة" };
+
+                // رابط مركز الأعمال الكامل (للرئيس فقط)
+                if (role == AppRoles.CommitteeChair)
+                {
+                    section.Items.Add(new MenuItem
+                    {
+                        Title = "مركز الأعمال الشامل",
+                        IconClass = "bi-shield-check",
+                        Url = "/Committee/ChairWorkCenter/Index"
+                    });
+                }
+
                 section.Items.Add(new MenuItem
                 {
                     Title = "صندوق الوارد (التحليل)",

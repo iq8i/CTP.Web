@@ -14,10 +14,14 @@ namespace CTP.Web.Areas.Ambassador.Controllers
     public class ReportController : Controller
     {
         private readonly IMonthlyReportService _reportService;
+        private readonly IReportQualityService _qualityService;
 
-        public ReportController(IMonthlyReportService reportService)
+        public ReportController(
+            IMonthlyReportService reportService,
+            IReportQualityService qualityService)
         {
             _reportService = reportService;
+            _qualityService = qualityService;
         }
 
         [HttpGet]
@@ -25,9 +29,8 @@ namespace CTP.Web.Areas.Ambassador.Controllers
         {
             ViewData["EntityTitle"] = "التقرير الشهري";
             ViewData["EntityHeaderSubtitle"] = "نموذج التقرير الشهري الموحد للتغيير والتحول";
-            ViewData["ThemeColor"] = "#C9A227"; // اللون الذهبي للسفراء
+            ViewData["ThemeColor"] = "#C9A227";
             ViewData["EntityHeaderIcon"] = "bi-file-earmark-text";
-
             return View(new CreateMonthlyReportViewModel());
         }
 
@@ -35,9 +38,10 @@ namespace CTP.Web.Areas.Ambassador.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateMonthlyReportViewModel model)
         {
+            // ─── 1. فحص ModelState التقليدي ───
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "يرجى التأكد من استكمال الحقول الإلزامية.";
+                TempData["Error"] = "يرجى استكمال الحقول الإلزامية.";
                 return View(model);
             }
 
@@ -50,7 +54,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 return RedirectToAction("Login", "Account", new { area = "" });
             }
 
-            // الحساب الرياضي للمؤشرات
+            // ─── 2. بناء الكيان ───
             int readiness = (model.AdkarAwareness + model.AdkarDesire + model.AdkarKnowledge) / 3;
             int adoption = (model.AdkarAbility + model.AdkarReinforcement) / 2;
 
@@ -89,15 +93,30 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 SubmittedDate = model.ActionType == "Submit" ? DateTime.Now : null
             };
 
+            // ─── 3. فحص الجودة ───
+            var qualityResult = model.ActionType == "Submit"
+                ? _qualityService.CheckForSubmission(report)
+                : _qualityService.CheckForDraft(report);
+
+            // ─── 4. إذا Submit وفيه مشاكل → ارجع النموذج مع الأخطاء ───
+            if (model.ActionType == "Submit" && !qualityResult.IsValid)
+            {
+                ViewBag.QualityIssues = qualityResult.Issues;
+                ViewBag.QualityScore = qualityResult.QualityPercent;
+                TempData["Error"] = $"لا يمكن رفع التقرير — {qualityResult.CriticalIssues.Count} عنصر يحتاج استكمالاً.";
+                return View(model);
+            }
+
+            // ─── 5. الحفظ ───
             await _reportService.CreateReportAsync(report);
 
             TempData["Success"] = model.ActionType == "Submit"
                 ? $"تم رفع التقرير للاعتماد بنجاح برقم: {report.ReportNumber}"
-                : $"تم حفظ المسودة بنجاح برقم: {report.ReportNumber}";
+                : $"تم حفظ المسودة برقم: {report.ReportNumber}";
 
             return RedirectToAction(nameof(Index));
         }
-        [HttpGet]
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -106,12 +125,12 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             ViewData["ThemeColor"] = "#C9A227";
             ViewData["EntityHeaderIcon"] = "bi-clock-history";
 
-            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdStr, out int preparerId)) return RedirectToAction("Login", "Account", new { area = "" });
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int preparerId))
+                return RedirectToAction("Login", "Account", new { area = "" });
 
             var reports = await _reportService.GetAmbassadorReportsAsync(preparerId);
 
-            // نظام الإشعارات الذكي (مبني على حالة التقارير)
             ViewBag.ReturnedReportsCount = reports.Count(r => r.Status == ReportStatus.Returned);
             ViewBag.ApprovedReportsCount = reports.Count(r => r.Status == ReportStatus.Approved);
 
@@ -122,65 +141,42 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 MonthYear = $"{r.Month} {r.Year}",
                 ChangeName = r.ChangeName,
                 CreatedDateFormatted = r.CreatedDate.ToHijri(),
-                IsDraft = r.Status == ReportStatus.Draft || r.Status == ReportStatus.Returned, // المعاد يعامل معاملة المسودة ليتمكن من تعديله
+                IsDraft = r.Status == ReportStatus.Draft || r.Status == ReportStatus.Returned,
                 StatusName = GetStatusName(r.Status),
                 StatusBadgeClass = GetStatusBadgeClass(r.Status)
             }).ToList();
 
             return View(viewModel);
         }
-        // دوال مساعدة لترجمة الـ Enum إلى نصوص وألوان الواجهة (توضع داخل الكنترولر)
-        private string GetStatusName(ReportStatus status) => status switch
-        {
-            ReportStatus.Draft => "مسودة",
-            ReportStatus.Submitted => "مرفوع",
-            ReportStatus.UnderAnalysis => "تحت التحليل",
-            ReportStatus.Returned => "معاد للاستكمال",
-            ReportStatus.Approved => "معتمد",
-            _ => "غير معروف"
-        };
 
-        private string GetStatusBadgeClass(ReportStatus status) => status switch
-        {
-            ReportStatus.Draft => "moda-badge-secondary",
-            ReportStatus.Submitted => "moda-badge-info",
-            ReportStatus.UnderAnalysis => "moda-badge-gold",
-            ReportStatus.Returned => "moda-badge-danger",
-            ReportStatus.Approved => "moda-badge-success",
-            _ => "moda-badge-secondary"
-        };
-
-        [HttpGet]
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
             var report = await _reportService.GetReportByIdAsync(id);
-            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            // التحقق من الملكية
             if (report == null || report.PreparerId.ToString() != userIdStr) return NotFound();
 
             ViewData["EntityTitle"] = "تفاصيل التقرير";
             ViewData["EntityHeaderSubtitle"] = $"تقرير رقم {report.ReportNumber}";
             ViewData["ThemeColor"] = "#C9A227";
 
-            // استغلال الدوال الموجودة مسبقاً في المتحكم
             ViewBag.StatusName = GetStatusName(report.Status);
             ViewBag.StatusBadgeClass = GetStatusBadgeClass(report.Status);
 
-            return View(report); // سنمرر الـ Entity مباشرة هنا للسرعة، أو استخدم ViewModel
+            return View(report);
         }
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var report = await _reportService.GetReportByIdAsync(id);
-            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (report == null || report.PreparerId.ToString() != userIdStr ||
                (report.Status != ReportStatus.Draft && report.Status != ReportStatus.Returned))
             {
-                TempData["Error"] = "لا يمكن تعديل هذا التقرير لأنه قيد الإجراء أو معتمد.";
+                TempData["Error"] = "لا يمكن تعديل هذا التقرير.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -233,7 +229,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             var report = await _reportService.GetReportByIdAsync(model.Id);
             if (report == null) return NotFound();
 
-            // تحديث البيانات الشاملة
+            // تحديث البيانات
             report.Year = model.Year;
             report.Month = model.Month;
             report.ChangeName = model.ChangeName;
@@ -261,18 +257,50 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             report.SuccessStories = model.SuccessStories;
             report.InitialRecommendation = model.InitialRecommendation;
 
-            // إعادة احتساب المؤشرات
             int readiness = (model.AdkarAwareness + model.AdkarDesire + model.AdkarKnowledge) / 3;
             int adoption = (model.AdkarAbility + model.AdkarReinforcement) / 2;
             report.ReadinessScore = readiness;
             report.AdoptionScore = adoption;
 
-            report.Status = model.ActionType == "Submit" ? ReportStatus.Submitted : report.Status;
+            // ─── فحص الجودة عند Submit ───
+            if (model.ActionType == "Submit")
+            {
+                var qualityResult = _qualityService.CheckForSubmission(report);
+                if (!qualityResult.IsValid)
+                {
+                    ViewBag.QualityIssues = qualityResult.Issues;
+                    ViewBag.QualityScore = qualityResult.QualityPercent;
+                    TempData["Error"] = $"لا يمكن إعادة الإرسال — {qualityResult.CriticalIssues.Count} عنصر يحتاج استكمالاً.";
+                    return View(model);
+                }
+                report.Status = ReportStatus.Submitted;
+                report.SubmittedDate = DateTime.Now;
+            }
 
             await _reportService.UpdateReportAsync(report);
 
             TempData["Success"] = "تم حفظ وتحديث التقرير بنجاح.";
             return RedirectToAction(nameof(Index));
         }
+
+        private string GetStatusName(ReportStatus status) => status switch
+        {
+            ReportStatus.Draft => "مسودة",
+            ReportStatus.Submitted => "مرفوع",
+            ReportStatus.UnderAnalysis => "تحت التحليل",
+            ReportStatus.Returned => "معاد للاستكمال",
+            ReportStatus.Approved => "معتمد",
+            _ => "غير معروف"
+        };
+
+        private string GetStatusBadgeClass(ReportStatus status) => status switch
+        {
+            ReportStatus.Draft => "moda-badge-secondary",
+            ReportStatus.Submitted => "moda-badge-info",
+            ReportStatus.UnderAnalysis => "moda-badge-gold",
+            ReportStatus.Returned => "moda-badge-danger",
+            ReportStatus.Approved => "moda-badge-success",
+            _ => "moda-badge-secondary"
+        };
     }
 }

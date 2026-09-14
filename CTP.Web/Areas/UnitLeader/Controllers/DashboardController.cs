@@ -1,27 +1,33 @@
-﻿using System.Security.Claims;
+﻿using CTP.Application.Helpers;
 using CTP.Application.Interfaces.Services;
+using CTP.Application.Services;
 using CTP.Domain.Constants;
 using CTP.Domain.Entities;
 using CTP.Web.Areas.UnitLeader.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using CTP.Application.Helpers;
+using System.Security.Claims;
 
 namespace CTP.Web.Areas.UnitLeader.Controllers
 {
+
     [Area("UnitLeader")]
     [Authorize(Roles = AppRoles.UnitLeader)]
     public class DashboardController : Controller
     {
         private readonly IMonthlyReportService _reportService;
         private readonly INotificationService _notificationService; // تم إضافة خدمة الإشعارات هنا
+        private readonly IReportQualityService _qualityService;
 
-        // حقن الخدمتين في البنّاء
-        public DashboardController(IMonthlyReportService reportService, INotificationService notificationService)
+        public DashboardController(
+            IMonthlyReportService reportService,
+            INotificationService notificationService,
+            IReportQualityService qualityService)
         {
             _reportService = reportService;
             _notificationService = notificationService;
-        }
+            _qualityService = qualityService;
+        }    
 
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -54,21 +60,34 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Review(int id, bool isApproved, string? notes)
         {
-            // جلب التقرير أولاً لمعرفة صاحبه (السفير) لكي نرسل له الإشعار
+            // 1. جلب التقرير أولاً (مشترك بين الكودين)
             var report = await _reportService.GetReportByIdAsync(id);
             if (report == null) return NotFound();
 
+            // 2. فحص الجودة عند الاعتماد (من الصورة الأولى)
+            if (isApproved)
+            {
+                var quality = _qualityService.CheckForSubmission(report);
+                if (!quality.IsValid)
+                {
+                    TempData["Error"] = $"لا يمكن اعتماد التقرير - {quality.CriticalIssues.Count} عنصر يحتاج استكمالاً. " +
+                                        $"يرجى إرجاعه للسفير: {string.Join(" | ", quality.CriticalIssues.Select(i => i.FieldLabel))}";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+            }
+
+            // 3. تنفيذ عملية المراجعة والحفظ (من الصورة الثانية)
             var success = await _reportService.ReviewReportAsync(id, isApproved, notes);
 
             if (success)
             {
-                TempData["Success"] = isApproved ? "تم اعتماد التقرير وإحالته للجنة بنجاح." : "تم إعادة التقرير للسفير للاستكمال.";
+                TempData["Success"] = isApproved ? "تم اعتماد التقرير وإحالته للجنة بنجاح" : "تم إعادة التقرير للاستكمال بنجاح";
 
-                // إرسال الإشعار الآلي للسفير بناءً على القرار
+                // إرسال الإشعار الآلي للسفير بناءً على القرار (من الصورة الثانية)
                 string notifTitle = isApproved ? "اعتماد تقرير" : "إعادة تقرير للاستكمال";
                 string notifMessage = isApproved
-                    ? $"تم اعتماد تقرير التغيير ({report.ChangeName}) من قبل القيادة بنجاح."
-                    : $"تمت إعادة تقرير ({report.ChangeName}) لوجود ملاحظات: {notes ?? "لا توجد ملاحظات إضافية."}";
+                    ? $"تم اعتماد تقرير التغيير {report.ChangeName} من قبل القيادة"
+                    : $"تم إعادة تقرير {report.ChangeName} لوجود ملاحظات: {notes ?? "لا توجد ملاحظات"}";
 
                 string icon = isApproved ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill";
                 string color = isApproved ? "text-success" : "text-danger";
@@ -81,13 +100,14 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
                     iconClass: icon,
                     colorClass: color
                 );
+
+                return RedirectToAction(nameof(Details), new { id }); // أو التوجيه المناسب لديك
             }
             else
             {
                 TempData["Error"] = "حدث خطأ أثناء معالجة التقرير.";
+                return RedirectToAction(nameof(Details), new { id });
             }
-
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]

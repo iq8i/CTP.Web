@@ -1,0 +1,1483 @@
+﻿@model CTP.Web.Areas.Committee.Models.ChairWorkCenterViewModel
+@using CTP.Application.Interfaces.Services
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .work-center-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #073B49, #0B4F61);
+            border-radius: 14px;
+            border: 1px solid rgba(201, 162, 39, 0.4);
+            box-shadow: 0 14px 34px rgba(7, 59, 73, 0.22);
+        }
+
+            .work-center-tabs a {
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(248, 247, 242, 0.18);
+                border-radius: 9px;
+                padding: 8px 15px;
+                font-size: 12.5px;
+                color: #E3EEF1;
+                text-decoration: none;
+                transition: all 0.18s;
+            }
+
+                .work-center-tabs a:hover {
+                    background: rgba(201, 162, 39, 0.22);
+                    border-color: #C9A227;
+                    color: white;
+                }
+
+                .work-center-tabs a.active {
+                    background: linear-gradient(145deg, #F3E7C2, #C9A227);
+                    color: #073B49;
+                    border-color: #C9A227;
+                    font-weight: bold;
+                    box-shadow: 0 4px 12px rgba(201, 162, 39, 0.45);
+                }
+
+        .kpi-tile {
+            background: linear-gradient(180deg, #FFFFFF, #F5FAFB);
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(7, 59, 73, 0.07);
+            position: relative;
+            overflow: hidden;
+        }
+
+            .kpi-tile::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                inset-inline: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #C9A227, #E6D39A);
+                opacity: 0.75;
+            }
+
+            .kpi-tile .kpi-num {
+                font-size: 28px;
+                font-weight: bold;
+                color: #0B4F61;
+            }
+
+                .kpi-tile .kpi-num.gold {
+                    color: #A98418;
+                }
+
+            .kpi-tile .kpi-lbl {
+                font-size: 11.5px;
+                color: #537382;
+                margin-top: 4px;
+            }
+
+        @@media print {
+            .moda-sidebar,
+            .moda-topbar,
+            .work-center-tabs,
+            .no-print,
+            .entity-header,
+            footer.main {
+                display: none !important;
+            }
+
+            .moda-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .moda-card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+
+    <!-- التبويبات السبعة -->
+    <nav class="work-center-tabs">
+        <a href="?tab=t1" class="@(Model.ActiveTab == "t1" ? "active" : "")">
+            <i class="bi bi-file-earmark-text me-1"></i> التقارير الشهرية
+        </a>
+        <a href="?tab=t2" class="@(Model.ActiveTab == "t2" ? "active" : "")">
+            <i class="bi bi-chat-left-dots me-1"></i> مدخلات الجهات
+        </a>
+        <a href="?tab=t3" class="@(Model.ActiveTab == "t3" ? "active" : "")">
+            <i class="bi bi-diagram-3 me-1"></i> التحليل وشجرة القرار
+        </a>
+        <a href="?tab=t4" class="@(Model.ActiveTab == "t4" ? "active" : "")">
+            <i class="bi bi-journal-check me-1"></i> التوصيات والقرارات
+        </a>
+        <a href="?tab=t5" class="@(Model.ActiveTab == "t5" ? "active" : "")">
+            <i class="bi bi-bar-chart-line me-1"></i> الداشبورد والرفع
+        </a>
+        <a href="?tab=t6" class="@(Model.ActiveTab == "t6" ? "active" : "")">
+            <i class="bi bi-sliders me-1"></i> إدارة النماذج
+        </a>
+        <a href="?tab=t7" class="@(Model.ActiveTab == "t7" ? "active" : "")">
+            <i class="bi bi-database me-1"></i> البيانات التجريبية
+        </a>
+    </nav>
+
+    @* ═══════════════════════════════════════════════════════ *@
+    @* Tab 1: التقارير الشهرية                                *@
+    @* ═══════════════════════════════════════════════════════ *@
+    @if (Model.ActiveTab == "t1")
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num">@Model.TotalReports</div>
+                    <div class="kpi-lbl">نسخة تحليلية واردة</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num gold">@Model.CompleteReports</div>
+                    <div class="kpi-lbl">مكتملة البيانات</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#9C3D2E;">@Model.IncompleteReports</div>
+                    <div class="kpi-lbl">ناقصة</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#B07A1E;">@Model.LateReports</div>
+                    <div class="kpi-lbl">متأخرة</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="moda-card border-0 shadow-sm">
+            <div class="moda-card-header d-flex justify-content-between align-items-center">
+                <h5 class="moda-card-title mb-0">
+                    <i class="bi bi-inboxes me-2"></i> النسخ التحليلية الواردة
+                </h5>
+                <span class="badge bg-secondary px-3 py-2">@Model.TotalReports تقرير</span>
+            </div>
+            <div class="moda-card-body p-0">
+                <div class="table-responsive">
+                    <table class="moda-table text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>التقرير</th>
+                                <th>الجهة</th>
+                                <th>التغيير</th>
+                                <th>الفترة</th>
+                                <th>الجاهزية</th>
+                                <th>التبني</th>
+                                <th>الاكتمال</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Reports.Any())
+                            {
+                                foreach (var item in Model.Reports)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-dark">@item.ReportNumber</td>
+                                        <td><span class="badge bg-light text-dark border">@item.EntityName</span></td>
+                                        <td class="text-start" style="max-width: 220px;">@item.ChangeName</td>
+                                        <td class="small text-muted">@item.Month @item.Year</td>
+                                        <td><span class="fw-bold" style="color:#106981;">@item.ReadinessScore%</span></td>
+                                        <td><span class="fw-bold" style="color:#3E7C3E;">@item.AdoptionScore%</span></td>
+                                        <td>
+                                            @if (item.IsComplete)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border">مكتمل</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border">ناقص</span>
+                                            }
+                                            @if (item.IsLate)
+                                            {
+                                                <span class="badge bg-warning-subtle text-dark border ms-1">متأخر</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a asp-action="Index"
+                                               asp-route-tab="t3"
+                                               asp-route-reportId="@item.Id"
+                                               class="moda-btn moda-btn-sm moda-btn-gold">
+                                                <i class="bi bi-diagram-3 me-1"></i> فتح للتحليل
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="8" class="py-5 text-muted">
+                                        <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                                        لا توجد تقارير واردة بانتظار التحليل حالياً.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    @* ═══════════════════════════════════════════════════════ *@
+    @* Tab 2: مدخلات الجهات                                   *@
+    @* ═══════════════════════════════════════════════════════ *@
+    else if (Model.ActiveTab == "t2")
+    {
+        <!-- KPIs -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="kpi-tile">
+                    <div class="kpi-num">@Model.TotalInputs</div>
+                    <div class="kpi-lbl">إجمالي المدخلات</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#B07A1E;">@Model.PendingInputs</div>
+                    <div class="kpi-lbl">بانتظار المعالجة</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-tile">
+                    <div class="kpi-num gold">@Model.InputsByType.Count</div>
+                    <div class="kpi-lbl">أنواع المدخلات</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- التصنيف حسب النوع -->
+        @if (Model.InputsByType.Any())
+        {
+            <div class="moda-card border-0 shadow-sm p-4 mb-4">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-pie-chart me-2"></i> التصنيف حسب النوع
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var kvp in Model.InputsByType.OrderByDescending(x => x.Value))
+                    {
+                        <span class="badge bg-light text-dark border px-3 py-2" style="font-size: 12.5px;">
+                            @kvp.Key
+                            <span class="badge bg-primary ms-2">@kvp.Value</span>
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- جدول المدخلات -->
+        <div class="moda-card border-0 shadow-sm">
+            <div class="moda-card-header d-flex justify-content-between align-items-center">
+                <h5 class="moda-card-title mb-0">
+                    <i class="bi bi-chat-left-dots me-2"></i> المدخلات الواردة
+                </h5>
+                <span class="badge bg-secondary px-3 py-2">@Model.TotalInputs مدخل</span>
+            </div>
+            <div class="moda-card-body p-0">
+                <div class="table-responsive">
+                    <table class="moda-table text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الجهة</th>
+                                <th>النوع</th>
+                                <th class="text-start">المحتوى</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.EntityInputs.Any())
+                            {
+                                foreach (var input in Model.EntityInputs)
+                                {
+                                    var badgeClass = input.Type switch
+                                    {
+                                        CTP.Domain.Enums.InputType.SuccessStory => "bg-success-subtle text-success border border-success",
+                                        CTP.Domain.Enums.InputType.SupportNeed => "bg-danger-subtle text-danger border border-danger",
+                                        CTP.Domain.Enums.InputType.Challenge or CTP.Domain.Enums.InputType.AdoptionBarrier => "bg-warning-subtle text-dark border border-warning",
+                                        CTP.Domain.Enums.InputType.PlatformFeedback => "bg-info-subtle text-info border border-info",
+                                        _ => "bg-light text-dark border"
+                                    };
+
+                                    var statusName = input.Status switch
+                                    {
+                                        CTP.Domain.Enums.InputStatus.Received => "مستلم",
+                                        CTP.Domain.Enums.InputStatus.Routed => "موجه",
+                                        CTP.Domain.Enums.InputStatus.SupportIssued => "قرار دعم",
+                                        CTP.Domain.Enums.InputStatus.Published => "منشور",
+                                        CTP.Domain.Enums.InputStatus.Escalated => "مصعد",
+                                        _ => "غير معروف"
+                                    };
+
+                                    var statusClass = input.Status switch
+                                    {
+                                        CTP.Domain.Enums.InputStatus.Received => "bg-secondary",
+                                        CTP.Domain.Enums.InputStatus.Routed => "bg-primary",
+                                        CTP.Domain.Enums.InputStatus.SupportIssued => "bg-success",
+                                        CTP.Domain.Enums.InputStatus.Published => "bg-info text-dark",
+                                        CTP.Domain.Enums.InputStatus.Escalated => "bg-danger",
+                                        _ => "bg-secondary"
+                                    };
+
+                                    var typeName = input.Type switch
+                                    {
+                                        CTP.Domain.Enums.InputType.Challenge => "تحدٍ",
+                                        CTP.Domain.Enums.InputType.SuccessStory => "قصة نجاح",
+                                        CTP.Domain.Enums.InputType.Improvement => "فرصة تحسين",
+                                        CTP.Domain.Enums.InputType.Inquiry => "استفسار",
+                                        CTP.Domain.Enums.InputType.SupportNeed => "احتياج دعم",
+                                        CTP.Domain.Enums.InputType.PlatformFeedback => "ملاحظة على المنصة",
+                                        CTP.Domain.Enums.InputType.AdoptionBarrier => "عائق تبني",
+                                        _ => "أخرى"
+                                    };
+
+                                    <tr>
+                                        <td class="small text-muted">@input.CreatedDate.ToString("yyyy/MM/dd")</td>
+                                        <td class="fw-bold">@input.Organization?.EntityName</td>
+                                        <td><span class="badge @badgeClass px-3 py-2">@typeName</span></td>
+                                        <td class="text-start small" style="max-width:320px;">
+                                            @(input.Content.Length > 100 ? input.Content.Substring(0, 100) + "..." : input.Content)
+                                        </td>
+                                        <td><span class="badge @statusClass">@statusName</span></td>
+                                        <td>
+                                            <a asp-action="Index"
+                                               asp-route-tab="t2"
+                                               asp-route-inputId="@input.Id"
+                                               class="moda-btn moda-btn-sm moda-btn-gold">
+                                                <i class="bi bi-eye me-1"></i> عرض
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="py-5 text-muted">
+                                        <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                                        لا توجد مدخلات واردة حالياً.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        
+        
+            var selectedId = Context.Request.Query["inputId"].ToString();
+            var selectedInput = !string.IsNullOrEmpty(selectedId)
+                ? Model.EntityInputs.FirstOrDefault(i => i.Id.ToString() == selectedId)
+                : null;
+        
+
+        @if (selectedInput != null)
+        {
+            <div class="moda-card border-0 shadow-sm p-4 mt-4" style="border-right: 4px solid #C9A227 !important;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color: var(--ctp-primary-olive);">
+                            <i class="bi bi-chat-square-text me-2"></i> تفاصيل المدخل
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-building me-1"></i> @selectedInput.Organization?.EntityName
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-calendar me-1"></i> @selectedInput.CreatedDate.ToString("yyyy/MM/dd HH:mm")
+                        </p>
+                    </div>
+                    <a asp-action="Index" asp-route-tab="t2" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> إغلاق
+                    </a>
+                </div>
+
+                <!-- المحتوى الكامل -->
+                <div class="p-4 bg-light rounded border mb-4" style="line-height: 1.9; font-size: 15px;">
+                    @selectedInput.Content
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                @if (selectedInput.Status == CTP.Domain.Enums.InputStatus.Received)
+                {
+                    <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-gear me-2"></i> إجراء اللجنة
+                    </h6>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <form method="post" asp-action="ProcessInput">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="inputId" value="@selectedInput.Id" />
+                                <input type="hidden" name="actionType" value="route" />
+                                <button type="submit" class="btn btn-primary w-100 py-3">
+                                    <i class="bi bi-arrow-right-circle me-1"></i> توجيه للجهة
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-3">
+                            <form method="post" asp-action="ProcessInput">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="inputId" value="@selectedInput.Id" />
+                                <input type="hidden" name="actionType" value="support" />
+                                <button type="submit" class="btn btn-success w-100 py-3">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i> إصدار قرار دعم
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-3">
+                            <form method="post" asp-action="ProcessInput">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="inputId" value="@selectedInput.Id" />
+                                <input type="hidden" name="actionType" value="publish" />
+                                <button type="submit" class="btn btn-info w-100 py-3 text-dark">
+                                    <i class="bi bi-megaphone me-1"></i> نشر كقصة
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-3">
+                            <form method="post" asp-action="ProcessInput">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="inputId" value="@selectedInput.Id" />
+                                <input type="hidden" name="actionType" value="escalate" />
+                                <button type="submit" class="btn btn-danger w-100 py-3">
+                                    <i class="bi bi-arrow-up-circle me-1"></i> تصعيد قيادي
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-success border-0 mb-0">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        تمت معالجة هذا المدخل — لا توجد إجراءات متاحة.
+                    </div>
+                }
+            </div>
+        }
+    }
+
+    @* ═══════════════════════════════════════════════════════ *@
+    @* Tab 3: التحليل                                          *@
+    @* ═══════════════════════════════════════════════════════ *@
+    else if (Model.ActiveTab == "t3")
+    {
+        @if (Model.SelectedReport == null)
+        {
+            <div class="moda-card border-0 shadow-sm p-5 text-center">
+                <i class="bi bi-info-circle" style="font-size: 72px; color: #B07A1E;"></i>
+                <h4 class="fw-bold mt-3 mb-2">لا يوجد تقرير مختار</h4>
+                <p class="text-muted mb-4">اذهب لتبويب "التقارير الشهرية" واختر تقريراً لبدء التحليل.</p>
+                <a asp-action="Index" asp-route-tab="t1" class="moda-btn moda-btn-gold">
+                    <i class="bi bi-arrow-right me-1"></i> التقارير الشهرية
+                </a>
+            </div>
+        }
+        else
+        {
+            var r = Model.SelectedReport;
+
+            <!-- 1️⃣ التقرير الكامل -->
+            <div class="moda-card border-0 shadow-sm mb-4" style="border-right: 4px solid #106981 !important;">
+                <div class="moda-card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color: var(--ctp-primary-olive);">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            @r.ReportNumber — @r.ChangeName
+                        </h5>
+                        <div class="text-muted small">
+                            <i class="bi bi-building me-1"></i> @r.Organization?.EntityName
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-calendar me-1"></i> @r.Month @r.Year
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-diagram-3 me-1"></i> @r.ChangeType
+                            <span class="mx-2">|</span>
+                            <span class="badge bg-secondary">@r.CurrentStage</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted mb-1">الجاهزية / التبني</div>
+                        <div>
+                            <span class="badge bg-primary fs-6 me-1">@r.ReadinessScore%</span>
+                            <span class="badge bg-success fs-6">@r.AdoptionScore%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="moda-card-body p-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">الفئات المتأثرة</small>
+                                <strong class="small">@(r.AffectedGroups ?? "-")</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">نطاق الأثر</small>
+                                <strong class="small">@(r.ImpactScope ?? "-")</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">الأكثر احتياجاً للدعم</small>
+                                <strong class="small">@(r.MostInNeedGroup ?? "-")</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">اكتمال الأنشطة</small>
+                                <strong class="small">@r.ActivityCompletionRate%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-card-text me-2"></i> تفاصيل التغيير
+                    </h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="text-muted fw-bold small">ما التغيير؟ (الملخص)</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.ChangeSummary) ? "لا يوجد ملخص" : r.ChangeSummary)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="text-muted fw-bold small">لماذا هذا التغيير مهم؟</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.WhyImportant) ? "-" : r.WhyImportant)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="text-muted fw-bold small">ماذا سيتغير؟</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.WhatWillChange) ? "-" : r.WhatWillChange)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="text-muted fw-bold small">ماذا لن يتغير؟</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.WhatWillNotChange) ? "-" : r.WhatWillNotChange)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="p-3 bg-light rounded border">
+                                <h6 class="text-muted fw-bold small">الأنشطة المنفذة</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.ExecutedActivities) ? "-" : r.ExecutedActivities)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-shield-exclamation me-2"></i> التحديات والدعم
+                    </h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border border-danger-subtle h-100">
+                                <h6 class="text-danger fw-bold small">العوائق والتحديات</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.Obstacles) ? "-" : r.Obstacles)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border border-warning-subtle h-100">
+                                <h6 class="text-warning fw-bold small">عوائق التبني</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.AdoptionBarriers) ? "-" : r.AdoptionBarriers)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border border-info-subtle h-100">
+                                <h6 class="text-info fw-bold small">الدعم المطلوب</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.RequiredSupport) ? "-" : r.RequiredSupport)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border border-secondary h-100">
+                                <h6 class="text-muted fw-bold small">المخاطر</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.Risks) ? "-" : r.Risks)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border border-success-subtle h-100">
+                                <h6 class="text-success fw-bold small">قصص النجاح</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.SuccessStories) ? "-" : r.SuccessStories)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border border-primary-subtle h-100">
+                                <h6 class="text-primary fw-bold small">التوصية الأولية من الجهة</h6>
+                                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(r.InitialRecommendation) ? "-" : r.InitialRecommendation)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2️⃣ أدوات التحليل -->
+            <h5 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-tools me-2"></i> أدوات التحليل المنهجي
+            </h5>
+
+            <div class="row g-3">
+                <!-- ADKAR -->
+                <div class="col-md-6">
+                    <div class="moda-card border-0 shadow-sm p-4 h-100">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-bar-chart-steps me-2 text-primary"></i> ADKAR — نقطة الحاجز
+                        </h6>
+                        @if (Model.Adkar != null)
+                        {
+                            var bars = new (string Label, int Value, bool IsBarrier)[]
+                            {
+                                ("الوعي (Awareness)", Model.Adkar.Awareness, Model.Adkar.BarrierName.Contains("Awareness")),
+                                ("الرغبة (Desire)", Model.Adkar.Desire, Model.Adkar.BarrierName.Contains("Desire")),
+                                ("المعرفة (Knowledge)", Model.Adkar.Knowledge, Model.Adkar.BarrierName.Contains("Knowledge")),
+                                ("القدرة (Ability)", Model.Adkar.Ability, Model.Adkar.BarrierName.Contains("Ability")),
+                                ("التعزيز (Reinforcement)", Model.Adkar.Reinforcement, Model.Adkar.BarrierName.Contains("Reinforcement"))
+                            };
+
+                            foreach (var b in bars)
+                            {
+                                <div class="d-flex justify-content-between small fw-bold mb-1">
+                                    <span>@b.Label</span>
+                                    <span class="@(b.IsBarrier ? "text-danger" : "")">@b.Value%</span>
+                                </div>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar @(b.IsBarrier ? "bg-danger" : "bg-primary")"
+                                         style="width: @b.Value%"></div>
+                                </div>
+                            }
+
+                            <div class="alert alert-danger small border-0 mb-0 mt-2">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                <strong>نقطة الحاجز:</strong> @Model.Adkar.BarrierName (@Model.Adkar.BarrierValue%)
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- PCT -->
+                <div class="col-md-6">
+                    <div class="moda-card border-0 shadow-sm p-4 h-100">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-diagram-3 me-2 text-success"></i> PCT — مثلث نجاح التغيير
+                        </h6>
+                        @if (Model.Pct != null)
+                        {
+                            var pctBars = new (string Label, int Value, bool IsWeakest)[]
+                            {
+                                ("القيادة والرعاية", Model.Pct.Leadership, Model.Pct.Weakest.Contains("القيادة")),
+                                ("إدارة المشروع", Model.Pct.ProjectManagement, Model.Pct.Weakest.Contains("المشروع")),
+                                ("إدارة الأفراد", Model.Pct.PeopleManagement, Model.Pct.Weakest.Contains("الأفراد"))
+                            };
+
+                            foreach (var b in pctBars)
+                            {
+                                <div class="d-flex justify-content-between small fw-bold mb-1">
+                                    <span>@b.Label</span>
+                                    <span class="@(b.IsWeakest ? "text-warning" : "")">@b.Value%</span>
+                                </div>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar @(b.IsWeakest ? "bg-warning" : "bg-success")"
+                                         style="width: @b.Value%"></div>
+                                </div>
+                            }
+
+                            <div class="alert alert-warning small border-0 mb-0 mt-2">
+                                <i class="bi bi-lightbulb-fill me-2"></i>
+                                <strong>الضلع الأضعف:</strong> @Model.Pct.Weakest
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- خلاصة What / So What / Now What -->
+                <div class="col-md-12">
+                    <div class="moda-card border-0 shadow-sm p-4" style="border-right: 4px solid #C9A227 !important;">
+                        <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                            <i class="bi bi-lightbulb me-2"></i> خلاصة القرار — What / So What / Now What
+                        </h6>
+
+                        @if (Model.Wswnw != null)
+                        {
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded h-100">
+                                        <h6 class="text-primary fw-bold small">What — ماذا حدث؟</h6>
+                                        <p class="small mb-0">@Model.Wswnw.What</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded h-100">
+                                        <h6 class="text-warning fw-bold small">So What — لماذا يهم؟</h6>
+                                        <p class="small mb-0">@Model.Wswnw.SoWhat</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded h-100">
+                                        <h6 class="text-success fw-bold small">Now What — ماذا نفعل؟</h6>
+                                        <p class="small mb-0">@Model.Wswnw.NowWhat</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mt-3">
+                                <div class="col-md-4">
+                                    <div class="d-flex justify-content-between p-2 border-bottom">
+                                        <span class="text-muted small">الأثر المتوقع</span>
+                                        <strong class="small">@Model.Wswnw.ExpectedImpact</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex justify-content-between p-2 border-bottom">
+                                        <span class="text-muted small">الأولوية</span>
+                                        <strong class="small">@Model.Wswnw.Priority</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex justify-content-between p-2 border-bottom">
+                                        <span class="text-muted small">الرفع</span>
+                                        <strong class="small">@Model.Wswnw.SupportDecision</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- تحليل مخاطر التبني -->
+            @if (Model.AdoptionRisk != null)
+            {
+                <h5 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-shield-exclamation me-2"></i> تحليل مخاطر التبني
+                </h5>
+
+                <div class="moda-card border-0 shadow-sm p-4 mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3 text-center">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block mb-1">مستوى الخطر</small>
+                                <span class="badge @Model.AdoptionRisk.BadgeClass fs-5 px-3 py-2">
+                                    @Model.AdoptionRisk.RiskLevel
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block mb-1">مؤشر التبني</small>
+                                <strong class="fs-4" style="color:#106981;">@Model.AdoptionRisk.AdoptionScore%</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block mb-1">العائق الأبرز</small>
+                                <strong class="small">@Model.AdoptionRisk.TopBarrier</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border">
+                                <h6 class="text-muted fw-bold small mb-1">السبب المحتمل</h6>
+                                <p class="small mb-0">@Model.AdoptionRisk.PotentialCause</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded border">
+                                <h6 class="text-muted fw-bold small mb-1">الأثر على النتائج</h6>
+                                <p class="small mb-0">@Model.AdoptionRisk.ImpactOnResults</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Pareto -->
+            @if (Model.ParetoBarriers != null && Model.ParetoBarriers.Any())
+            {
+                <h5 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-bar-chart-line me-2"></i> Pareto — عوائق التبني المتكررة
+                </h5>
+
+                <div class="moda-card border-0 shadow-sm p-4 mb-4">
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        عرض العوائق المتكررة على مستوى <strong>جميع التقارير الواردة</strong> —
+                        التركيز على القلة المؤثرة (Pareto 80/20).
+                    </p>
+
+                    <div class="table-responsive">
+                        <table class="moda-table text-center align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-start">العائق</th>
+                                    <th>التكرار</th>
+                                    <th>النسبة</th>
+                                    <th>التراكمي</th>
+                                    <th>ضمن الـ 80%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ParetoBarriers)
+                                {
+                                    <tr>
+                                        <td class="text-start">@item.Barrier</td>
+                                        <td><strong>@item.Count</strong></td>
+                                        <td>@item.Percentage%</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2 justify-content-center">
+                                                <span class="fw-bold">@item.CumulativePercentage%</span>
+                                                <div class="progress" style="width: 80px; height: 6px;">
+                                                    <div class="progress-bar @(item.IsFocusArea ? "bg-danger" : "bg-secondary")"
+                                                         style="width: @item.CumulativePercentage%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (item.IsFocusArea)
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="bi bi-bullseye me-1"></i> تركيز
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">—</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- 5 Whys -->
+            <h5 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-question-circle me-2"></i> 5 Whys — السبب الجذري
+            </h5>
+
+            <div class="moda-card border-0 shadow-sm p-4 mb-4">
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    اتبع السؤال "لماذا؟" خمس مرات للوصول للسبب الجذري للفجوة المُلاحَظة.
+                </p>
+
+                <div class="row g-3">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var level = i;
+                        <div class="col-md-12">
+                            <div class="d-flex align-items-start gap-3 p-3 bg-light rounded border">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold text-white"
+                                     style="width: 32px; height: 32px; background: @(level == 5 ? "#9C3D2E" : "#106981"); flex-shrink: 0;">
+                                    @level
+                                </div>
+                                <div class="flex-grow-1">
+                                    <label class="small fw-bold text-muted mb-1">
+                                        @(level == 1 ? "المشكلة الأولية" : $"لماذا؟ (المستوى {level})")
+                                        @if (level == 5)
+                                        {
+                                            <span class="badge bg-danger ms-2">السبب الجذري</span>
+                                        }
+                                    </label>
+                                    <textarea class="form-control form-control-sm" rows="1"
+                                              placeholder="@(level == 1 ? "المشكلة كما وردت في التقرير..." : "السؤال التالي...")"
+                                              id="why_@level"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="alert alert-warning small border-0 mt-3 mb-0">
+                    <i class="bi bi-lightbulb-fill me-2"></i>
+                    <strong>ملاحظة:</strong> 5 Whys أداة تحليلية مساعدة — يمكن استخدام نتيجتها كمادة خام للإجراء المقترح في التوصية أدناه.
+                </div>
+            </div>
+
+            <!-- 3️⃣ نموذج التوصية الكاملة -->
+            <h5 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-pencil-square me-2"></i> صياغة التوصية الكاملة
+            </h5>
+
+            <div class="moda-card border-0 shadow-sm p-4">
+                <form method="post" asp-action="CreateRecommendation">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="MonthlyReportId" value="@r.Id" />
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">6</span>
+                                الدليل / المؤشر <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="Evidence" class="form-control" rows="2" required
+                                      placeholder="مؤشر من التقرير يدعم هذه التوصية (مثال: مؤشر القدرة = 30%)"></textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">7</span>
+                                السبب المحتمل <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="Cause" class="form-control" rows="2" required
+                                      placeholder="ما السبب الجذري للفجوة المُلاحَظة؟"></textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">8</span>
+                                أثر الفجوة على التبني <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="GapEffect" class="form-control" rows="2" required
+                                      placeholder="كيف تؤثر هذه الفجوة على سرعة تبني التغيير؟"></textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">9</span>
+                                الإجراء المقترح <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="SuggestedAction" class="form-control" rows="2" required
+                                      placeholder="ما الإجراء الذي سيسد هذه الفجوة؟"></textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">10</span>
+                                مالك الإجراء <span class="text-danger">*</span>
+                            </label>
+                            <input name="ActionOwner" class="form-control" required
+                                   placeholder="الجهة المسؤولة عن التنفيذ" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">11</span>
+                                المدة <span class="text-danger">*</span>
+                            </label>
+                            <input name="Duration" class="form-control" required
+                                   placeholder="مثال: 4 أسابيع" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">12</span>
+                                مؤشر النجاح <span class="text-danger">*</span>
+                            </label>
+                            <input name="SuccessIndicator" class="form-control" required
+                                   placeholder="كيف سنعرف أن التوصية نجحت؟" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-dark">
+                                <span class="badge bg-primary me-1">13</span>
+                                طريقة قياس الأثر <span class="text-danger">*</span>
+                            </label>
+                            <input name="ImpactMeasure" class="form-control" required
+                                   placeholder="مثال: مقارنة قبل/بعد في التقرير الشهري التالي" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-dark">
+                                الأثر المتوقع <span class="text-muted">(اختياري)</span>
+                            </label>
+                            <input name="ExpectedImpact" class="form-control"
+                                   placeholder="مثال: رفع مؤشر القدرة من 30% إلى 40%" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-check form-switch p-3 bg-light rounded">
+                                <input class="form-check-input" type="checkbox"
+                                       name="RequiresSupport" id="requiresSupport" value="true">
+                                <label class="form-check-label fw-bold small" for="requiresSupport">
+                                    <i class="bi bi-shield-exclamation text-danger me-1"></i>
+                                    هذه التوصية تحتاج قرار دعم قيادي (سعادة النائب عند الحاجة)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 d-flex justify-content-end gap-2 pt-3 border-top">
+                            <button type="submit" class="moda-btn moda-btn-gold px-5">
+                                <i class="bi bi-send-check me-1"></i> حفظ التوصية
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        }
+    }
+
+    @* ═══════════════════════════════════════════════════════ *@
+    @* Tab 4: التوصيات والقرارات                                *@
+    @* ═══════════════════════════════════════════════════════ *@
+    else if (Model.ActiveTab == "t4")
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num">@Model.TotalRecommendations</div>
+                    <div class="kpi-lbl">إجمالي التوصيات</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#B07A1E;">@Model.PendingRecommendations</div>
+                    <div class="kpi-lbl">بانتظار الاعتماد</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#3E7C3E;">@Model.ApprovedRecommendations</div>
+                    <div class="kpi-lbl">معتمدة</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#9C3D2E;">@Model.RejectedRecommendations</div>
+                    <div class="kpi-lbl">مرفوضة</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="moda-card border-0 shadow-sm mb-4">
+            <div class="moda-card-header d-flex justify-content-between align-items-center">
+                <h5 class="moda-card-title mb-0">
+                    <i class="bi bi-journal-check me-2"></i> سجل التوصيات
+                </h5>
+                <span class="badge bg-secondary px-3 py-2">@Model.TotalRecommendations توصية</span>
+            </div>
+            <div class="moda-card-body p-0">
+                <div class="table-responsive">
+                    <table class="moda-table text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>التقرير</th>
+                                <th>الجهة</th>
+                                <th>الفجوة</th>
+                                <th>الإجراء المقترح</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Recommendations.Any())
+                            {
+                                foreach (var item in Model.Recommendations)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-dark">@item.RecommendationNumber</td>
+                                        <td><span class="badge bg-light text-dark border">@item.ReportNumber</span></td>
+                                        <td>@item.EntityName</td>
+                                        <td>@item.GapType</td>
+                                        <td class="text-start small" style="max-width:280px;">@item.SuggestedAction</td>
+                                        <td>
+                                            <span class="badge @item.StatusBadgeClass">@item.StatusArabic</span>
+                                        </td>
+                                        <td>
+                                            <a asp-action="ChairReview"
+                                               asp-route-recommendationId="@item.Id"
+                                               class="moda-btn moda-btn-sm moda-btn-gold">
+                                                <i class="bi bi-shield-check me-1"></i> مراجعة واعتماد
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7" class="py-5 text-muted">
+                                        <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                                        لا توجد توصيات مسجلة بعد.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    @* ═══════════════════════════════════════════════════════ *@
+    @* Tab 5: الداشبورد والرفع القيادي                          *@
+    @* ═══════════════════════════════════════════════════════ *@
+    else if (Model.ActiveTab == "t5")
+    {
+        <!-- زر الطباعة -->
+        <div class="d-flex justify-content-end mb-3 no-print">
+            <button onclick="window.print()" class="moda-btn moda-btn-outline">
+                <i class="bi bi-printer me-1"></i> طباعة / تصدير PDF
+            </button>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- KPIs المؤسسية                                       -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num">@Model.TotalAnalyzedReports</div>
+                    <div class="kpi-lbl">تقرير مؤسسي</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#106981;">@Model.AvgReadiness%</div>
+                    <div class="kpi-lbl">متوسط الجاهزية</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#3E7C3E;">@Model.AvgAdoption%</div>
+                    <div class="kpi-lbl">متوسط التبني</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#A98418;">@Model.AvgReinforcement%</div>
+                    <div class="kpi-lbl">متوسط التعزيز</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- مؤشرات ADKAR الإجمالية                              -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="moda-card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-bar-chart-steps me-2"></i> مؤشرات ADKAR على مستوى المنظومة
+            </h5>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    @{
+                        var adkarOverall = new (string Label, double Value)[]
+                        {
+                            ("الوعي (Awareness)", Model.AvgAdkarAwareness),
+                            ("الرغبة (Desire)", Model.AvgAdkarDesire),
+                            ("المعرفة (Knowledge)", Model.AvgAdkarKnowledge),
+                            ("القدرة (Ability)", Model.AvgAdkarAbility),
+                            ("التعزيز (Reinforcement)", Model.AvgAdkarReinforcement)
+                        };
+                    }
+
+                    @foreach (var dim in adkarOverall)
+                    {
+                        var pct = (int)Math.Round(dim.Value);
+                        var colorClass = pct < 50 ? "bg-danger" : pct < 65 ? "bg-warning" : "bg-success";
+
+                        <div class="d-flex justify-content-between small fw-bold mb-1">
+                            <span>@dim.Label</span>
+                            <span>@dim.Value%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar @colorClass" style="width: @pct%"></div>
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-6">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded text-center h-100" style="background: rgba(16,105,129,0.08);">
+                                <small class="text-muted d-block mb-1">الجاهزية العامة</small>
+                                <h3 class="fw-bold mb-0" style="color:#106981;">@Model.AvgReadiness%</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded text-center h-100" style="background: rgba(62,124,62,0.08);">
+                                <small class="text-muted d-block mb-1">التبني العام</small>
+                                <h3 class="fw-bold mb-0" style="color:#3E7C3E;">@Model.AvgAdoption%</h3>
+                            </div>
+                        </div>
+
+                        @{
+                            var weakest = adkarOverall.OrderBy(x => x.Value).First();
+                            var strongest = adkarOverall.OrderByDescending(x => x.Value).First();
+                        }
+
+                        <div class="col-md-12">
+                            <div class="alert alert-danger small border-0 mb-2">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>
+                                <strong>أضعف بُعد:</strong> @weakest.Label (@weakest.Value%)
+                            </div>
+                            <div class="alert alert-success small border-0 mb-0">
+                                <i class="bi bi-check-circle-fill me-1"></i>
+                                <strong>أقوى بُعد:</strong> @strongest.Label (@strongest.Value%)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- توزيع حسب نوع الجهة                                 -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        @if (Model.StatsByEntityType.Any())
+        {
+            <div class="moda-card border-0 shadow-sm p-4 mb-4">
+                <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-diagram-2 me-2"></i> التوزيع حسب نوع الجهة
+                </h5>
+
+                <div class="table-responsive">
+                    <table class="moda-table text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>نوع الجهة</th>
+                                <th>عدد التقارير</th>
+                                <th>متوسط الجاهزية</th>
+                                <th>متوسط التبني</th>
+                                <th>المقارنة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var stat in Model.StatsByEntityType)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@stat.EntityType</td>
+                                    <td>@stat.ReportCount</td>
+                                    <td>
+                                        <span class="fw-bold" style="color:#106981;">@stat.AvgReadiness%</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold" style="color:#3E7C3E;">@stat.AvgAdoption%</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column gap-1">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <small class="text-muted" style="width:70px;">الجاهزية</small>
+                                                <div class="progress flex-grow-1" style="height: 6px;">
+                                                    <div class="progress-bar bg-primary" style="width: @stat.ReadinessPercent%"></div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <small class="text-muted" style="width:70px;">التبني</small>
+                                                <div class="progress flex-grow-1" style="height: 6px;">
+                                                    <div class="progress-bar bg-success" style="width: @stat.AdoptionPercent%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Pareto — عوائق التبني على المنظومة                  -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        @if (Model.ParetoBarriers != null && Model.ParetoBarriers.Any())
+        {
+            <div class="moda-card border-0 shadow-sm p-4 mb-4">
+                <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-bar-chart-line me-2"></i> عوائق التبني الأكثر تكراراً (Pareto 80/20)
+                </h5>
+
+                <div class="table-responsive">
+                    <table class="moda-table text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-start">العائق</th>
+                                <th>التكرار</th>
+                                <th>النسبة</th>
+                                <th>التراكمي</th>
+                                <th>ضمن الـ 80%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ParetoBarriers)
+                            {
+                                <tr>
+                                    <td class="text-start">@item.Barrier</td>
+                                    <td><strong>@item.Count</strong></td>
+                                    <td>@item.Percentage%</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2 justify-content-center">
+                                            <span class="fw-bold">@item.CumulativePercentage%</span>
+                                            <div class="progress" style="width: 80px; height: 6px;">
+                                                <div class="progress-bar @(item.IsFocusArea ? "bg-danger" : "bg-secondary")"
+                                                     style="width: @item.CumulativePercentage%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (item.IsFocusArea)
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-bullseye me-1"></i> تركيز
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- التوصيات المعتمدة                                   -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="moda-card border-0 shadow-sm p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-journal-check me-2"></i> التوصيات المعتمدة
+                </h5>
+                <span class="badge bg-success px-3 py-2">@Model.ApprovedRecommendationsList.Count توصية</span>
+            </div>
+
+            @if (Model.ApprovedRecommendationsList.Any())
+            {
+                <div class="table-responsive">
+                    <table class="moda-table text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الجهة</th>
+                                <th>الإجراء</th>
+                                <th>الوجهات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rec in Model.ApprovedRecommendationsList)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@rec.RecommendationNumber</td>
+                                    <td>@rec.EntityName</td>
+                                    <td class="text-start small" style="max-width:300px;">@rec.SuggestedAction</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                            @if (rec.IncludeInInstitutionalReport)
+                                            {
+                                                <span class="badge bg-primary-subtle text-primary border">التقرير الشهري</span>
+                                            }
+                                            @if (rec.IncludeInImpactDashboard)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border">لوحة الأثر</span>
+                                            }
+                                            @if (rec.IncludeInExecutiveSummary)
+                                            {
+                                                <span class="badge bg-warning-subtle text-dark border">الملخص التنفيذي</span>
+                                            }
+                                            @if (!rec.IncludeInInstitutionalReport && !rec.IncludeInImpactDashboard && !rec.IncludeInExecutiveSummary)
+                                            {
+                                                <span class="text-muted small">لم تُدرج بعد</span>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                    لا توجد توصيات معتمدة حتى الآن.
+                </div>
+            }
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- ملخص الرفع القيادي                                  -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="moda-card border-0 shadow-sm p-4"
+             style="border-right: 4px solid #C9A227 !important; background: linear-gradient(135deg, #FEFCF3 0%, #FFFFFF 100%);">
+            <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-send-check me-2"></i> ملخص الرفع القيادي
+            </h5>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded border text-center">
+                        <i class="bi bi-journal-text fs-3 text-primary"></i>
+                        <div class="fw-bold fs-4 mt-2">@Model.TotalPlacedInInstitutional</div>
+                        <small class="text-muted">في التقرير المؤسسي</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded border text-center">
+                        <i class="bi bi-graph-up-arrow fs-3 text-success"></i>
+                        <div class="fw-bold fs-4 mt-2">@Model.TotalPlacedInImpact</div>
+                        <small class="text-muted">في لوحة الأثر</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded border text-center">
+                        <i class="bi bi-file-earmark-text fs-3 text-warning"></i>
+                        <div class="fw-bold fs-4 mt-2">@Model.TotalPlacedInExecutive</div>
+                        <small class="text-muted">في الملخص التنفيذي</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info border-0 small mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>مسار الرفع:</strong>
+                رئيس لجنة شركاء التغيير ← سعادة رئيس فريق عمل القائد ← سعادة النائب عند الحاجة ← معالي القائد عند الحاجة.
+            </div>
+        </div>
+    }
+
+    @* ═══════════════════════════════════════════════════════ *@
+    @* التبويبات المتبقية: قيد الإنشاء                         *@
+    @* ═══════════════════════════════════════════════════════ *@
+    else
+    {
+        var tabNames = new Dictionary<string, string>
+        {
+            { "t2", "مدخلات الجهات" },
+            { "t5", "الداشبورد والرفع القيادي" },
+            { "t6", "إدارة النماذج والتقارير والمدخلات" },
+            { "t7", "البيانات التجريبية" }
+        };
+        var tabName = tabNames.GetValueOrDefault(Model.ActiveTab, "التبويب");
+
+        <div class="moda-card border-0 shadow-sm p-5 text-center">
+            <i class="bi bi-tools" style="font-size: 72px; color: #C9A227;"></i>
+            <h4 class="fw-bold mt-3 mb-2">@tabName</h4>
+            <p class="text-muted mb-4">قيد الإنشاء — الخطوات القادمة</p>
+            <a asp-action="Index" asp-route-tab="t1" class="moda-btn moda-btn-gold">
+                <i class="bi bi-arrow-right me-1"></i> العودة للتقارير الشهرية
+            </a>
+        </div>
+    }
+
+</div>

@@ -27,20 +27,41 @@ namespace CTP.Web.Areas.Committee.Controllers
         public async Task<IActionResult> Inbox()
         {
             ViewData["EntityTitle"] = "صندوق الوارد (التحليل)";
+            ViewData["EntityHeaderSubtitle"] = "التقارير التي بانتظار التحليل والتوصيات";
             ViewData["ThemeColor"] = "#0B4F61";
+            ViewData["EntityHeaderIcon"] = "bi-inboxes";
 
-            // جلب التقارير التي بحالة UnderAnalysis
             var allReports = await _reportService.GetCommitteeInboxReportsAsync();
             var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
 
-            // استبعاد فقط التقارير التي لديها توصيات نشطة أو معتمدة؛ المرفوضة تعود للوارد
+            // ═══════════════════════════════════════════════════════
+            // 1. استبعاد التقارير التي لها توصية "قيد الانتظار" أو "معتمدة"
+            //    (المرفوضة تعود للـ Inbox)
+            // ═══════════════════════════════════════════════════════
             var reportsWithActiveRecs = allRecs
-                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.Rejected)
+                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.ReadyForChair
+                         || r.Status == CTP.Domain.Enums.RecommendationStatus.AwaitingSupport
+                         || r.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
                 .Select(r => r.MonthlyReportId)
                 .Distinct()
+                .ToHashSet();
+
+            var inboxReports = allReports
+                .Where(r => !reportsWithActiveRecs.Contains(r.Id))
                 .ToList();
 
-            var inboxReports = allReports.Where(r => !reportsWithActiveRecs.Contains(r.Id)).ToList();
+            // ═══════════════════════════════════════════════════════
+            // 2. جمع ملاحظات الرفض لكل تقرير (لعرضها في الـ Inbox)
+            // ═══════════════════════════════════════════════════════
+            var rejectionNotes = allRecs
+                .Where(r => r.Status == CTP.Domain.Enums.RecommendationStatus.Rejected)
+                .GroupBy(r => r.MonthlyReportId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(r => r.ReviewedDate ?? r.CreatedDate)
+                          .First().ChairReviewNotes);
+
+            ViewBag.RejectionNotes = rejectionNotes;
 
             return View(inboxReports);
         }

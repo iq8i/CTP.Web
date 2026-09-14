@@ -21,6 +21,7 @@ namespace CTP.Infrastructure.Data
         public DbSet<MonthlyReport> MonthlyReports { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Recommendation> Recommendations { get; set; }
+        public DbSet<ImpactMeasurement> ImpactMeasurements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,7 +35,11 @@ namespace CTP.Infrastructure.Data
             modelBuilder.Entity<MonthlyReport>().HasOne(m => m.Preparer).WithMany().HasForeignKey(m => m.PreparerId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<EntityInput>().HasOne(e => e.Organization).WithMany().HasForeignKey(e => e.OrganizationEntityId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<EntityInput>().HasOne(e => e.Preparer).WithMany().HasForeignKey(e => e.PreparerId).OnDelete(DeleteBehavior.Restrict);
-
+            modelBuilder.Entity<ImpactMeasurement>()
+    .HasOne(im => im.Recommendation)
+    .WithMany()
+    .HasForeignKey(im => im.RecommendationId)
+    .OnDelete(DeleteBehavior.Cascade);
             var fixedDate = new DateTime(2026, 8, 1);
             var defaultPassword = "$2a$12$2MFOVCFQZyT5u8uzANHEkexgxCHk9NijF4NLseoeV5321.mAEvwwy";
 

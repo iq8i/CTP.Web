@@ -27,5 +27,23 @@ namespace CTP.Application.Interfaces.Services
             string? chairReviewNotes);
         Task<bool> RejectChairRecommendationAsync(int reportId, string? chairReviewNotes);
         Task<bool> UpdateRecommendationPlacementAsync(int reportId, string placement, bool enabled);
+        /// <summary>
+        /// B.4b: حفظ توصية كاملة مع كل الحقول الـ16
+        /// </summary>
+        Task<string> CreateFullRecommendationAsync(
+            int reportId,
+            string gapType,
+            string evidence,
+            string cause,
+            string gapEffect,
+            string suggestedAction,
+            string actionOwner,
+            string duration,
+            string successIndicator,
+            string impactMeasure,
+            string expectedImpact,
+            string supportDecision,
+            string escalation,
+            bool requiresSupport);
     }
 }

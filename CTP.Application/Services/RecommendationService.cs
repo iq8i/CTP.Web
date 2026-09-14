@@ -49,6 +49,55 @@ namespace CTP.Application.Services
             return await _recommendationRepository.GetApprovedForExecutiveSummaryAsync();
         }
 
+        public async Task<string> CreateFullRecommendationAsync(
+    int reportId,
+    string gapType,
+    string evidence,
+    string cause,
+    string gapEffect,
+    string suggestedAction,
+    string actionOwner,
+    string duration,
+    string successIndicator,
+    string impactMeasure,
+    string expectedImpact,
+    string supportDecision,
+    string escalation,
+    bool requiresSupport)
+        {
+            // توليد رقم مرجعي
+            string recNumber = $"R-{DateTime.Now:MMdd}-{new Random().Next(100, 999)}";
+
+            // تحديد الحالة
+            var status = requiresSupport
+                ? CTP.Domain.Enums.RecommendationStatus.AwaitingSupport
+                : CTP.Domain.Enums.RecommendationStatus.ReadyForChair;
+
+            var recommendation = new Recommendation
+            {
+                MonthlyReportId = reportId,
+                RecommendationNumber = recNumber,
+                GapType = gapType.Length > 100 ? gapType.Substring(0, 100) : gapType,
+                Evidence = evidence,
+                Cause = cause,
+                GapEffect = gapEffect,
+                SuggestedAction = suggestedAction,
+                ActionOwner = actionOwner,
+                Duration = duration,
+                SuccessIndicator = successIndicator,
+                ImpactMeasure = impactMeasure,
+                ExpectedImpact = expectedImpact,
+                SupportDecision = supportDecision,
+                Escalation = escalation,
+                Status = status,
+                CreatedDate = DateTime.Now
+            };
+
+            await _recommendationRepository.AddAsync(recommendation);
+            await _recommendationRepository.SaveChangesAsync();
+
+            return recNumber;
+        }
         public async Task<bool> ApproveForChairAsync(
             int reportId,
             bool includeInInstitutionalReport,

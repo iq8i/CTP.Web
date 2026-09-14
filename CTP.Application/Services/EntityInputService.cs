@@ -1,6 +1,7 @@
 ﻿using CTP.Application.Interfaces.Repositories;
 using CTP.Application.Interfaces.Services;
 using CTP.Domain.Entities;
+using CTP.Domain.Enums;
 
 namespace CTP.Application.Services
 {
@@ -24,6 +25,15 @@ namespace CTP.Application.Services
         public async Task<EntityInput?> GetInputByIdAsync(int id)
         {
             return await _repository.GetByIdAsync(id);
+        }
+        public async Task<bool> UpdateInputStatusAsync(int inputId, InputStatus newStatus)
+        {
+            var input = await _repository.GetByIdAsync(inputId);
+            if (input == null) return false;
+
+            input.Status = newStatus;
+            await _repository.SaveChangesAsync();
+            return true;
         }
     }
 }

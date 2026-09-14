@@ -38,7 +38,23 @@ namespace CTP.Domain.Entities
         public RecommendationStatus Status { get; set; } = RecommendationStatus.RequiresCompletion;
         [StringLength(1000)]
         public string? ChairReviewNotes { get; set; }
+        [StringLength(500)]
+        public string? Evidence { get; set; }           // الدليل أو المؤشر
 
+        [StringLength(500)]
+        public string? Cause { get; set; }               // السبب المحتمل
+
+        [StringLength(500)]
+        public string? GapEffect { get; set; }           // أثر الفجوة على التبني
+
+        [StringLength(500)]
+        public string? ImpactMeasure { get; set; }       // طريقة قياس الأثر
+
+        [StringLength(500)]
+        public string? SupportDecision { get; set; }     // قرار الدعم المطلوب
+
+        [StringLength(200)]
+        public string? Escalation { get; set; }          // مستوى الرفع
         public bool IncludeInInstitutionalReport { get; set; }
         public bool IncludeInImpactDashboard { get; set; }
         public bool IncludeInExecutiveSummary { get; set; }

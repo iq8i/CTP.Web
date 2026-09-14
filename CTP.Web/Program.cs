@@ -51,16 +51,24 @@ builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 builder.Services.AddScoped<IPasswordHasher, CTP.Infrastructure.Security.BCryptPasswordHasher>();
     builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+    builder.Services.AddScoped<IAnalysisToolService, AnalysisToolService>();
+    builder.Services.AddScoped<IQualityGateService, QualityGateService>();
+    builder.Services.AddScoped<IReportQualityService, ReportQualityService>();
 
     // ==========================================
     // 3. MVC
     // ==========================================
     builder.Services.AddControllersWithViews();
-
-// ==========================================
-// 4. المصادقة
-// ==========================================
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromMinutes(60);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+    });
+    // ==========================================
+    // 4. المصادقة
+    // ==========================================
+    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
@@ -108,7 +116,8 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthentication();
+    app.UseSession();
+    app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

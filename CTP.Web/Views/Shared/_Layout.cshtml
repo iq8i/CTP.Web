@@ -7,6 +7,16 @@
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+    <style>
+    /* Bootstrap Modal أعلى من SweetAlert2 */
+    .modal-backdrop { z-index: 20000 !important; }
+    .modal { z-index: 20010 !important; }
+    .modal-dialog { z-index: 20020 !important; }
+    
+    /* في حال ظهور SweetAlert + Modal معاً، ارفع الـ Modal */
+    body.swal2-shown .modal { z-index: 30000 !important; }
+    body.swal2-shown .modal-backdrop { z-index: 29990 !important; }
+</style>
 <head>
    
     <meta charset="utf-8" />

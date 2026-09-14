@@ -1,0 +1,339 @@
+﻿@model CTP.Web.Areas.Committee.Models.ChairWorkCenterViewModel
+@using CTP.Application.Interfaces.Services
+@{
+    Layout = "_Layout";
+    var rec = Model.SelectedRecommendation!;
+    var gate = Model.QualityGate!;
+    var report = rec.SourceReport;
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- زر الرجوع -->
+    <div class="mb-3">
+        <a asp-action="Index" asp-route-tab="t4" asp-route-recommendationId="@rec.Id"
+           class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> رجوع لسجل التوصيات
+        </a>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- العمود الأيسر (الأكبر): تفاصيل التوصية الكاملة      -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="col-lg-8">
+
+            <!-- معلومات التوصية -->
+            <div class="moda-card border-0 shadow-sm p-4 mb-3">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h4 class="fw-bold mb-1" style="color: var(--ctp-primary-olive);">
+                            <i class="bi bi-journal-check me-2"></i>
+                            التوصية @rec.RecommendationNumber
+                        </h4>
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-building me-1"></i> @report?.Organization?.EntityName
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-file-earmark me-1"></i> @report?.ReportNumber
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-calendar me-1"></i> @rec.CreatedDate.ToShortDateString()
+                        </p>
+                    </div>
+                    <span class="badge bg-secondary fs-6">@rec.GapType</span>
+                </div>
+
+                <hr />
+
+                <!-- السبب والدليل -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="text-muted fw-bold small mb-1">
+                                <i class="bi bi-search me-1"></i> الدليل / المؤشر
+                            </h6>
+                            <p class="mb-0 small">@(string.IsNullOrWhiteSpace(rec.Evidence) ? "—" : rec.Evidence)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="text-muted fw-bold small mb-1">
+                                <i class="bi bi-exclamation-circle me-1"></i> السبب المحتمل
+                            </h6>
+                            <p class="mb-0 small">@(string.IsNullOrWhiteSpace(rec.Cause) ? "—" : rec.Cause)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="text-muted fw-bold small mb-1">
+                                <i class="bi bi-arrow-down-circle me-1"></i> أثر الفجوة على التبني
+                            </h6>
+                            <p class="mb-0 small">@(string.IsNullOrWhiteSpace(rec.GapEffect) ? "—" : rec.GapEffect)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-3" />
+
+                <!-- الإجراء المقترح -->
+                <div class="p-3 mb-3" style="background: rgba(201, 162, 39, 0.08); border-right: 4px solid #C9A227; border-radius: 8px;">
+                    <h6 class="fw-bold small mb-2" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-lightning-charge me-1"></i> الإجراء المقترح
+                    </h6>
+                    <p class="mb-0 fw-bold">@rec.SuggestedAction</p>
+                </div>
+
+                <!-- التفاصيل -->
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded">
+                            <span class="text-muted small"><i class="bi bi-person me-1"></i> مالك الإجراء:</span>
+                            <strong class="small">@rec.ActionOwner</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded">
+                            <span class="text-muted small"><i class="bi bi-clock me-1"></i> المدة:</span>
+                            <strong class="small">@rec.Duration</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded">
+                            <span class="text-muted small"><i class="bi bi-check2-circle me-1"></i> مؤشر النجاح:</span>
+                            <strong class="small">@rec.SuccessIndicator</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded">
+                            <span class="text-muted small"><i class="bi bi-graph-up me-1"></i> طريقة القياس:</span>
+                            <strong class="small">@rec.ImpactMeasure</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded">
+                            <span class="text-muted small"><i class="bi bi-bullseye me-1"></i> الأثر المتوقع:</span>
+                            <strong class="small">@(string.IsNullOrWhiteSpace(rec.ExpectedImpact) ? "—" : rec.ExpectedImpact)</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded">
+                            <span class="text-muted small"><i class="bi bi-arrow-up me-1"></i> مستوى الرفع:</span>
+                            <strong class="small">@rec.Escalation</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="d-flex justify-content-between p-2 rounded"
+                             style="background: rgba(156, 61, 46, 0.08);">
+                            <span class="text-muted small"><i class="bi bi-shield-exclamation me-1"></i> قرار الدعم:</span>
+                            <strong class="small">@rec.SupportDecision</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- سياق التقرير الأصلي -->
+            @if (report != null)
+            {
+                <div class="moda-card border-0 shadow-sm p-4">
+                    <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-info-circle me-2"></i> سياق التقرير الأصلي
+                    </h6>
+
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">اسم التغيير</small>
+                                <strong class="small">@report.ChangeName</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">الجاهزية</small>
+                                <strong class="small" style="color:#106981;">@report.ReadinessScore%</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">التبني</small>
+                                <strong class="small" style="color:#3E7C3E;">@report.AdoptionScore%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <a asp-action="Index" asp-route-tab="t3" asp-route-reportId="@report.Id"
+                           class="moda-btn moda-btn-sm moda-btn-outline">
+                            <i class="bi bi-diagram-3 me-1"></i> عرض التحليل الكامل للتقرير
+                        </a>
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- العمود الأيمن: بوابة الجودة + القرار                -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="col-lg-4">
+
+            <!-- بوابة الجودة -->
+            <div class="moda-card border-0 shadow-sm p-4 mb-3"
+                 style="border-right: 4px solid #C9A227 !important;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-shield-check me-1"></i> بوابة الجودة
+                    </h6>
+                    <span class="fw-bold fs-5 @(gate.IsReadyForApproval ? "text-success" : "text-warning")">
+                        @gate.CompletenessPercent%
+                    </span>
+                </div>
+
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar @(gate.IsReadyForApproval ? "bg-success" : "bg-warning")"
+                         style="width: @gate.CompletenessPercent%"></div>
+                </div>
+
+                @if (gate.IsReadyForApproval)
+                {
+                    <div class="alert alert-success border-0 small mb-0">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        <strong>جميع العناصر مكتملة</strong> — جاهزة للاعتماد.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning border-0 small mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <strong>@gate.MissingItems عنصر ناقص</strong> من أصل @gate.TotalItems.
+                    </div>
+
+                    <!-- قائمة النواقص -->
+                    <div class="mt-3">
+                        <small class="text-muted fw-bold">العناصر الناقصة:</small>
+                        <ul class="small mt-2 mb-0">
+                            @foreach (var g in gate.Items.Where(i => !i.IsPassed))
+                            {
+                                <li class="text-danger">@g.Label</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            <!-- صندوق القرار -->
+            <div class="moda-card border-0 shadow-sm p-4" style="background: linear-gradient(180deg, #FFFFFF, #F9FCFD);">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-shield-check me-1"></i> قرار رئيس اللجنة
+                </h6>
+
+                @if (rec.Status == CTP.Domain.Enums.RecommendationStatus.ReadyForChair ||
+                     rec.Status == CTP.Domain.Enums.RecommendationStatus.AwaitingSupport)
+                {
+                    <!-- ملاحظات -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">ملاحظات (اختياري للاعتماد — إلزامي للرفض)</label>
+                        <textarea id="chairNotes" class="form-control" rows="4"
+                                  placeholder="أضف ملاحظاتك هنا..."></textarea>
+                    </div>
+
+                    <!-- زر الاعتماد -->
+                    @if (gate.IsReadyForApproval)
+                    {
+                        <form method="post" asp-action="ApproveRecommendation" id="approveForm" class="mb-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="recommendationId" value="@rec.Id" />
+                            <input type="hidden" name="chairNotes" id="approveNotesHidden" />
+                            <button type="button" onclick="submitApprove()"
+                                    class="moda-btn moda-btn-gold w-100 py-3">
+                                <i class="bi bi-check-circle me-2"></i>
+                                اعتماد التوصية
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <button type="button" class="moda-btn moda-btn-gold w-100 py-3 mb-2" disabled
+                                title="لا يمكن الاعتماد قبل استكمال العناصر الناقصة">
+                            <i class="bi bi-lock me-2"></i>
+                            الاعتماد معطّل (@gate.MissingItems ناقص)
+                        </button>
+                    }
+
+                    <!-- زر الرفض -->
+                    <form method="post" asp-action="RejectRecommendation" id="rejectForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="recommendationId" value="@rec.Id" />
+                        <input type="hidden" name="chairNotes" id="rejectNotesHidden" />
+                        <button type="button" onclick="submitReject()"
+                                class="moda-btn moda-btn-outline text-danger border-danger w-100 py-3">
+                            <i class="bi bi-x-circle me-2"></i>
+                            رفض التوصية
+                        </button>
+                    </form>
+                }
+                else if (rec.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
+                {
+                    <div class="alert alert-success border-0">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <strong>توصية معتمدة</strong>
+                        @if (rec.ReviewedDate.HasValue)
+                        {
+                            <div class="small mt-1">بتاريخ: @rec.ReviewedDate.Value.ToString("yyyy/MM/dd HH:mm")</div>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(rec.ChairReviewNotes))
+                    {
+                        <div class="mt-3 p-3 bg-light rounded border small">
+                            <strong class="d-block mb-1">ملاحظات الاعتماد:</strong>
+                            @rec.ChairReviewNotes
+                        </div>
+                    }
+                }
+                else if (rec.Status == CTP.Domain.Enums.RecommendationStatus.Rejected)
+                {
+                    <div class="alert alert-danger border-0">
+                        <i class="bi bi-x-circle-fill me-2"></i>
+                        <strong>توصية مرفوضة</strong>
+                        @if (rec.ReviewedDate.HasValue)
+                        {
+                            <div class="small mt-1">بتاريخ: @rec.ReviewedDate.Value.ToString("yyyy/MM/dd HH:mm")</div>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(rec.ChairReviewNotes))
+                    {
+                        <div class="mt-3 p-3 bg-light rounded border small">
+                            <strong class="d-block mb-1 text-danger">سبب الرفض:</strong>
+                            @rec.ChairReviewNotes
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function submitApprove() {
+            var notes = document.getElementById('chairNotes').value;
+            document.getElementById('approveNotesHidden').value = notes;
+            document.getElementById('approveForm').submit();
+        }
+
+        function submitReject() {
+            var notes = document.getElementById('chairNotes').value.trim();
+            if (!notes) {
+                alert('يجب كتابة سبب الرفض قبل التأكيد.');
+                document.getElementById('chairNotes').focus();
+                return;
+            }
+            document.getElementById('rejectNotesHidden').value = notes;
+            document.getElementById('rejectForm').submit();
+        }
+    </script>
+}
