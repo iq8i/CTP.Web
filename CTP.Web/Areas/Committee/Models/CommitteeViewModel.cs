@@ -52,17 +52,7 @@ namespace CTP.Web.Areas.Committee.Models
     }
 
     // 4. نماذج التقرير المؤسسي (Dashboard)
-    public class InstitutionalReportViewModel
-    {
-        public string ReportMonth { get; set; } = string.Empty;
-        public int TotalReports { get; set; }
-        public int TotalEntities { get; set; }
-        public int AverageReadiness { get; set; }
-        public int AverageAdoption { get; set; }
-        public int AverageReinforcement { get; set; }
-        public List<ParetoItem> TopBarriers { get; set; } = new();
-        public List<Recommendation> ApprovedRecommendations { get; set; } = new();
-    }
+   
 
     public class ParetoItem
     {

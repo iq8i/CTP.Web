@@ -77,52 +77,48 @@ namespace CTP.Web.ViewComponents
             // ==========================================
             // 4. مساحة لجنة شركاء التغيير
             // ==========================================
-            else if (role == AppRoles.CommitteeChair
-      || role == AppRoles.CommitteeMember)
+            else if (role == AppRoles.CommitteeChair || role == AppRoles.CommitteeMember)
             {
-                var section = new MenuSection { Title = "مركز أعمال اللجنة" };
+                var sec = new MenuSection { Title = "مركز أعمال اللجنة" };
 
-                // رابط مركز الأعمال الكامل (للرئيس فقط)
+                // رابط مركز الأعمال — للرئيس والعضو
+                sec.Items.Add(new MenuItem
+                {
+                    Title = role == AppRoles.CommitteeChair
+                        ? "مركز الأعمال الشامل"
+                        : "مساحة التحليل",
+                    IconClass = "bi-shield-check",
+                    Url = "/Committee/ChairWorkCenter/Index"
+                });
+
+                // لوحة الأثر — رئيس اللجنة فقط
                 if (role == AppRoles.CommitteeChair)
                 {
-                    section.Items.Add(new MenuItem
+                    sec.Items.Add(new MenuItem
                     {
-                        Title = "مركز الأعمال الشامل",
-                        IconClass = "bi-shield-check",
-                        Url = "/Committee/ChairWorkCenter/Index"
+                        Title = "لوحة الأثر المتحقق",
+                        IconClass = "bi-graph-up-arrow",
+                        Url = "/Committee/Impact/Index"
+                    });
+
+                    sec.Items.Add(new MenuItem
+                    {
+                        Title = "التقرير المؤسسي الشهري",
+                        IconClass = "bi-file-earmark-text",
+                        Url = "/Committee/InstitutionalReport/Index"
+                    });
+
+                    sec.Items.Add(new MenuItem
+                    {
+                        Title = "الملخص التنفيذي",
+                        IconClass = "bi-file-earmark-bar-graph",
+                        Url = "/Committee/ExecutiveSummary/Index"
                     });
                 }
 
-                section.Items.Add(new MenuItem
-                {
-                    Title = "صندوق الوارد (التحليل)",
-                    IconClass = "bi-inboxes",
-                    Url = "/Committee/Workspace/Inbox"
-                });
-                section.Items.Add(new MenuItem
-                {
-                    Title = "سجل التوصيات",
-                    IconClass = "bi-journal-check",
-                    Url = "/Committee/Workspace/Recommendations"
-                });
-                section.Items.Add(new MenuItem
-                {
-                    Title = "مدخلات الجهات",
-                    IconClass = "bi-chat-left-dots",
-                    Url = "/Committee/Workspace/Inputs"
-                });
+                
 
-                if (role == AppRoles.CommitteeChair || role == AppRoles.Leader)
-                {
-                    section.Items.Add(new MenuItem
-                    {
-                        Title = "منصة الاعتماد",
-                        IconClass = "bi-shield-check",
-                        Url = "/Committee/Workspace/ChairBoard"
-                    });
-                }
-
-                menu.Add(section);
+                menu.Add(sec);
             }
 
             // ==========================================

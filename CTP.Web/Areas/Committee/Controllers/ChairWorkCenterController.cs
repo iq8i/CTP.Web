@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CTP.Web.Areas.Committee.Controllers
 {
     [Area("Committee")]
-    [Authorize(Roles = AppRoles.CommitteeChair)]
+    [Authorize(Roles = AppRoles.CommitteeChair + "," + AppRoles.CommitteeMember)]
     public class ChairWorkCenterController : Controller
     {
         private readonly IMonthlyReportService _reportService;
@@ -51,6 +51,8 @@ namespace CTP.Web.Areas.Committee.Controllers
             ViewData["Title"] = "مركز الأعمال";
 
             var vm = new ChairWorkCenterViewModel { ActiveTab = tab };
+            ViewBag.IsChair = User.IsInRole(AppRoles.CommitteeChair);
+            ViewBag.IsMember = User.IsInRole(AppRoles.CommitteeMember);
 
             // ─── Session: التقرير المختار ───
             if (reportId.HasValue)
@@ -72,6 +74,7 @@ namespace CTP.Web.Areas.Committee.Controllers
             if (tab == "t2")
                 await LoadTab2(vm);
 
+           
             // ═══════════════════════════════════════════════════════
             // Tab 3: التحليل
             // ═══════════════════════════════════════════════════════
@@ -85,6 +88,18 @@ namespace CTP.Web.Areas.Committee.Controllers
 
                 var allReports = (await _reportService.GetCommitteeInboxReportsAsync()).ToList();
                 vm.ParetoBarriers = _analysisTools.AnalyzePareto(allReports);
+
+                // ═══ جديد: هل للتقرير توصية نشطة؟ ═══
+                var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
+                var existingRec = allRecs.FirstOrDefault(r =>
+                    r.MonthlyReportId == vm.SelectedReport.Id
+                    && r.Status != RecommendationStatus.Rejected);
+
+                vm.ExistingRecommendationId = existingRec?.Id;
+                vm.ExistingRecommendationStatus = existingRec?.Status;
+                vm.ExistingRecommendationNumber = existingRec?.RecommendationNumber;
+
+                ViewBag.HasExistingRecommendation = existingRec != null;
             }
 
             // ═══════════════════════════════════════════════════════
@@ -100,6 +115,22 @@ namespace CTP.Web.Areas.Committee.Controllers
             if (tab == "t5")
                 await LoadTab5(vm);
             return View(vm);
+
+            // ═══════════════════════════════════════════════════════
+            // Tab 6: إدارة النماذج
+            // ═══════════════════════════════════════════════════════
+            if (tab == "t6")
+            {
+                if (User.IsInRole(AppRoles.CommitteeChair))
+                {
+                    await LoadTab6(vm);
+                }
+                else
+                {
+                    // إعادة توجيه العضو للـ Tab 1
+                    return RedirectToAction(nameof(Index), new { tab = "t1" });
+                }
+            }
         }
 
         // ═══════════════════════════════════════════════════════
@@ -109,29 +140,44 @@ namespace CTP.Web.Areas.Committee.Controllers
         {
             var reports = (await _reportService.GetCommitteeInboxReportsAsync()).ToList();
             var allRecs = (await _recommendationService.GetCommitteeRecommendationsAsync()).ToList();
-            var reportsWithActiveRecs = allRecs
-                .Where(r => r.Status != RecommendationStatus.Rejected)
-                .Select(r => r.MonthlyReportId)
-                .Distinct()
-                .ToHashSet();
 
-            vm.Reports = reports.Select(r => new ChairReportListItem
+            // ═══════════════════════════════════════════════════════
+            // لا نستبعد — نُعلّم فقط
+            // ═══════════════════════════════════════════════════════
+            var activeRecsByReport = allRecs
+                .Where(r => r.Status != RecommendationStatus.Rejected)
+                .GroupBy(r => r.MonthlyReportId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            vm.Reports = reports.Select(r =>
             {
-                Id = r.Id,
-                ReportNumber = r.ReportNumber,
-                EntityName = r.Organization?.EntityName ?? "غير محدد",
-                ChangeName = r.ChangeName,
-                Month = r.Month,
-                Year = r.Year,
-                ReadinessScore = r.ReadinessScore,
-                AdoptionScore = r.AdoptionScore,
-                ActivityCompletionRate = r.ActivityCompletionRate,
-                SubmittedDateFormatted = r.SubmittedDate.ToHijri(),
-                IsComplete = _analysisTools.CheckCompleteness(r).IsComplete,
-                IsLate = IsLate(r),
-                StatusArabic = GetStatusArabic(r.Status),
-                HasActiveRecommendation = reportsWithActiveRecs.Contains(r.Id)
-            }).ToList();
+                var hasRec = activeRecsByReport.ContainsKey(r.Id);
+                var rec = hasRec ? activeRecsByReport[r.Id] : null;
+
+                return new ChairReportListItem
+                {
+                    Id = r.Id,
+                    ReportNumber = r.ReportNumber,
+                    EntityName = r.Organization?.EntityName ?? "غير محدد",
+                    ChangeName = r.ChangeName,
+                    Month = r.Month,
+                    Year = r.Year,
+                    ReadinessScore = r.ReadinessScore,
+                    AdoptionScore = r.AdoptionScore,
+                    ActivityCompletionRate = r.ActivityCompletionRate,
+                    SubmittedDateFormatted = r.SubmittedDate.ToHijri(),
+                    IsComplete = _analysisTools.CheckCompleteness(r).IsComplete,
+                    IsLate = IsLate(r),
+                    StatusArabic = GetStatusArabic(r.Status),
+                    HasActiveRecommendation = hasRec,
+                    RecommendationId = rec?.Id,                      // ← جديد
+                    RecommendationNumber = rec?.RecommendationNumber,
+                    RecommendationStatus = rec?.Status
+                };
+            })
+             .OrderBy(r => r.HasActiveRecommendation)
+             .ThenByDescending(r => r.Id)
+             .ToList();
 
             vm.TotalReports = vm.Reports.Count;
             vm.CompleteReports = vm.Reports.Count(r => r.IsComplete);
@@ -243,7 +289,8 @@ namespace CTP.Web.Areas.Committee.Controllers
         {
             var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
             var recommendation = allRecs.FirstOrDefault(r => r.Id == recommendationId);
-
+            ViewBag.IsChair = User.IsInRole(AppRoles.CommitteeChair);
+            ViewBag.IsMember = User.IsInRole(AppRoles.CommitteeMember);
             if (recommendation == null)
             {
                 TempData["Error"] = "التوصية غير موجودة.";
@@ -414,6 +461,7 @@ namespace CTP.Web.Areas.Committee.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = AppRoles.CommitteeChair)]  // ← جديد
         public async Task<IActionResult> ApproveRecommendation(int recommendationId, string? chairNotes)
         {
             var rec = await _recommendationService.GetRecommendationByReportIdAsync(
@@ -458,6 +506,7 @@ namespace CTP.Web.Areas.Committee.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = AppRoles.CommitteeChair)]  // ← جديد
         public async Task<IActionResult> RejectRecommendation(int recommendationId, string? chairNotes)
         {
             var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
@@ -524,7 +573,12 @@ namespace CTP.Web.Areas.Committee.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TogglePlacement(int recommendationId, string placement, bool enabled)
+        [Authorize(Roles = AppRoles.CommitteeChair)]  // ← جديد
+        public async Task<IActionResult> TogglePlacement(
+    int recommendationId,
+    string placement,
+    bool enabled,
+    string? returnTo = null)
         {
             var allRecs = await _recommendationService.GetCommitteeRecommendationsAsync();
             var recommendation = allRecs.FirstOrDefault(r => r.Id == recommendationId);
@@ -563,6 +617,12 @@ namespace CTP.Web.Areas.Committee.Controllers
             {
                 TempData["Error"] = "تعذر تحديث الإدراج.";
             }
+
+            // ═══════════════════════════════════════════════════════
+            // التوجيه الذكي: لو جاء الطلب من صفحة المراجعة → ارجع لها
+            // ═══════════════════════════════════════════════════════
+            if (returnTo == "chairReview")
+                return RedirectToAction(nameof(ChairReview), new { recommendationId });
 
             return RedirectToAction(nameof(Index), new { tab = "t4", recommendationId });
         }
@@ -664,6 +724,58 @@ namespace CTP.Web.Areas.Committee.Controllers
             }
 
             return RedirectToAction(nameof(Index), new { tab = "t2" });
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // Tab 6 loader: إدارة النماذج
+        // ═══════════════════════════════════════════════════════
+        private async Task LoadTab6(ChairWorkCenterViewModel vm)
+        {
+            // ─── إحصائيات نموذج التقرير الشهري ───
+            var allReports = (await _reportService.GetCommitteeInboxReportsAsync()).ToList();
+
+            if (allReports.Any())
+            {
+                int totalFields = 0;
+                int validFields = 0;
+
+                foreach (var report in allReports)
+                {
+                    var check = _analysisTools.CheckCompleteness(report);
+                    totalFields += check.TotalFields;
+                    validFields += check.CompletedFields;
+
+                    if (check.IsComplete)
+                        vm.ReportsWithFullData++;
+                    else
+                        vm.ReportsWithMissingData++;
+                }
+
+                vm.AvgCompletenessPercent = totalFields > 0
+                    ? Math.Round((double)validFields / totalFields * 100, 1)
+                    : 0;
+            }
+
+            // ─── إحصائيات أنواع المدخلات ───
+            var inputs = (await _inputService.GetCommitteeInputsAsync()).ToList();
+
+            var usage = new Dictionary<string, int>();
+            foreach (var input in inputs)
+            {
+                var typeName = input.Type switch
+                {
+                    InputType.Challenge => "تحدٍ",
+                    InputType.SuccessStory => "قصة نجاح",
+                    InputType.Improvement => "فرصة تحسين",
+                    InputType.Inquiry => "استفسار",
+                    InputType.SupportNeed => "احتياج دعم",
+                    InputType.PlatformFeedback => "ملاحظة على المنصة",
+                    InputType.AdoptionBarrier => "عائق تبني",
+                    _ => "أخرى"
+                };
+                usage[typeName] = usage.GetValueOrDefault(typeName) + 1;
+            }
+            vm.InputTypesUsage = usage;
         }
     }
 }

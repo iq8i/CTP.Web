@@ -1,0 +1,176 @@
+﻿@model CTP.Domain.Entities.ImpactMeasurement
+@{
+    Layout = "_Layout";
+    var rec = ViewBag.Recommendation as CTP.Domain.Entities.Recommendation;
+    var existing = ViewBag.Existing as CTP.Domain.Entities.ImpactMeasurement;
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> رجوع للوحة الأثر
+        </a>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- سياق التوصية -->
+        <div class="col-lg-4">
+            <div class="moda-card border-0 shadow-sm p-4">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-journal-check me-2"></i> سياق التوصية
+                </h6>
+
+                @if (rec != null)
+                {
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted d-block">رقم التوصية</small>
+                        <strong>@rec.RecommendationNumber</strong>
+                    </div>
+
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted d-block">الجهة</small>
+                        <strong>@(rec.SourceReport?.Organization?.EntityName ?? "—")</strong>
+                    </div>
+
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted d-block">الإجراء المقترح</small>
+                        <p class="small mb-0">@rec.SuggestedAction</p>
+                    </div>
+
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted d-block">مؤشر النجاح المتوقع</small>
+                        <p class="small mb-0">@rec.SuccessIndicator</p>
+                    </div>
+
+                    <div class="mb-0">
+                        <small class="text-muted d-block">الأثر المتوقع</small>
+                        <p class="small mb-0">@rec.ExpectedImpact</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- نموذج القياس -->
+        <div class="col-lg-8">
+            <div class="moda-card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-speedometer2 me-2"></i> إدخال قياس الأثر
+                </h5>
+
+                <form method="post" asp-action="Measure">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="recommendationId" value="@Model.RecommendationId" />
+
+                    <div class="row g-3">
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">
+                                اسم المؤشر المُقاس <span class="text-danger">*</span>
+                            </label>
+                            <input name="indicatorName" class="form-control" required
+                                   value="@Model.IndicatorName"
+                                   placeholder="مثال: مؤشر القدرة على التطبيق" />
+                            <small class="text-muted">هذا ما سيتغير بناءً على تنفيذ التوصية.</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">
+                                القيمة قبل التنفيذ (%) <span class="text-danger">*</span>
+                            </label>
+                            <input name="beforeValue" type="number" min="0" max="100" required
+                                   class="form-control form-control-lg"
+                                   value="@(existing != null ? Model.BeforeValue : 0)" />
+                            <small class="text-muted">الحالة قبل بدء التنفيذ</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">
+                                القيمة بعد التنفيذ (%) <span class="text-danger">*</span>
+                            </label>
+                            <input name="afterValue" type="number" min="0" max="100" required
+                                   class="form-control form-control-lg"
+                                   value="@(existing != null ? Model.AfterValue : 0)" />
+                            <small class="text-muted">الحالة بعد التنفيذ</small>
+                        </div>
+
+                        <!-- الفرق التلقائي -->
+                        <div class="col-md-12">
+                            <div class="p-3 bg-light rounded border">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted fw-bold small">الفرق (يُحسب تلقائياً)</span>
+                                    <span class="fw-bold fs-4" id="deltaDisplay">0</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    ≥ +10 = تحقق كامل | 1-9 = جزئي | 0 أو أقل = لم يتحقق
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">
+                                سبب عدم التحقق <span class="text-muted">(إن وجد)</span>
+                            </label>
+                            <textarea name="improvementReason" class="form-control" rows="2"
+                                      placeholder="مثال: قِصر مدة القياس — يعاد القياس الشهر القادم">@Model.ImprovementReason</textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">
+                                الخطوة التالية <span class="text-muted">(إن وجدت)</span>
+                            </label>
+                            <textarea name="nextStep" class="form-control" rows="2"
+                                      placeholder="مثال: استمرار التدخل مع قياس شهري">@Model.NextStep</textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">
+                                الدرس المستفاد <span class="text-muted">(إن وجد)</span>
+                            </label>
+                            <textarea name="lesson" class="form-control" rows="2"
+                                      placeholder="مثال: التدخل المبكر مع الفئة المتأثرة يرفع المؤشر بسرعة">@Model.Lesson</textarea>
+                        </div>
+
+                        <div class="col-md-12 d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" class="moda-btn moda-btn-outline">إلغاء</a>
+                            <button type="submit" class="moda-btn moda-btn-gold px-5">
+                                <i class="bi bi-check-circle me-1"></i> حفظ القياس
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const beforeInput = document.querySelector('input[name="beforeValue"]');
+            const afterInput = document.querySelector('input[name="afterValue"]');
+            const deltaDisplay = document.getElementById('deltaDisplay');
+
+            function updateDelta() {
+                const before = parseInt(beforeInput.value) || 0;
+                const after = parseInt(afterInput.value) || 0;
+                const delta = after - before;
+
+                const sign = delta > 0 ? '+' : '';
+                deltaDisplay.textContent = sign + delta;
+
+                deltaDisplay.style.color = delta >= 10 ? '#3E7C3E'
+                    : delta >= 1 ? '#B07A1E'
+                        : '#9C3D2E';
+            }
+
+            beforeInput.addEventListener('input', updateDelta);
+            afterInput.addEventListener('input', updateDelta);
+            updateDelta();
+        });
+    </script>
+}

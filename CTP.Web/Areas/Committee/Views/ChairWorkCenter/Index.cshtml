@@ -1,8 +1,12 @@
 ﻿@model CTP.Web.Areas.Committee.Models.ChairWorkCenterViewModel
 @using CTP.Application.Interfaces.Services
+@using CTP.Domain.Enums
 @{
     Layout = "_Layout";
+    var isChair = (bool)(ViewBag.IsChair ?? false);
 }
+
+
 
 @section Styles {
     <style>
@@ -125,9 +129,12 @@
         <a href="?tab=t5" class="@(Model.ActiveTab == "t5" ? "active" : "")">
             <i class="bi bi-bar-chart-line me-1"></i> الداشبورد والرفع
         </a>
-        <a href="?tab=t6" class="@(Model.ActiveTab == "t6" ? "active" : "")">
-            <i class="bi bi-sliders me-1"></i> إدارة النماذج
-        </a>
+        @if (isChair)
+        {
+            <a href="?tab=t6" class="@(Model.ActiveTab == "t6" ? "active" : "")">
+                <i class="bi bi-sliders me-1"></i> إدارة النماذج
+            </a>
+        }
         <a href="?tab=t7" class="@(Model.ActiveTab == "t7" ? "active" : "")">
             <i class="bi bi-database me-1"></i> البيانات التجريبية
         </a>
@@ -180,25 +187,42 @@
                                 <th>التقرير</th>
                                 <th>الجهة</th>
                                 <th>التغيير</th>
-                                <th>الفترة</th>
                                 <th>الجاهزية</th>
                                 <th>التبني</th>
                                 <th>الاكتمال</th>
+                                <th>حالة التوصية</th>
                                 <th>الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
                             @if (Model.Reports.Any())
                             {
-                                foreach (var item in Model.Reports)
+                                @foreach (var item in Model.Reports)
                                 {
-                                    <tr>
+                                    <tr class="@(item.HasActiveRecommendation ? "table-warning" : "")">
+
+                                        @* ═══ 1. رقم التقرير ═══ *@
                                         <td class="fw-bold text-dark">@item.ReportNumber</td>
-                                        <td><span class="badge bg-light text-dark border">@item.EntityName</span></td>
+
+                                        @* ═══ 2. الجهة ═══ *@
+                                        <td>
+                                            <span class="badge bg-light text-dark border">@item.EntityName</span>
+                                        </td>
+
+                                        @* ═══ 3. التغيير ═══ *@
                                         <td class="text-start" style="max-width: 220px;">@item.ChangeName</td>
-                                        <td class="small text-muted">@item.Month @item.Year</td>
-                                        <td><span class="fw-bold" style="color:#106981;">@item.ReadinessScore%</span></td>
-                                        <td><span class="fw-bold" style="color:#3E7C3E;">@item.AdoptionScore%</span></td>
+
+                                        @* ═══ 4. الجاهزية ═══ *@
+                                        <td>
+                                            <span class="fw-bold" style="color:#106981;">@item.ReadinessScore%</span>
+                                        </td>
+
+                                        @* ═══ 5. التبني ═══ *@
+                                        <td>
+                                            <span class="fw-bold" style="color:#3E7C3E;">@item.AdoptionScore%</span>
+                                        </td>
+
+                                        @* ═══ 6. الاكتمال ═══ *@
                                         <td>
                                             @if (item.IsComplete)
                                             {
@@ -213,13 +237,61 @@
                                                 <span class="badge bg-warning-subtle text-dark border ms-1">متأخر</span>
                                             }
                                         </td>
+
+                                        @* ═══ 7. حالة التوصية — بيانات فقط ═══ *@
                                         <td>
-                                            <a asp-action="Index"
-                                               asp-route-tab="t3"
-                                               asp-route-reportId="@item.Id"
-                                               class="moda-btn moda-btn-sm moda-btn-gold">
-                                                <i class="bi bi-diagram-3 me-1"></i> فتح للتحليل
-                                            </a>
+                                            @if (item.HasActiveRecommendation && item.RecommendationId.HasValue)
+                                            {
+                                                <div class="d-flex flex-column gap-1">
+                                                    <a asp-action="ChairReview"
+                                                       asp-route-recommendationId="@item.RecommendationId"
+                                                       class="badge bg-primary-subtle text-primary border text-decoration-none">
+                                                        @item.RecommendationNumber
+                                                    </a>
+
+                                                    @if (item.RecommendationStatus == RecommendationStatus.ReadyForChair)
+                                                    {
+                                                        <small class="text-muted">بانتظار الاعتماد</small>
+                                                    }
+                                                    else if (item.RecommendationStatus == RecommendationStatus.AwaitingSupport)
+                                                    {
+                                                        <small class="text-muted">بانتظار الدعم</small>
+                                                    }
+                                                    else if (item.RecommendationStatus == RecommendationStatus.Approved)
+                                                    {
+                                                        <small class="text-success fw-bold">معتمدة ✓</small>
+                                                    }
+                                                    else if (item.RecommendationStatus == RecommendationStatus.Rejected)
+                                                    {
+                                                        <small class="text-danger">مرفوضة</small>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary border">لا توجد</span>
+                                            }
+                                        </td>
+
+                                        @* ═══ 8. الإجراءات — الأزرار ═══ *@
+                                        <td>
+                                            @if (item.HasActiveRecommendation && item.RecommendationId.HasValue)
+                                            {
+                                                <a asp-action="ChairReview"
+                                                   asp-route-recommendationId="@item.RecommendationId"
+                                                   class="moda-btn moda-btn-sm moda-btn-gold">
+                                                    <i class="bi bi-journal-check me-1"></i> عرض التوصية
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a asp-action="Index"
+                                                   asp-route-tab="t3"
+                                                   asp-route-reportId="@item.Id"
+                                                   class="moda-btn moda-btn-sm moda-btn-gold">
+                                                    <i class="bi bi-diagram-3 me-1"></i> فتح للتحليل
+                                                </a>
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -229,7 +301,7 @@
                                 <tr>
                                     <td colspan="8" class="py-5 text-muted">
                                         <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
-                                        لا توجد تقارير واردة بانتظار التحليل حالياً.
+                                        لا توجد تقارير واردة حالياً.
                                     </td>
                                 </tr>
                             }
@@ -240,6 +312,9 @@
         </div>
     }
     @* ═══════════════════════════════════════════════════════ *@
+    @* Tab 2: مدخلات الجهات                                   *@
+    @* ═══════════════════════════════════════════════════════ *@
+      @* ═══════════════════════════════════════════════════════ *@
     @* Tab 2: مدخلات الجهات                                   *@
     @* ═══════════════════════════════════════════════════════ *@
     else if (Model.ActiveTab == "t2")
@@ -309,7 +384,7 @@
                         <tbody>
                             @if (Model.EntityInputs.Any())
                             {
-                                foreach (var input in Model.EntityInputs)
+                                @foreach (var input in Model.EntityInputs)
                                 {
                                     var badgeClass = input.Type switch
                                     {
@@ -387,7 +462,6 @@
         </div>
 
         
-        
             var selectedId = Context.Request.Query["inputId"].ToString();
             var selectedInput = !string.IsNullOrEmpty(selectedId)
                 ? Model.EntityInputs.FirstOrDefault(i => i.Id.ToString() == selectedId)
@@ -413,12 +487,10 @@
                     </a>
                 </div>
 
-                <!-- المحتوى الكامل -->
                 <div class="p-4 bg-light rounded border mb-4" style="line-height: 1.9; font-size: 15px;">
                     @selectedInput.Content
                 </div>
 
-                <!-- أزرار الإجراءات -->
                 @if (selectedInput.Status == CTP.Domain.Enums.InputStatus.Received)
                 {
                     <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
@@ -477,7 +549,6 @@
             </div>
         }
     }
-
     @* ═══════════════════════════════════════════════════════ *@
     @* Tab 3: التحليل                                          *@
     @* ═══════════════════════════════════════════════════════ *@
@@ -918,7 +989,47 @@
                 </div>
             </div>
 
-            <!-- 3️⃣ نموذج التوصية الكاملة -->
+            
+            @if (Model.ExistingRecommendationId.HasValue)
+            {
+                <!-- توجد توصية نشطة — لا نسمح بإنشاء واحدة جديدة -->
+                <div class="moda-card border-0 shadow-sm p-4 mt-4"
+                     style="border-right: 4px solid #B07A1E !important; background: linear-gradient(135deg, #FDF7E3 0%, #FFFFFF 100%);">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-info-circle-fill fs-3 text-warning"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-2" style="color: #8A6A12;">
+                                لهذا التقرير توصية قائمة بالفعل
+                            </h6>
+                            <p class="small mb-3">
+                                التوصية <strong>@Model.ExistingRecommendationNumber</strong>
+                                @if (Model.ExistingRecommendationStatus == RecommendationStatus.ReadyForChair)
+                                {
+                                    <span>— <strong>بانتظار اعتماد رئيس اللجنة</strong>.</span>
+                                }
+                                else if (Model.ExistingRecommendationStatus == RecommendationStatus.AwaitingSupport)
+                                {
+                                    <span>— <strong>بانتظار قرار دعم قيادي</strong>.</span>
+                                }
+                                else if (Model.ExistingRecommendationStatus == RecommendationStatus.Approved)
+                                {
+                                    <span>— <strong>معتمدة ومُدرجة</strong>.</span>
+                                }
+                            </p>
+                            <p class="small text-muted mb-3">
+                                لا يمكن إنشاء توصية جديدة إلا بعد رفض التوصية الحالية.
+                            </p>
+
+                            <a asp-action="ChairReview"
+                               asp-route-recommendationId="@Model.ExistingRecommendationId"
+                               class="moda-btn moda-btn-gold">
+                                <i class="bi bi-journal-check me-1"></i> عرض التوصية الحالية
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else{<!-- 3️⃣ نموذج التوصية الكاملة -->
             <h5 class="fw-bold mb-3 mt-4" style="color: var(--ctp-primary-olive);">
                 <i class="bi bi-pencil-square me-2"></i> صياغة التوصية الكاملة
             </h5>
@@ -1027,7 +1138,7 @@
                         </div>
                     </div>
                 </form>
-            </div>
+            </div>}
         }
     }
 
@@ -1099,11 +1210,45 @@
                                             <span class="badge @item.StatusBadgeClass">@item.StatusArabic</span>
                                         </td>
                                         <td>
-                                            <a asp-action="ChairReview"
-                                               asp-route-recommendationId="@item.Id"
-                                               class="moda-btn moda-btn-sm moda-btn-gold">
-                                                <i class="bi bi-shield-check me-1"></i> مراجعة واعتماد
-                                            </a>
+                                            @if (item.IsPending)
+                                            {
+                                                <a asp-action="ChairReview"
+                                                   asp-route-recommendationId="@item.Id"
+                                                   class="moda-btn moda-btn-sm moda-btn-gold">
+                                                    @if (isChair)
+                                                    {
+                                                        <i class="bi bi-shield-check me-1"></i> <text>مراجعة واعتماد</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-eye me-1"></i> <text>عرض التفاصيل</text>
+                                                    }
+                                                </a>
+                                            }
+                                            else if (item.IsApproved)
+                                            {
+                                                <a asp-action="ChairReview"
+                                                   asp-route-recommendationId="@item.Id"
+                                                   class="moda-btn moda-btn-sm"
+                                                   style="background: linear-gradient(145deg, #2E7D32, #1B5E20); color: white;">
+                                                    @if (isChair)
+                                                    {
+                                                        <i class="bi bi-pin-angle me-1"></i> <text>إدارة الإدراج</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-eye me-1"></i> <text>عرض</text>
+                                                    }
+                                                </a>
+                                            }
+                                            else if (item.IsRejected)
+                                            {
+                                                <a asp-action="ChairReview"
+                                                   asp-route-recommendationId="@item.Id"
+                                                   class="moda-btn moda-btn-sm moda-btn-outline text-danger border-danger">
+                                                    <i class="bi bi-eye me-1"></i> عرض سبب الرفض
+                                                </a>
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -1455,6 +1600,338 @@
             </div>
         </div>
     }
+        @* ═══════════════════════════════════════════════════════ *@
+    @* Tab 6: إدارة النماذج                                    *@
+    @* ═══════════════════════════════════════════════════════ *@
+    else if (Model.ActiveTab == "t6")
+    {
+        <!-- KPIs النماذج -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num">@(Model.ReportsWithFullData + Model.ReportsWithMissingData)</div>
+                    <div class="kpi-lbl">إجمالي التقارير المُعبأة</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#3E7C3E;">@Model.ReportsWithFullData</div>
+                    <div class="kpi-lbl">مكتملة</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num" style="color:#9C3D2E;">@Model.ReportsWithMissingData</div>
+                    <div class="kpi-lbl">ناقصة</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-tile">
+                    <div class="kpi-num gold">@Model.AvgCompletenessPercent%</div>
+                    <div class="kpi-lbl">متوسط الاكتمال</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- معاينة نموذج التقرير الشهري الموحد                  -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="moda-card border-0 shadow-sm p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-file-earmark-text me-2"></i> نموذج التقرير الشهري الموحد
+                </h5>
+                <span class="badge bg-primary px-3 py-2">6 أقسام</span>
+            </div>
+
+            <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                النموذج الموحد لجميع الوحدات والهيئات والإدارات — يضمن بيانات متسقة وقابلة للمقارنة.
+            </p>
+
+            <div class="accordion" id="reportFormAccordion">
+                @{
+                    var sections = new (string Id, string Title, string Icon, string[] Fields)[]
+                    {
+                        ("sec1", "بيانات التقرير", "bi-info-circle",
+                            new[] { "رقم التقرير", "شهر التقرير", "سنة التقرير", "اسم الجهة", "نوع الجهة", "معد التقرير", "الدور" }),
+
+                        ("sec2", "بيانات التغيير", "bi-diagram-3",
+                            new[] { "اسم التغيير", "نوع التغيير", "المرحلة الحالية", "الفئات المتأثرة", "نطاق الأثر", "الفئة الأكثر احتياجاً" }),
+
+                        ("sec3", "تفاصيل التغيير", "bi-card-text",
+                            new[] { "ملخص التغيير", "لماذا هذا التغيير مهم", "ماذا سيتغير", "ماذا لن يتغير", "الأنشطة المنفذة" }),
+
+                        ("sec4", "المؤشرات (ADKAR)", "bi-speedometer2",
+                            new[] { "الوعي (A)", "الرغبة (D)", "المعرفة (K)", "القدرة (A)", "التعزيز (R)", "الجاهزية العامة", "التبني العام" }),
+
+                        ("sec5", "التحديات والدعم", "bi-shield-exclamation",
+                            new[] { "العوائق والتحديات", "عوائق التبني", "الدعم المطلوب", "المخاطر", "فرص التحسين", "قصص النجاح" }),
+
+                        ("sec6", "التوصية والاعتماد", "bi-check2-circle",
+                            new[] { "التوصية الأولية", "مالك الإجراء", "مؤشر النجاح", "الأثر المتوقع", "الاعتماد", "ملاحظات المعتمد", "الشواهد" })
+                    };
+                }
+
+                @foreach (var sec in sections)
+                {
+                    <div class="accordion-item border mb-2" style="border-radius: 10px;">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#@sec.Id"
+                                    style="color: var(--ctp-primary-olive); background: #F8FAFC;">
+                                <i class="bi @sec.Icon me-2"></i>
+                                @sec.Title
+                                <span class="badge bg-secondary ms-2">@sec.Fields.Length حقول</span>
+                            </button>
+                        </h2>
+                        <div id="@sec.Id" class="accordion-collapse collapse" data-bs-parent="#reportFormAccordion">
+                            <div class="accordion-body">
+                                <div class="row g-2">
+                                    @foreach (var field in sec.Fields)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="p-2 bg-light rounded small border">
+                                                <i class="bi bi-check-circle text-success me-1"></i>
+                                                @field
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 7 أنواع مدخلات الجهات                                -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="moda-card border-0 shadow-sm p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-chat-left-dots me-2"></i> أنواع مدخلات الجهات (7 أنواع)
+                </h5>
+            </div>
+
+            <div class="row g-3">
+                @{
+                    var inputTypes = new (string Icon, string Title, string Desc, string Color, string Key)[]
+                    {
+                        ("bi-exclamation-triangle", "تحدٍ", "معوقات تواجه تنفيذ التغيير", "danger", "تحدٍ"),
+                        ("bi-trophy", "قصة نجاح", "إنجازات جديرة بالمشاركة", "success", "قصة نجاح"),
+                        ("bi-lightbulb", "فرصة تحسين", "أفكار لتطوير التنفيذ", "primary", "فرصة تحسين"),
+                        ("bi-question-circle", "استفسار", "أسئلة تحتاج توضيحاً", "info", "استفسار"),
+                        ("bi-life-preserver", "احتياج دعم", "طلبات موارد أو مساندة", "warning", "احتياج دعم"),
+                        ("bi-chat-square-text", "ملاحظة على المنصة", "تغذية راجعة على تجربة الاستخدام", "secondary", "ملاحظة على المنصة"),
+                        ("bi-shield-exclamation", "عائق تبني", "مقاومة أو تباطؤ في التبني", "dark", "عائق تبني")
+                    };
+                }
+
+                @foreach (var type in inputTypes)
+                {
+                    var usage = Model.InputTypesUsage.GetValueOrDefault(type.Key, 0);
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-3 bg-white rounded border h-100">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                     style="width: 42px; height: 42px; background: var(--bs-@type.Color)-bg-subtle; color: var(--bs-@type.Color);">
+                                    <i class="bi @type.Icon fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong class="small">@type.Title</strong>
+                                        @if (usage > 0)
+                                        {
+                                            <span class="badge bg-primary">@usage</span>
+                                        }
+                                    </div>
+                                    <p class="small text-muted mb-0">@type.Desc</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- مسار سير العمل                                       -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="moda-card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-diagram-2 me-2"></i> مسار سير العمل
+            </h5>
+
+            <div class="p-4 rounded" style="background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%); border: 1px dashed #C9A227;">
+                <div class="row g-3 align-items-center">
+                    @{
+                        var flow = new (string Title, string Icon, string Color)[]
+                        {
+                            ("سفير التغيير", "bi-person-badge", "#C9A227"),
+                            ("قائد الوحدة", "bi-building-check", "#0B4F61"),
+                            ("رئيس فريق العمل", "bi-arrow-up-right-circle", "#2E86A0"),
+                            ("رئيس اللجنة", "bi-shield-check", "#073B49"),
+                            ("نائب القائد", "bi-person-badge", "#0B4F61"),
+                            ("معالي القائد", "bi-award", "#A98418")
+                        };
+                    }
+
+                    @for (int i = 0; i < flow.Length; i++)
+                    {
+                        var step = flow[i];
+                        <div class="col-auto">
+                            <div class="d-flex flex-column align-items-center" style="min-width: 100px;">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle mb-2"
+                                     style="width: 50px; height: 50px; background: @step.Color; color: white;">
+                                    <i class="bi @step.Icon fs-4"></i>
+                                </div>
+                                <small class="fw-bold text-center" style="font-size: 11.5px;">@step.Title</small>
+                            </div>
+                        </div>
+
+                        @if (i < flow.Length - 1)
+                        {
+                            <div class="col-auto">
+                                <i class="bi bi-arrow-left fs-3" style="color: #C9A227;"></i>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="alert alert-info small border-0 mt-3 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>ملاحظة:</strong> رئيس اللجنة يستقبل <strong>نسخة تحليلية إلكترونية</strong> — ليس جهة الاستقبال الرسمية الأولى.
+                    الرفع القيادي يمر عبر سعادة رئيس فريق عمل القائد.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- حوكمة المادة العلمية + الروابط السريعة              -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="moda-card border-0 shadow-sm p-4 h-100">
+                    <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-mortarboard me-2"></i> حوكمة المادة العلمية
+                    </h6>
+
+                    <div class="p-3 rounded mb-2" style="background: #FDF7E3;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold">حالة اعتماد المادة</span>
+                            <span class="badge bg-warning text-dark">قيد المراجعة</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded mb-2" style="background: #EAF2F4;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold">جاهزية التدريس</span>
+                            <span class="badge bg-info text-dark">بعد الاعتماد</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded mb-2" style="background: #F0FDF4;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold">سفراء التغيير</span>
+                            <span class="badge bg-success">60 سفيراً</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded" style="background: #EAF2F4;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold">الربط بالتقارير</span>
+                            <span class="badge bg-primary">موحّد</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="moda-card border-0 shadow-sm p-4 h-100">
+                    <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-link-45deg me-2"></i> روابط سريعة
+                    </h6>
+
+                    <div class="d-grid gap-2">
+                        <a asp-area="Ambassador" asp-controller="Report" asp-action="Create"
+                           class="btn btn-outline-primary text-start" target="_blank">
+                            <i class="bi bi-file-earmark-plus me-2"></i>
+                            نموذج التقرير الشهري (معاينة)
+                        </a>
+
+                        <a asp-area="Ambassador" asp-controller="Input" asp-action="Create"
+                           class="btn btn-outline-success text-start" target="_blank">
+                            <i class="bi bi-chat-left-dots me-2"></i>
+                            نموذج مدخلات الجهات
+                        </a>
+
+                        <a asp-action="Index" asp-route-tab="t4"
+                           class="btn btn-outline-warning text-start">
+                            <i class="bi bi-shield-check me-2"></i>
+                            بوابة جودة التوصية (16 عنصراً)
+                        </a>
+
+                        <a asp-action="Index" asp-route-tab="t5"
+                           class="btn btn-outline-info text-start">
+                            <i class="bi bi-bar-chart-line me-2"></i>
+                            الداشبورد المؤسسي
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 4 قواعد سير العمل                                   -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="moda-card border-0 shadow-sm p-4 mt-4"
+             style="border-right: 4px solid #C9A227 !important;">
+            <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-bookmark-check me-2"></i> قواعد سير العمل المعتمدة
+            </h6>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start gap-2 p-2 rounded bg-light">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <div class="small">
+                            <strong class="d-block">سهولة الإدخال</strong>
+                            النموذج مصمم لتقليل الجهد على السفير مع ضمان الدقة.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start gap-2 p-2 rounded bg-light">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <div class="small">
+                            <strong class="d-block">جودة المخرجات</strong>
+                            بوابة 16 عنصراً تمنع اعتماد توصية ناقصة.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start gap-2 p-2 rounded bg-light">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <div class="small">
+                            <strong class="d-block">تغذية الداشبورد</strong>
+                            كل مدخل يُغذي لوحات المؤشرات الأثرية تلقائياً.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start gap-2 p-2 rounded bg-light">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <div class="small">
+                            <strong class="d-block">دعم التبني</strong>
+                            كل توصية مربوطة بمؤشر أثر قابل للقياس.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     @* ═══════════════════════════════════════════════════════ *@
     @* التبويبات المتبقية: قيد الإنشاء                         *@
@@ -1463,9 +1940,7 @@
     {
         var tabNames = new Dictionary<string, string>
         {
-            { "t2", "مدخلات الجهات" },
-            { "t5", "الداشبورد والرفع القيادي" },
-            { "t6", "إدارة النماذج والتقارير والمدخلات" },
+          
             { "t7", "البيانات التجريبية" }
         };
         var tabName = tabNames.GetValueOrDefault(Model.ActiveTab, "التبويب");

@@ -1,5 +1,6 @@
 ﻿using CTP.Application.Interfaces.Services;
 using CTP.Domain.Entities;
+using CTP.Domain.Enums;
 
 namespace CTP.Web.Areas.Committee.Models
 {
@@ -31,6 +32,10 @@ namespace CTP.Web.Areas.Committee.Models
         public WswnwResult? Wswnw { get; set; }
         public AdkarResult? Adkar { get; set; }
         public PctResult? Pct { get; set; }
+        // ─── Tab 3: هل يوجد توصية نشطة للتقرير؟ ───
+        public int? ExistingRecommendationId { get; set; }
+        public RecommendationStatus? ExistingRecommendationStatus { get; set; }
+        public string? ExistingRecommendationNumber { get; set; }
         // ─── Tab 4: التوصيات ───
         public List<ChairRecommendationItem> Recommendations { get; set; } = new();
         public Recommendation? SelectedRecommendation { get; set; }
@@ -67,6 +72,11 @@ namespace CTP.Web.Areas.Committee.Models
         public int TotalPlacedInInstitutional { get; set; }
         public int TotalPlacedInImpact { get; set; }
         public int TotalPlacedInExecutive { get; set; }
+        // ─── Tab 6: إدارة النماذج ───
+        public int ReportsWithFullData { get; set; }
+        public int ReportsWithMissingData { get; set; }
+        public double AvgCompletenessPercent { get; set; }
+        public Dictionary<string, int> InputTypesUsage { get; set; } = new();
     }
 
     public class ChairRecommendationItem
@@ -88,6 +98,7 @@ namespace CTP.Web.Areas.Committee.Models
         public bool IncludeInExecutiveSummary { get; set; }
         public string CreatedDateFormatted { get; set; } = "-";
         public string? ReviewedDateFormatted { get; set; }
+
     }
     public class EntityTypeStat
     {
@@ -114,6 +125,10 @@ namespace CTP.Web.Areas.Committee.Models
         public bool IsLate { get; set; }
         public string StatusArabic { get; set; } = string.Empty;
         public bool HasActiveRecommendation { get; set; }
-        
+        public int? RecommendationId { get; set; }                 // ← جديد
+
+        public string? RecommendationNumber { get; set; }   // ← جديد
+        public RecommendationStatus? RecommendationStatus { get; set; }  // ← جديد
+
     }
 }

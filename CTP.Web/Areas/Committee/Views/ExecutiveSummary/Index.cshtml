@@ -1,0 +1,192 @@
+﻿@{
+    Layout = "_Layout";
+    var topRecs = ViewBag.TopRecommendations as List<CTP.Domain.Entities.Recommendation> ?? new();
+    var decisions = ViewBag.SupportDecisions as List<CTP.Domain.Entities.Recommendation> ?? new();
+    var totalReports = (int)(ViewBag.TotalReports ?? 0);
+    var approvedReports = (int)(ViewBag.ApprovedReports ?? 0);
+    var avgReadiness = (double)(ViewBag.AvgReadiness ?? 0d);
+    var avgAdoption = (double)(ViewBag.AvgAdoption ?? 0d);
+    var generatedDate = (DateTime)(ViewBag.GeneratedDate ?? DateTime.Now);
+}
+
+@section Styles {
+    <style>
+        @@media print {
+            .moda-sidebar,
+            .moda-topbar,
+            .no-print,
+            .entity-header,
+            footer.main {
+                display: none !important;
+            }
+
+            .moda-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .moda-card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                page-break-inside: avoid;
+            }
+
+            body {
+                background: white !important;
+            }
+        }
+
+        .exec-hero {
+            background: linear-gradient(135deg, #073B49, #0B4F61);
+            color: white;
+            padding: 32px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+
+    <!-- زر الطباعة -->
+    <div class="d-flex justify-content-end mb-3 no-print">
+        <button onclick="window.print()" class="moda-btn moda-btn-gold">
+            <i class="bi bi-printer me-1"></i> طباعة / تصدير PDF
+        </button>
+    </div>
+
+    <!-- ترويسة -->
+    <div class="exec-hero">
+        <h2 class="fw-bold mb-2">الملخص التنفيذي للرفع القيادي</h2>
+        <p class="mb-0" style="opacity: 0.9;">
+            <i class="bi bi-calendar3 me-1"></i> @generatedDate.ToString("yyyy/MM/dd")
+            — <i class="bi bi-shield-check ms-2 me-1"></i> معتمد من رئيس لجنة شركاء التغيير
+        </p>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <small class="text-muted d-block">تقارير واردة</small>
+                <h3 class="fw-bold mb-0" style="color:#106981;">@totalReports</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <small class="text-muted d-block">تقارير معتمدة</small>
+                <h3 class="fw-bold mb-0" style="color:#3E7C3E;">@approvedReports</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <small class="text-muted d-block">الجاهزية العامة</small>
+                <h3 class="fw-bold mb-0" style="color:#106981;">@avgReadiness%</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <small class="text-muted d-block">التبني العام</small>
+                <h3 class="fw-bold mb-0" style="color:#3E7C3E;">@avgAdoption%</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- المواقف العامة -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-4">
+        <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+            <i class="bi bi-clipboard-check me-2"></i> الموقف العام
+        </h5>
+        <p class="mb-0" style="line-height: 1.9;">
+            البرنامج يسير وفق خارطة الطريق المعتمدة. بلغ متوسط الجاهزية
+            <strong>@avgReadiness%</strong> والتبني <strong>@avgAdoption%</strong>
+            على مستوى المنظومة. تم اعتماد <strong>@topRecs.Count</strong>
+            توصية رئيسية للرفع القيادي.
+        </p>
+    </div>
+
+    <!-- التوصيات الرئيسية -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-4">
+        <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+            <i class="bi bi-star-fill me-2 text-warning"></i> التوصيات الرئيسية للرفع
+        </h5>
+
+        @if (topRecs.Any())
+        {
+            <ol class="mb-0" style="line-height: 2;">
+                @foreach (var rec in topRecs)
+                {
+                    <li class="mb-2">
+                        <strong>@rec.SuggestedAction</strong>
+                        <div class="small text-muted mt-1">
+                            <i class="bi bi-building me-1"></i> @rec.SourceReport?.Organization?.EntityName
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-person me-1"></i> @rec.ActionOwner
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-clock me-1"></i> @rec.Duration
+                        </div>
+                    </li>
+                }
+            </ol>
+        }
+        else
+        {
+            <div class="alert alert-info border-0 mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                لم يتم إدراج أي توصية في الملخص التنفيذي بعد.
+                اذهب إلى Tab 4 → اعتمد توصية → اضغط "إدراج في الملخص التنفيذي".
+            </div>
+        }
+    </div>
+
+    <!-- قرارات الدعم المطلوبة -->
+    @if (decisions.Any())
+    {
+        <div class="moda-card border-0 shadow-sm p-4 mb-4"
+             style="border-right: 4px solid #9C3D2E !important;">
+            <h5 class="fw-bold mb-3 text-danger">
+                <i class="bi bi-shield-exclamation me-2"></i> قرارات الدعم المطلوبة
+            </h5>
+
+            <ul class="mb-0" style="line-height: 2;">
+                @foreach (var dec in decisions)
+                {
+                    <li class="mb-2">
+                        <strong>@dec.SuggestedAction</strong>
+                        <div class="small text-muted mt-1">
+                            <i class="bi bi-building me-1"></i> @dec.SourceReport?.Organization?.EntityName
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-arrow-up me-1"></i> @dec.Escalation
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- المطلوب من القيادة -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-4"
+         style="background: linear-gradient(135deg, #FEFCF3 0%, #FFFFFF 100%);">
+        <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+            <i class="bi bi-hand-index-thumb me-2"></i> المطلوب من القيادة
+        </h5>
+        <ul class="mb-0" style="line-height: 2;">
+            <li>الاطلاع على موجز البرنامج والأثر المتحقق</li>
+            <li>البت في قرارات الدعم المرفوعة</li>
+            <li>توجيه ما يلزم عبر سعادة رئيس فريق عمل القائد</li>
+        </ul>
+    </div>
+
+    <!-- مسار الرفع -->
+    <div class="text-center text-muted small mt-4">
+        <p class="mb-0">
+            <i class="bi bi-send-check me-1"></i>
+            يُرفع عبر: <strong>سعادة رئيس فريق عمل القائد</strong>
+            → <strong>سعادة النائب عند الحاجة</strong>
+            → <strong>معالي القائد عند الحاجة</strong>
+        </p>
+    </div>
+
+</div>

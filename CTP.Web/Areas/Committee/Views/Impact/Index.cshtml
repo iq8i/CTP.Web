@@ -1,0 +1,175 @@
+﻿@model CTP.Web.Areas.Committee.Models.ImpactDashboardViewModel
+@{
+    Layout = "_Layout";
+    var summary = Model.Summary;
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <i class="bi bi-bullseye fs-3" style="color:#106981;"></i>
+                <div class="fw-bold fs-4 mt-2">@summary.TotalMeasurements</div>
+                <small class="text-muted">إجمالي القياسات</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <i class="bi bi-check-circle-fill fs-3 text-success"></i>
+                <div class="fw-bold fs-4 mt-2" style="color:#3E7C3E;">@summary.VerifiedCount</div>
+                <small class="text-muted">تحقق كامل</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <i class="bi bi-hourglass-split fs-3 text-warning"></i>
+                <div class="fw-bold fs-4 mt-2" style="color:#B07A1E;">@summary.PartialCount</div>
+                <small class="text-muted">تحقق جزئي</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center">
+                <i class="bi bi-graph-up-arrow fs-3" style="color:#A98418;"></i>
+                <div class="fw-bold fs-4 mt-2" style="color:#A98418;">+@summary.AvgDelta</div>
+                <small class="text-muted">متوسط التحسن (نقطة)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- شريط حالة -->
+    @if (summary.PendingCount > 0)
+    {
+        <div class="alert alert-info border-0 shadow-sm mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>@summary.PendingCount توصية</strong> بانتظار إدخال قياس الأثر (قبل/بعد).
+        </div>
+    }
+
+    <!-- جدول القياسات -->
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-graph-up me-2"></i> قياسات الأثر
+            </h5>
+            <span class="badge bg-secondary px-3 py-2">@Model.Rows.Count توصية</span>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الجهة</th>
+                            <th>الإجراء</th>
+                            <th>المؤشر</th>
+                            <th>قبل</th>
+                            <th>بعد</th>
+                            <th>الفرق</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Rows.Any())
+                        {
+                            foreach (var row in Model.Rows)
+                            {
+                                <tr class="@(row.HasMeasurement ? "" : "table-warning")">
+                                    <td class="fw-bold text-dark">@row.RecommendationNumber</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">@row.EntityName</span>
+                                    </td>
+                                    <td class="text-start small" style="max-width:220px;">
+                                        @(row.SuggestedAction.Length > 80 ? row.SuggestedAction.Substring(0, 80) + "..." : row.SuggestedAction)
+                                    </td>
+                                    <td class="text-start small">@row.IndicatorName</td>
+                                    <td>
+                                        @if (row.HasMeasurement)
+                                        {
+                                            <strong>@row.BeforeValue%</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (row.HasMeasurement)
+                                        {
+                                            <strong style="color:#106981;">@row.AfterValue%</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (row.HasMeasurement && row.Delta != 0)
+                                        {
+                                            var sign = row.Delta > 0 ? "+" : "";
+                                            var color = row.Delta > 0 ? "#3E7C3E" : "#9C3D2E";
+                                            <strong style="color:@color;">@sign@row.Delta</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @row.StatusBadgeClass">@row.Status</span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="Measure"
+                                           asp-route-recommendationId="@row.RecommendationId"
+                                           class="moda-btn moda-btn-sm @(row.HasMeasurement ? "moda-btn-outline" : "moda-btn-gold")">
+                                            <i class="bi @(row.HasMeasurement ? "bi-pencil-square" : "bi-plus-circle") me-1"></i>
+                                            @(row.HasMeasurement ? "تعديل" : "إدخال قياس")
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="py-5 text-muted">
+                                    <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                                    لا توجد توصيات مُدرجة في لوحة الأثر بعد.
+                                    <br />
+                                    <small>اذهب إلى Tab 4 → اعتمد توصية → أدرجها في "لوحة الأثر".</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- الدروس المستفادة -->
+    @{
+        var lessons = Model.Rows.Where(r => !string.IsNullOrWhiteSpace(r.Lesson)).ToList();
+    }
+
+    @if (lessons.Any())
+    {
+        <div class="moda-card border-0 shadow-sm p-4 mt-4" style="border-right: 4px solid #C9A227 !important;">
+            <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-lightbulb me-2"></i> الدروس المستفادة
+            </h6>
+
+            @foreach (var lesson in lessons)
+            {
+                <div class="p-3 bg-light rounded mb-2 border-start border-4 border-warning">
+                    <strong class="small d-block mb-1">@lesson.RecommendationNumber — @lesson.EntityName</strong>
+                    <p class="small mb-0">@lesson.Lesson</p>
+                </div>
+            }
+        </div>
+    }
+
+</div>

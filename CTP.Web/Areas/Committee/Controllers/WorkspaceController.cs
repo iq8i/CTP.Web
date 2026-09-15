@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using CTP.Application.Interfaces.Services;
+﻿using CTP.Application.Interfaces.Services;
+using CTP.Domain.Constants;
 using CTP.Domain.Entities;
 using CTP.Web.Areas.Committee.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CTP.Web.Areas.Committee.Controllers
 {
@@ -66,13 +67,12 @@ namespace CTP.Web.Areas.Committee.Controllers
             return View(inboxReports);
         }
         #endregion
-        // 1.5. شاشة استعراض تفاصيل التقرير
         [HttpGet]
+        [Authorize(Roles = AppRoles.CommitteeChair + "," + AppRoles.CommitteeMember)]
         public async Task<IActionResult> Details(int id)
         {
             var report = await _reportService.GetReportByIdAsync(id);
 
-            // التأكد من أن التقرير متاح للجنة
             if (report == null || report.Status != CTP.Domain.Enums.ReportStatus.UnderAnalysis)
             {
                 TempData["Error"] = "التقرير غير متاح للمراجعة حالياً.";

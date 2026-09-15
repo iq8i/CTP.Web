@@ -1,0 +1,274 @@
+﻿@model CTP.Web.Areas.Committee.Models.InstitutionalReportViewModel
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        @@media print {
+            .moda-sidebar,
+            .moda-topbar,
+            .no-print,
+            .entity-header,
+            footer.main {
+                display: none !important;
+            }
+
+            .moda-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .moda-card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                page-break-inside: avoid;
+                margin-bottom: 12px;
+            }
+
+            body {
+                background: white !important;
+            }
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, #073B49, #0B4F61);
+            color: white;
+            padding: 30px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-3 mb-5">
+
+    <!-- زر الطباعة -->
+    <div class="d-flex justify-content-end mb-3 no-print">
+        <button onclick="window.print()" class="moda-btn moda-btn-gold">
+            <i class="bi bi-printer me-1"></i> طباعة / تصدير PDF
+        </button>
+    </div>
+
+    <!-- ترويسة التقرير -->
+    <div class="report-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h2 class="fw-bold mb-2">التقرير المؤسسي الشهري</h2>
+                <p class="mb-0" style="opacity: 0.9;">
+                    لجنة شركاء التغيير — @Model.ReportMonth @Model.ReportYear هـ
+                </p>
+            </div>
+            <div class="text-end">
+                <small style="opacity: 0.85;">تاريخ الإصدار</small>
+                <div class="fw-bold">@Model.GeneratedDate.ToString("yyyy/MM/dd HH:mm")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- 1. الملخص التنفيذي                                  -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-3">
+        <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+            <i class="bi bi-file-text me-2"></i> الملخص التنفيذي
+        </h5>
+
+        <p class="mb-3" style="line-height: 1.9;">
+            استقبلت لجنة شركاء التغيير خلال @Model.ReportMonth @Model.ReportYear
+            إجمالي <strong>@Model.TotalReports تقريراً</strong>، اعتُمد منها
+            <strong>@Model.ApprovedReports</strong>.
+            بلغ متوسط الجاهزية العامة <strong>@Model.AvgReadiness%</strong>
+            والتبني العام <strong>@Model.AvgAdoption%</strong>.
+            اعتمدت اللجنة <strong>@Model.TotalRecommendations توصية</strong>،
+            أُدرج منها <strong>@Model.InstitutionalRecommendations توصية</strong>
+            في هذا التقرير المؤسسي.
+        </p>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center" style="background: rgba(16,105,129,0.08);">
+                    <small class="text-muted d-block">إجمالي التقارير</small>
+                    <h3 class="fw-bold mb-0" style="color:#106981;">@Model.TotalReports</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center" style="background: rgba(62,124,62,0.08);">
+                    <small class="text-muted d-block">تقارير معتمدة</small>
+                    <h3 class="fw-bold mb-0" style="color:#3E7C3E;">@Model.ApprovedReports</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center" style="background: rgba(201,162,39,0.08);">
+                    <small class="text-muted d-block">إجمالي التوصيات</small>
+                    <h3 class="fw-bold mb-0" style="color:#A98418;">@Model.TotalRecommendations</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center" style="background: rgba(7,59,73,0.08);">
+                    <small class="text-muted d-block">في هذا التقرير</small>
+                    <h3 class="fw-bold mb-0" style="color:#073B49;">@Model.InstitutionalRecommendations</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- 2. مؤشرات ADKAR المؤسسية                            -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-3">
+        <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+            <i class="bi bi-bar-chart-steps me-2"></i> مؤشرات ADKAR المؤسسية
+        </h5>
+
+        <div class="row g-3">
+            @{
+                var adkarData = new (string Label, double Value)[]
+                {
+                    ("الوعي (Awareness)", Model.AvgAdkarAwareness),
+                    ("الرغبة (Desire)", Model.AvgAdkarDesire),
+                    ("المعرفة (Knowledge)", Model.AvgAdkarKnowledge),
+                    ("القدرة (Ability)", Model.AvgAdkarAbility),
+                    ("التعزيز (Reinforcement)", Model.AvgAdkarReinforcement)
+                };
+            }
+
+            @foreach (var item in adkarData)
+            {
+                var pct = (int)Math.Round(item.Value);
+                var color = pct < 50 ? "bg-danger" : pct < 65 ? "bg-warning" : "bg-success";
+
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between small fw-bold mb-1">
+                        <span>@item.Label</span>
+                        <span>@item.Value%</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 12px;">
+                        <div class="progress-bar @color" style="width: @pct%"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- 3. عوائق التبني الأكثر تكراراً (Pareto)             -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    @if (Model.ParetoBarriers.Any())
+    {
+        <div class="moda-card border-0 shadow-sm p-4 mb-3">
+            <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-bar-chart-line me-2"></i> عوائق التبني الأكثر تكراراً
+            </h5>
+
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-start">العائق</th>
+                            <th>التكرار</th>
+                            <th>النسبة</th>
+                            <th>التراكمي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ParetoBarriers)
+                        {
+                            <tr>
+                                <td class="text-start">@item.Barrier</td>
+                                <td><strong>@item.Count</strong></td>
+                                <td>@item.Percentage%</td>
+                                <td class="fw-bold">@item.CumulativePercentage%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- 4. التوصيات المعتمدة المُدرجة                       -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-3">
+        <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+            <i class="bi bi-journal-check me-2"></i> التوصيات المعتمدة المُدرجة
+            <span class="badge bg-success ms-2">@Model.Recommendations.Count</span>
+        </h5>
+
+        @if (Model.Recommendations.Any())
+        {
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:80px;">#</th>
+                            <th>الجهة</th>
+                            <th>الفجوة</th>
+                            <th class="text-start">الإجراء المقترح</th>
+                            <th>المالك</th>
+                            <th>المدة</th>
+                            <th>مؤشر النجاح</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rec in Model.Recommendations)
+                        {
+                            <tr>
+                                <td class="fw-bold">@rec.RecommendationNumber</td>
+                                <td class="small">@rec.EntityName</td>
+                                <td class="small">@rec.GapType</td>
+                                <td class="text-start small">@rec.SuggestedAction</td>
+                                <td class="small">@rec.ActionOwner</td>
+                                <td class="small">@rec.Duration</td>
+                                <td class="small">@rec.SuccessIndicator</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info border-0 mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                لم يتم إدراج أي توصية في التقرير المؤسسي بعد.
+                اذهب إلى Tab 4 → اعتمد توصية → اضغط "إدراج في التقرير الشهري".
+            </div>
+        }
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- 5. مسار الرفع                                       -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-3"
+         style="border-right: 4px solid #C9A227 !important;">
+        <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+            <i class="bi bi-send-check me-2"></i> مسار الرفع الرسمي
+        </h6>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 small">
+            <span class="badge bg-primary px-3 py-2">رئيس لجنة شركاء التغيير</span>
+            <i class="bi bi-arrow-left"></i>
+            <span class="badge bg-primary px-3 py-2">سعادة رئيس فريق عمل القائد</span>
+            <i class="bi bi-arrow-left"></i>
+            <span class="badge bg-warning text-dark px-3 py-2">سعادة النائب (عند الحاجة)</span>
+            <i class="bi bi-arrow-left"></i>
+            <span class="badge bg-danger px-3 py-2">معالي القائد (عند الحاجة)</span>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- 6. التذييل                                          -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="text-center text-muted small mt-4">
+        <p class="mb-0">
+            هذا التقرير صادر من منصة التغيير والتحول — إصدار التدشين
+            <br />
+            جميع البيانات معتمدة من رئيس لجنة شركاء التغيير
+        </p>
+    </div>
+
+</div>
