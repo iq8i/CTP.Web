@@ -17,16 +17,14 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
     {
         private readonly IMonthlyReportService _reportService;
         private readonly INotificationService _notificationService; // تم إضافة خدمة الإشعارات هنا
-        private readonly IReportQualityService _qualityService;
 
         public DashboardController(
             IMonthlyReportService reportService,
-            INotificationService notificationService,
-            IReportQualityService qualityService)
+            INotificationService notificationService)
         {
             _reportService = reportService;
             _notificationService = notificationService;
-            _qualityService = qualityService;
+            
         }    
 
         [HttpGet]
@@ -65,16 +63,7 @@ namespace CTP.Web.Areas.UnitLeader.Controllers
             if (report == null) return NotFound();
 
             // 2. فحص الجودة عند الاعتماد (من الصورة الأولى)
-            if (isApproved)
-            {
-                var quality = _qualityService.CheckForSubmission(report);
-                if (!quality.IsValid)
-                {
-                    TempData["Error"] = $"لا يمكن اعتماد التقرير - {quality.CriticalIssues.Count} عنصر يحتاج استكمالاً. " +
-                                        $"يرجى إرجاعه للسفير: {string.Join(" | ", quality.CriticalIssues.Select(i => i.FieldLabel))}";
-                    return RedirectToAction(nameof(Details), new { id });
-                }
-            }
+           
 
             // 3. تنفيذ عملية المراجعة والحفظ (من الصورة الثانية)
             var success = await _reportService.ReviewReportAsync(id, isApproved, notes);

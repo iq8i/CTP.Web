@@ -1,16 +1,511 @@
-﻿@{
+﻿@model CTP.Web.Areas.Leader.Models.LeaderDashboardViewModel
+@{
     Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, #073B49 0%, #0B4F61 50%, #106981 100%);
+            color: white;
+            padding: 32px 36px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(7, 59, 73, 0.25);
+        }
+
+            .hero-banner::after {
+                content: "";
+                position: absolute;
+                top: -50px;
+                inset-inline-end: -50px;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, rgba(201, 162, 39, 0.18), transparent 70%);
+                pointer-events: none;
+            }
+
+            .hero-banner h1 {
+                font-size: 1.8rem;
+                font-weight: 800;
+                margin-bottom: 8px;
+            }
+
+            .hero-banner .hero-sub {
+                opacity: 0.9;
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+            .hero-stat .hero-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.12);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.3rem;
+                color: #E6D39A;
+            }
+
+            .hero-stat .hero-num {
+                font-size: 1.6rem;
+                font-weight: 800;
+                line-height: 1.1;
+            }
+
+            .hero-stat .hero-lbl {
+                font-size: 0.75rem;
+                opacity: 0.8;
+            }
+
+        .kpi-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+            box-shadow: 0 4px 12px rgba(7, 59, 73, 0.06);
+            transition: transform 0.2s;
+        }
+
+            .kpi-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(7, 59, 73, 0.1);
+            }
+
+            .kpi-card h6 {
+                font-size: 1rem;
+            }
+
+        .progress-panel {
+            background: linear-gradient(180deg, #FFFFFF, #F9FCFD);
+            border: 1px solid #D6E5EA;
+            border-right: 4px solid #C9A227;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+        }
+
+            .progress-panel .progress {
+                height: 14px;
+                border-radius: 10px;
+                background: #EAF2F4;
+            }
+
+            .progress-panel .progress-bar {
+                background: linear-gradient(90deg, #A98418, #C9A227, #E6D39A);
+                border-radius: 10px;
+            }
+
+        .exec-summary {
+            background: linear-gradient(135deg, #FEFCF3 0%, #FFFFFF 100%);
+            border: 1px solid rgba(201, 162, 39, 0.4);
+            border-right: 4px solid #C9A227;
+            border-radius: 14px;
+            padding: 24px;
+            line-height: 1.9;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+
+        .decision-card {
+            background: #FEF2F2;
+            border-right: 4px solid #9C3D2E;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+        }
+
+            .decision-card .dec-title {
+                font-weight: 700;
+                color: #073B49;
+                font-size: 0.9rem;
+                margin-bottom: 4px;
+            }
+
+            .decision-card .dec-meta {
+                font-size: 0.75rem;
+                color: #537382;
+            }
+
+        .risk-card {
+            border-right: 4px solid #B07A1E;
+            background: #FDF9EC;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+        }
+
+        .impact-mini {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 12px;
+            background: #F8FAFC;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+            .impact-mini .impact-arrow {
+                color: #C9A227;
+                font-size: 1.2rem;
+            }
+
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #EAF2F4;
+        }
+
+            .activity-item:last-child {
+                border-bottom: none;
+            }
+
+            .activity-item .activity-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #F5FAFB;
+                flex-shrink: 0;
+            }
+
+        .deck-button {
+            background: linear-gradient(145deg, #F3E7C2, #C9A227 60%, #A98418);
+            color: #073B49;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(201, 162, 39, 0.4);
+        }
+
+            .deck-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(201, 162, 39, 0.5);
+            }
+
+        .view-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #0B4F61;
+            background: linear-gradient(145deg, #F8FAFC, #EAF2F4);
+            border: 1px solid #D6E5EA;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(7, 59, 73, 0.05);
+        }
+
+            .view-all-btn:hover {
+                background: linear-gradient(145deg, #EAF2F4, #D6E5EA);
+                border-color: #106981;
+                color: #106981;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(16, 105, 129, 0.15);
+            }
+
+            .view-all-btn i {
+                font-size: 0.75rem;
+                transition: transform 0.2s ease;
+            }
+
+            .view-all-btn:hover i {
+                transform: translateX(-3px);
+            }
+    </style>
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    <div class="moda-card border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-award" style="font-size: 72px; color: #073B49;"></i>
-        <h3 class="fw-bold mt-3">الموجز الاستراتيجي لمعالي القائد</h3>
-        <p class="text-muted mt-2 mb-4">
-            هذه المساحة مخصصة لمعالي القائد لعرض حالة البرنامج والأثر المتحقق.
-        </p>
-        <span class="badge bg-warning text-dark px-4 py-2">قيد الإنشاء — المرحلة (ب)</span>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Hero Banner                                         -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="hero-banner">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1>مرحباً معالي القائد</h1>
+                <p class="hero-sub mb-0">
+                    نظرة استراتيجية شاملة على برنامج التغيير والتحول — @DateTime.Now.ToString("yyyy/MM/dd")
+                </p>
+            </div>
+            <a asp-action="Index"
+               asp-controller="ChairWorkCenter"
+               asp-area="Committee"
+               class="btn btn-sm btn-outline-light d-none">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+            </a>
+        </div>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-speedometer2"></i></div>
+                <div>
+                    <div class="hero-num">@Model.AvgReadiness%</div>
+                    <div class="hero-lbl">الجاهزية العامة</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div>
+                    <div class="hero-num">@Model.AvgAdoption%</div>
+                    <div class="hero-lbl">التبني العام</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-journal-check"></i></div>
+                <div>
+                    <div class="hero-num">@Model.ApprovedRecommendations</div>
+                    <div class="hero-lbl">توصية معتمدة</div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Row 1: الملخص التنفيذي + حالة البرنامج               -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="row g-4 mb-4">
+
+        <!-- الملخص التنفيذي المعتمد -->
+        <div class="col-lg-8">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-file-text me-2"></i> الملخص التنفيذي المعتمد
+                </h6>
+                <div class="exec-summary">
+                    @Model.ExecutiveSummary
+                </div>
+            </div>
+        </div>
+
+        <!-- حالة البرنامج + العرض المرئي -->
+        <div class="col-lg-4">
+            <div class="d-flex flex-column gap-3 h-100">
+
+                <!-- حالة البرنامج -->
+                <div class="progress-panel">
+                    <h6 class="fw-bold mb-2" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-signpost-split me-2"></i> حالة البرنامج
+                    </h6>
+                    <p class="small text-muted mb-2">
+                        المرحلة الحالية: <strong style="color: #073B49;">@Model.CurrentPhase</strong>
+                    </p>
+                    <p class="small text-muted mb-3">@Model.RoadmapStatus</p>
+
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                        <span class="fw-bold">نسبة التقدم في خارطة الطريق</span>
+                        <span class="fw-bold" style="color: #A98418;">@Model.RoadmapProgressPercent%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: @Model.RoadmapProgressPercent%"></div>
+                    </div>
+                </div>
+
+                <!-- العرض المرئي -->
+                <div class="kpi-card flex-grow-1">
+                    <h6 class="fw-bold mb-2" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-easel me-2"></i> العرض المرئي الخاص بمعالي القائد
+                    </h6>
+                    <p class="small text-muted mb-3">
+                        عرض تنفيذي موجز (5 شرائح) بمستوى العرض الوزاري.
+                    </p>
+                    <button type="button" class="deck-button" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>
+                        فتح العرض / طباعة PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Row 2: الأثر + قرارات الدعم + المخاطر                -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="row g-4 mb-4">
+
+        <!-- الأثر المتحقق -->
+        <div class="col-lg-4">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-graph-up me-2"></i> الأثر المتحقق
+                    </h6>
+                    <a asp-action="Impact" class="moda-btn moda-btn-outline">
+                        
+                        عرض الكل
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                </div>
+
+                @if (Model.TopImpacts.Any())
+                {
+                    @foreach (var impact in Model.TopImpacts)
+                    {
+                        <div class="impact-mini">
+                            <div>
+                                <div class="text-muted" style="font-size: 0.7rem;">قبل</div>
+                                <div class="fw-bold" style="color: #537382;">@impact.Before%</div>
+                            </div>
+                            <div class="impact-arrow"><i class="bi bi-arrow-left"></i></div>
+                            <div>
+                                <div class="text-muted" style="font-size: 0.7rem;">بعد</div>
+                                <div class="fw-bold" style="color: #3E7C3E;">@impact.After%</div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="alert alert-success small border-0 mb-0 mt-3">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        <strong>@Model.ImpactVerifiedCount مؤشرات تحققت</strong> بمتوسط +@Model.AvgImpactDelta نقطة
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-hourglass fs-1 d-block mb-2"></i>
+                        <small>الأثر قيد القياس</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- قرارات الدعم عند الحاجة -->
+        <div class="col-lg-4">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-shield-exclamation me-2"></i> قرارات الدعم عند الحاجة
+                </h6>
+
+                @if (Model.SupportDecisions.Any())
+                {
+                    @foreach (var dec in Model.SupportDecisions)
+                    {
+                        <div class="decision-card">
+                            <div class="dec-title">
+                                @(dec.Title.Length > 90 ? dec.Title.Substring(0, 90) + "..." : dec.Title)
+                            </div>
+                            <div class="dec-meta">
+                                <i class="bi bi-building me-1"></i>@dec.Entity
+                                <span class="mx-2">|</span>
+                                <i class="bi bi-person me-1"></i>@dec.RequestedBy
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
+                        <small>لا توجد قرارات دعم مطلوبة حالياً</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- المخاطر الحرجة -->
+        <div class="col-lg-4">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-exclamation-triangle me-2"></i> المخاطر الحرجة عند الحاجة
+                </h6>
+
+                @if (Model.CriticalRisks.Any())
+                {
+                    @foreach (var risk in Model.CriticalRisks)
+                    {
+                        <div class="risk-card">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <div class="fw-bold small" style="color: #073B49;">
+                                    @(risk.Title.Length > 80 ? risk.Title.Substring(0, 80) + "..." : risk.Title)
+                                </div>
+                                <span class="badge @risk.BadgeClass">@risk.Level</span>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.72rem;">
+                                <i class="bi bi-building me-1"></i>@risk.Entity
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-shield-check fs-1 d-block mb-2 text-success"></i>
+                        <small>لا توجد مخاطر حرجة مرفوعة</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Row 3: آخر النشاطات + موجز الاستخدام                 -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div class="row g-4">
+
+        <!-- آخر النشاطات -->
+        <div class="col-lg-8">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-activity me-2"></i> آخر النشاطات الاستراتيجية
+                </h6>
+
+                @if (Model.RecentActivities.Any())
+                {
+                    @foreach (var activity in Model.RecentActivities)
+                    {
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="bi @activity.Icon" style="color: @activity.Color;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div style="font-size: 0.85rem; line-height: 1.4;">@activity.Title</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">@activity.TimeAgo</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <small>لا توجد أنشطة حديثة</small>
+                    </div>
+                }
+            </div>
+        </div>
+        
+    </div>
+
 </div>

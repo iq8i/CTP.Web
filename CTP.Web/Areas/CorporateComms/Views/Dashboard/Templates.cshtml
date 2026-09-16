@@ -1,13 +1,123 @@
-﻿@{
+﻿@model CTP.Web.Areas.CorporateComms.Models.CommsDashboardViewModel
+@{
     Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .template-card-lg {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 22px;
+            height: 100%;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .template-card-lg::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                inset-inline: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #C9A227, #E6D39A);
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+
+            .template-card-lg:hover {
+                border-color: #C9A227;
+                transform: translateY(-3px);
+                box-shadow: 0 12px 28px rgba(201, 162, 39, 0.18);
+            }
+
+                .template-card-lg:hover::before {
+                    opacity: 1;
+                }
+
+            .template-card-lg .tpl-icon-lg {
+                width: 54px;
+                height: 54px;
+                border-radius: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                margin-bottom: 14px;
+            }
+
+            .template-card-lg .tpl-title-lg {
+                font-weight: 800;
+                color: #073B49;
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+
+            .template-card-lg .tpl-desc-lg {
+                font-size: 0.82rem;
+                color: #537382;
+                line-height: 1.6;
+                margin-bottom: 14px;
+                min-height: 40px;
+            }
+
+            .template-card-lg .tpl-file {
+                font-size: 0.72rem;
+                color: #8A6A12;
+                font-weight: 600;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 10px;
+                background: #FDF9EC;
+                border: 1px solid rgba(201, 162, 39, 0.3);
+                border-radius: 20px;
+            }
+    </style>
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    <div class="moda-card border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-chat-quote" style="font-size: 72px; color: #C9A227;"></i>
-        <h3 class="fw-bold mt-3">قوالب الرسائل</h3>
-        <p class="text-muted mt-2 mb-4">قيد الإنشاء — المرحلة (ب)</p>
+
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> عودة للمساحة
+        </a>
     </div>
+
+    <!-- Hero صغير -->
+    <div class="moda-card border-0 shadow-sm p-4 mb-4" style="background: linear-gradient(135deg, #FDF9EC, #FFFFFF); border-right: 4px solid #C9A227 !important;">
+        <h5 class="fw-bold mb-2" style="color: #073B49;">
+            <i class="bi bi-folder-fill me-2 text-warning"></i>
+            حزمة قوالب الاتصال المؤسسي
+        </h5>
+        <p class="text-muted mb-0">
+            10 قوالب معتمدة جاهزة للاستخدام — تشمل التدشين، الإعلان، القيادة، الأسئلة الشائعة، والتوعية.
+        </p>
+    </div>
+
+    <!-- شبكة القوالب -->
+    <div class="row g-4">
+        @foreach (var tpl in Model.Templates)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="template-card-lg">
+                    <div class="tpl-icon-lg bg-@tpl.Color-subtle text-@tpl.Color">
+                        <i class="bi @tpl.Icon"></i>
+                    </div>
+                    <div class="tpl-title-lg">@tpl.Title</div>
+                    <div class="tpl-desc-lg">@tpl.Description</div>
+                    <span class="tpl-file">
+                        <i class="bi bi-file-earmark-word"></i>
+                        @tpl.FileName
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+
 </div>

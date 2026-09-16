@@ -217,11 +217,11 @@
         <fieldset class="ctp-fset">
             <legend><i class="bi bi-speedometer2 me-1"></i> المؤشرات (نسبة من 100)</legend>
             <div class="ctp-form-grid mb-3">
-                <div class="ctp-form-group"><label asp-for="AdkarAwareness">الوعي (A)</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarA" /></div>
-                <div class="ctp-form-group"><label asp-for="AdkarDesire">الرغبة (D)</label><input asp-for="AdkarDesire" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarD" /></div>
-                <div class="ctp-form-group"><label asp-for="AdkarKnowledge">المعرفة (K)</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarK" /></div>
-                <div class="ctp-form-group"><label asp-for="AdkarAbility">القدرة على التطبيق (A)</label><input asp-for="AdkarAbility" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarAb" /></div>
-                <div class="ctp-form-group"><label asp-for="AdkarReinforcement">التعزيز والاستدامة (R)</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarR" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarAwareness">الوعي (A)</label><input asp-for="AdkarAwareness" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarA" value="@(Model.AdkarAwareness > 0 ? Model.AdkarAwareness : 0)" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarDesire">الرغبة (D)</label><input asp-for="AdkarDesire" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarD" value="@(Model.AdkarDesire > 0 ? Model.AdkarDesire : 0)" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarKnowledge">المعرفة (K)</label><input asp-for="AdkarKnowledge" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarK" value="@(Model.AdkarKnowledge > 0 ? Model.AdkarKnowledge : 0)" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarAbility">القدرة على التطبيق (A)</label><input asp-for="AdkarAbility" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarAb" value="@(Model.AdkarAbility > 0 ? Model.AdkarAbility : 0)" /></div>
+                <div class="ctp-form-group"><label asp-for="AdkarReinforcement">التعزيز والاستدامة (R)</label><input asp-for="AdkarReinforcement" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarR" value="@(Model.AdkarReinforcement > 0 ? Model.AdkarReinforcement : 0)" /></div>
             </div>
             <div class="row g-3">
                 <div class="col-md-6"><div class="score-box"><span class="text-muted small d-block">الجاهزية العامة</span><h4 class="fw-bold mb-0 text-primary" id="dispReadiness">0%</h4></div></div>

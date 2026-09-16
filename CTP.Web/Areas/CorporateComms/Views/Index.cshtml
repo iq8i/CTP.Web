@@ -1,0 +1,429 @@
+﻿@model CTP.Web.Areas.CorporateComms.Models.CommsDashboardViewModel
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, #A98418 0%, #C9A227 50%, #E6D39A 100%);
+            color: #073B49;
+            padding: 32px 36px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(201, 162, 39, 0.28);
+        }
+
+            .hero-banner::after {
+                content: "";
+                position: absolute;
+                top: -50px;
+                inset-inline-end: -50px;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 70%);
+                pointer-events: none;
+            }
+
+            .hero-banner h1 {
+                font-size: 1.8rem;
+                font-weight: 800;
+                margin-bottom: 8px;
+                color: #073B49;
+            }
+
+            .hero-banner .hero-sub {
+                opacity: 0.85;
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(7, 59, 73, 0.15);
+        }
+
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+            .hero-stat .hero-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                background: rgba(7, 59, 73, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.3rem;
+                color: #073B49;
+            }
+
+            .hero-stat .hero-num {
+                font-size: 1.6rem;
+                font-weight: 800;
+                line-height: 1.1;
+                color: #073B49;
+            }
+
+            .hero-stat .hero-lbl {
+                font-size: 0.75rem;
+                opacity: 0.75;
+                color: #073B49;
+            }
+
+        .kpi-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+            box-shadow: 0 4px 12px rgba(7, 59, 73, 0.06);
+            transition: transform 0.2s;
+        }
+
+            .kpi-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(7, 59, 73, 0.1);
+            }
+
+        .template-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 12px;
+            padding: 16px;
+            height: 100%;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+            .template-card:hover {
+                border-color: #C9A227;
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(201, 162, 39, 0.15);
+            }
+
+            .template-card .tpl-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                margin-bottom: 12px;
+            }
+
+            .template-card .tpl-title {
+                font-weight: 700;
+                color: #073B49;
+                font-size: 0.92rem;
+                margin-bottom: 6px;
+            }
+
+            .template-card .tpl-desc {
+                font-size: 0.78rem;
+                color: #537382;
+                line-height: 1.5;
+            }
+
+        .change-item {
+            border-right: 3px solid #C9A227;
+            background: #FDF9EC;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+        }
+
+            .change-item .chg-name {
+                font-weight: 700;
+                color: #073B49;
+                font-size: 0.85rem;
+                margin-bottom: 4px;
+            }
+
+            .change-item .chg-meta {
+                font-size: 0.72rem;
+                color: #537382;
+            }
+
+        .announcement-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+            .announcement-item:last-child {
+                border-bottom: none;
+            }
+
+        .guideline-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #E2E8F0;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+            .guideline-item:last-child {
+                border-bottom: none;
+            }
+
+            .guideline-item::before {
+                content: "✓";
+                color: #3E7C3E;
+                font-weight: 700;
+                flex-shrink: 0;
+            }
+
+        .view-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #0B4F61;
+            background: linear-gradient(145deg, #F8FAFC, #EAF2F4);
+            border: 1px solid #D6E5EA;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+            .view-all-btn:hover {
+                background: linear-gradient(145deg, #EAF2F4, #D6E5EA);
+                border-color: #106981;
+                color: #106981;
+                transform: translateY(-1px);
+            }
+
+        .quick-action {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+            .quick-action a {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 16px;
+                background: linear-gradient(145deg, #F3E7C2, #C9A227);
+                color: #073B49;
+                font-weight: 600;
+                font-size: 0.85rem;
+                border-radius: 10px;
+                text-decoration: none;
+                transition: all 0.2s;
+                box-shadow: 0 4px 10px rgba(201, 162, 39, 0.3);
+            }
+
+                .quick-action a:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 15px rgba(201, 162, 39, 0.4);
+                }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- Hero -->
+    <div class="hero-banner">
+        <h1>مرحباً الاتصال المؤسسي</h1>
+        <p class="hero-sub">توحيد رسائل التغيير ورفع الوعي والفهم بلغة داعمة موحدة</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-file-text"></i></div>
+                <div>
+                    <div class="hero-num">@Model.TotalTemplates</div>
+                    <div class="hero-lbl">قالب جاهز</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-kanban"></i></div>
+                <div>
+                    <div class="hero-num">@Model.ActiveChanges</div>
+                    <div class="hero-lbl">تغيير جارٍ</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-megaphone"></i></div>
+                <div>
+                    <div class="hero-num">@Model.PublishedAnnouncements</div>
+                    <div class="hero-lbl">إعلان منشور</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-pencil-square"></i></div>
+                <div>
+                    <div class="hero-num">@Model.DraftMessages</div>
+                    <div class="hero-lbl">مسودة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أزرار سريعة -->
+    <div class="quick-action mb-4">
+        <a asp-action="Templates">
+            <i class="bi bi-folder-fill"></i> فتح حزمة القوالب
+        </a>
+        <a asp-action="Announcements">
+            <i class="bi bi-megaphone-fill"></i> سجل الإعلانات
+        </a>
+    </div>
+
+    <!-- Row 1: القوالب + إرشادات النشر -->
+    <div class="row g-4 mb-4">
+
+        <!-- حزمة القوالب -->
+        <div class="col-lg-8">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-folder-fill me-2 text-warning"></i> حزمة القوالب الجاهزة (10 قوالب)
+                    </h6>
+                    <a asp-action="Templates" class="view-all-btn">
+                        عرض الكل <i class="bi bi-arrow-left"></i>
+                    </a>
+                </div>
+
+                <div class="row g-3">
+                    @foreach (var tpl in Model.Templates.Take(6))
+                    {
+                        <div class="col-md-4">
+                            <div class="template-card">
+                                <div class="tpl-icon bg-@tpl.Color-subtle text-@tpl.Color">
+                                    <i class="bi @tpl.Icon"></i>
+                                </div>
+                                <div class="tpl-title">@tpl.Title</div>
+                                <div class="tpl-desc">@tpl.Description</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- إرشادات النشر -->
+        <div class="col-lg-4">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-bookmark-check me-2"></i> إرشادات النشر
+                </h6>
+
+                <div style="max-height: 400px; overflow-y: auto;">
+                    @foreach (var guide in Model.PublishingGuidelines)
+                    {
+                        <div class="guideline-item">@guide</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: التغييرات الجارية + الإعلانات المنشورة -->
+    <div class="row g-4">
+
+        <!-- التغييرات الجارية -->
+        <div class="col-lg-7">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-kanban me-2"></i> التغييرات الجارية للاستناد عليها
+                    </h6>
+                    <span class="badge bg-warning text-dark">@Model.ActiveChanges تغيير</span>
+                </div>
+
+                @if (Model.ActiveChangesList.Any())
+                {
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        @foreach (var change in Model.ActiveChangesList)
+                        {
+                            <div class="change-item">
+                                <div class="chg-name">@change.ChangeName</div>
+                                <div class="chg-meta">
+                                    <i class="bi bi-diagram-3 me-1"></i>@change.ChangeType
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-signpost me-1"></i>@change.CurrentStage
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-building me-1"></i>@change.EntityName
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-calendar me-1"></i>@change.ApprovedDate
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <small>لا توجد تغييرات معتمدة بعد</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- الإعلانات المنشورة -->
+        <div class="col-lg-5">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-megaphone me-2"></i> آخر الإعلانات المنشورة
+                    </h6>
+                    <a asp-action="Announcements" class="view-all-btn">
+                        عرض الكل <i class="bi bi-arrow-left"></i>
+                    </a>
+                </div>
+
+                @if (Model.PublishedAnnouncementsList.Any())
+                {
+                    @foreach (var ann in Model.PublishedAnnouncementsList)
+                    {
+                        <div class="announcement-item">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold" style="font-size: 0.85rem; color: #073B49;">
+                                    @ann.Title
+                                </div>
+                                <div class="text-muted" style="font-size: 0.72rem;">
+                                    <i class="bi bi-tag me-1"></i>@ann.Type
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-people me-1"></i>@ann.Audience
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge @ann.StatusBadge">@ann.Date</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <small>لا توجد إعلانات منشورة</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>

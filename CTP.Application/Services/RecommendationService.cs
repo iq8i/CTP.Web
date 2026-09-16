@@ -182,5 +182,32 @@ namespace CTP.Application.Services
 
             return recNumber;
         }
+        public async Task<bool> UpdateRecommendationEscalationAsync(int recommendationId, string target)
+        {
+            var allRecs = await _recommendationRepository.GetAllWithDetailsAsync();
+            var rec = allRecs.FirstOrDefault(r => r.Id == recommendationId);
+            if (rec == null) return false;
+
+            rec.Status = target switch
+            {
+                "deputy" => CTP.Domain.Enums.RecommendationStatus.EscalatedToDeputy,
+                "leader" => CTP.Domain.Enums.RecommendationStatus.EscalatedToLeader,
+                "return" => CTP.Domain.Enums.RecommendationStatus.Rejected,   // ← إعادة للجنة
+                _ => rec.Status
+            };
+
+            rec.Escalation = target switch
+            {
+                "deputy" => "سعادة النائب",
+                "leader" => "معالي القائد",
+                "return" => "أعيدت للجنة",
+                _ => rec.Escalation
+            };
+
+            rec.ReviewedDate = DateTime.Now;
+
+            await _recommendationRepository.SaveChangesAsync();
+            return true;
+        }
     }
 }

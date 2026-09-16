@@ -1,0 +1,234 @@
+﻿@model CTP.Web.Areas.ChiefOfStaff.Models.ChiefRecommendationReviewViewModel
+@{
+    Layout = "_Layout";
+    var rec = Model.Recommendation;
+    var report = Model.SourceReport;
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- زر الرجوع -->
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> رجوع للوحة
+        </a>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ═══ العمود الأيسر: التقرير الكامل ═══ -->
+        <div class="col-lg-8">
+
+            <!-- ترويسة التقرير -->
+            <div class="moda-card border-0 shadow-sm p-4 mb-3"
+                 style="border-right: 4px solid #106981 !important;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color: #073B49;">
+                            @report?.ReportNumber — @report?.ChangeName
+                        </h5>
+                        <div class="text-muted small">
+                            <i class="bi bi-building me-1"></i>@report?.Organization?.EntityName
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-calendar me-1"></i>@report?.Month @report?.Year
+                            <span class="mx-2">|</span>
+                            <span class="badge bg-secondary">@report?.CurrentStage</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">الجاهزية / التبني</small>
+                        <span class="badge bg-primary fs-6 me-1">@report?.ReadinessScore%</span>
+                        <span class="badge bg-success fs-6">@report?.AdoptionScore%</span>
+                    </div>
+                </div>
+
+                <!-- تفاصيل التغيير -->
+                <h6 class="fw-bold mb-2 mt-4" style="color: #073B49; font-size: 0.9rem;">
+                    <i class="bi bi-card-text me-1"></i> تفاصيل التغيير
+                </h6>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="small fw-bold text-muted mb-1">ما التغيير؟</div>
+                            <p class="mb-0 small">@report?.ChangeSummary</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="small fw-bold text-muted mb-1">لماذا مهم؟</div>
+                            <p class="mb-0 small">@report?.WhyImportant</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- التحديات -->
+                <h6 class="fw-bold mb-2 mt-4" style="color: #073B49; font-size: 0.9rem;">
+                    <i class="bi bi-shield-exclamation me-1"></i> التحديات والدعم
+                </h6>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-white border rounded">
+                            <div class="small fw-bold text-danger mb-1">العوائق</div>
+                            <p class="mb-0 small">@report?.Obstacles</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-white border rounded">
+                            <div class="small fw-bold text-info mb-1">الدعم المطلوب</div>
+                            <p class="mb-0 small">@report?.RequiredSupport</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تفاصيل التوصية -->
+            <div class="moda-card border-0 shadow-sm p-4"
+                 style="border-right: 4px solid #C9A227 !important; background: linear-gradient(135deg, #FEFCF3, #FFFFFF);">
+                <h5 class="fw-bold mb-3" style="color: #073B49;">
+                    <i class="bi bi-journal-check me-2 text-warning"></i>
+                    التوصية المُعتمدة — @rec.RecommendationNumber
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="small text-muted">الفجوة</div>
+                            <div class="fw-bold small">@rec.GapType</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="small text-muted">الدليل / المؤشر</div>
+                            <div class="fw-bold small">@(string.IsNullOrEmpty(rec.Evidence) ? "—" : rec.Evidence)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="small text-muted">الإجراء المقترح</div>
+                            <div class="fw-bold small">@rec.SuggestedAction</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="small text-muted">المالك</div>
+                            <div class="fw-bold small">@rec.ActionOwner</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="small text-muted">المدة</div>
+                            <div class="fw-bold small">@rec.Duration</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="small text-muted">مؤشر النجاح</div>
+                            <div class="fw-bold small">@rec.SuccessIndicator</div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="small text-muted">الأثر المتوقع</div>
+                            <div class="fw-bold small">@(string.IsNullOrEmpty(rec.ExpectedImpact) ? "—" : rec.ExpectedImpact)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قرار رئيس الفريق -->
+                @if (rec.Status == CTP.Domain.Enums.RecommendationStatus.Approved)
+                {
+                    <hr class="my-4" />
+
+                    <h6 class="fw-bold mb-3" style="color: #073B49;">
+                        <i class="bi bi-shield-check me-1"></i> قرارك كرئيس فريق عمل القائد
+                    </h6>
+
+                    <form method="post" asp-action="Escalate">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="recommendationId" value="@rec.Id" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">ملاحظات (اختياري)</label>
+                            <textarea name="notes" class="form-control" rows="3"
+                                      placeholder="أضف ملاحظاتك..."></textarea>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <button type="submit" name="target" value="deputy"
+                                        class="btn btn-warning w-100 py-3">
+                                    <i class="bi bi-person-badge me-2"></i>
+                                    تصعيد لسعادة النائب
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" name="target" value="leader"
+                                        class="btn btn-danger w-100 py-3">
+                                    <i class="bi bi-award me-2"></i>
+                                    تصعيد لمعالي القائد
+                                </button>
+                            </div>
+                            <div class="col-md-12">
+                                <button type="submit" name="target" value="return"
+                                        class="btn btn-outline-secondary w-100 py-2">
+                                    <i class="bi bi-arrow-return-left me-2"></i>
+                                    إعادة للجنة للمراجعة
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                }
+                else if (rec.Status == CTP.Domain.Enums.RecommendationStatus.EscalatedToDeputy)
+                {
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="bi bi-arrow-up-circle-fill me-2"></i>
+                        <strong>تم تصعيدها لسعادة النائب</strong>
+                    </div>
+                }
+                else if (rec.Status == CTP.Domain.Enums.RecommendationStatus.EscalatedToLeader)
+                {
+                    <div class="alert alert-danger mt-3 mb-0">
+                        <i class="bi bi-arrow-up-circle-fill me-2"></i>
+                        <strong>تم تصعيدها لمعالي القائد</strong>
+                    </div>
+                }
+                else if (rec.Status == CTP.Domain.Enums.RecommendationStatus.Rejected)
+                {
+                    <div class="alert alert-secondary mt-3 mb-0">
+                        <i class="bi bi-arrow-return-left me-2"></i>
+                        <strong>أعيدت للجنة</strong>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ═══ العمود الأيمن: سجل القرارات ═══ -->
+        <div class="col-lg-4">
+            <div class="moda-card border-0 shadow-sm p-4">
+                <h6 class="fw-bold mb-3" style="color: #073B49;">
+                    <i class="bi bi-clock-history me-2"></i> سجل القرارات
+                </h6>
+
+                @foreach (var decision in Model.PreviousDecisions)
+                {
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="badge @decision.BadgeClass">@decision.Action</span>
+                            <small class="text-muted">@decision.Date</small>
+                        </div>
+                        <div class="small fw-bold" style="color: #073B49;">@decision.Actor</div>
+                        @if (!string.IsNullOrWhiteSpace(decision.Notes) && decision.Notes != "بدون ملاحظات")
+                        {
+                            <p class="small text-muted mb-0 mt-1">
+                                <i class="bi bi-chat-left-text me-1"></i>@decision.Notes
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>

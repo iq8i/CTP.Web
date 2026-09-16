@@ -45,5 +45,6 @@ namespace CTP.Application.Interfaces.Services
             string supportDecision,
             string escalation,
             bool requiresSupport);
+        Task<bool> UpdateRecommendationEscalationAsync(int recommendationId, string target);
     }
 }

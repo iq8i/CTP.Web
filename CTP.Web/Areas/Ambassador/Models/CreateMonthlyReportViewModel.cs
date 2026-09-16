@@ -19,18 +19,22 @@ namespace CTP.Web.Areas.Ambassador.Models
 
         public string ChangeType { get; set; } = "تنظيمي";
         public string CurrentStage { get; set; } = "تعريف";
-        public string? AffectedGroups { get; set; }
+        public string AffectedGroups { get; set; }
         public string ImpactScope { get; set; } = "الجهة";
-        public string? MostInNeedGroup { get; set; }
+        public string MostInNeedGroup { get; set; }
 
         [Range(0, 100, ErrorMessage = "النسبة يجب أن تكون بين 0 و 100")]
         public int ActivityCompletionRate { get; set; } = 0;
-
-        public string? ChangeSummary { get; set; }
-        public string? WhyImportant { get; set; }
-        public string? WhatWillChange { get; set; }
-        public string? WhatWillNotChange { get; set; }
-        public string? ExecutedActivities { get; set; }
+        [Required(ErrorMessage = "ملخص التغيير مطلوب")]
+        public string ChangeSummary { get; set; }
+        [Required(ErrorMessage = "أهمية التغيير مطلوبة")]
+        public string WhyImportant { get; set; }
+        [Required(ErrorMessage = "ماذا سيتغير مطلوب")]
+        public string WhatWillChange { get; set; }
+        [Required(ErrorMessage = "ماذا لن يتغير مطلوب")]
+        public string WhatWillNotChange { get; set; }
+        [Required(ErrorMessage = "الأنشطة المنفذة مطلوبة")]
+        public string ExecutedActivities { get; set; }
 
         // 3. مؤشرات ADKAR
         [Range(0, 100)] public int AdkarAwareness { get; set; } = 0;
@@ -40,12 +44,14 @@ namespace CTP.Web.Areas.Ambassador.Models
         [Range(0, 100)] public int AdkarReinforcement { get; set; } = 0;
 
         // 4. التحديات والدعم
-        public string? Obstacles { get; set; }
-        public string? AdoptionBarriers { get; set; }
-        public string? RequiredSupport { get; set; }
-        public string? Risks { get; set; }
-        public string? ImprovementOpportunities { get; set; }
-        public string? SuccessStories { get; set; }
+        [Required(ErrorMessage = "العوائق مطلوبة")]
+        public string Obstacles { get; set; }
+        public string AdoptionBarriers { get; set; }
+        [Required(ErrorMessage = "الدعم المطلوب إلزامي")]
+        public string RequiredSupport { get; set; }
+        public string Risks { get; set; }
+        public string ImprovementOpportunities { get; set; }
+        public string SuccessStories { get; set; }
 
         public string ActionType { get; set; } = "Draft";
     }

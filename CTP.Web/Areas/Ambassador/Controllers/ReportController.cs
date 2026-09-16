@@ -14,14 +14,14 @@ namespace CTP.Web.Areas.Ambassador.Controllers
     public class ReportController : Controller
     {
         private readonly IMonthlyReportService _reportService;
-        private readonly IReportQualityService _qualityService;
+        
 
         public ReportController(
-            IMonthlyReportService reportService,
-            IReportQualityService qualityService)
+            IMonthlyReportService reportService
+          )
         {
             _reportService = reportService;
-            _qualityService = qualityService;
+            
         }
 
         [HttpGet]
@@ -93,19 +93,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
                 SubmittedDate = model.ActionType == "Submit" ? DateTime.Now : null
             };
 
-            // ─── 3. فحص الجودة ───
-            var qualityResult = model.ActionType == "Submit"
-                ? _qualityService.CheckForSubmission(report)
-                : _qualityService.CheckForDraft(report);
-
-            // ─── 4. إذا Submit وفيه مشاكل → ارجع النموذج مع الأخطاء ───
-            if (model.ActionType == "Submit" && !qualityResult.IsValid)
-            {
-                ViewBag.QualityIssues = qualityResult.Issues;
-                ViewBag.QualityScore = qualityResult.QualityPercent;
-                TempData["Error"] = $"لا يمكن رفع التقرير — {qualityResult.CriticalIssues.Count} عنصر يحتاج استكمالاً.";
-                return View(model);
-            }
+            
 
             // ─── 5. الحفظ ───
             await _reportService.CreateReportAsync(report);
@@ -262,20 +250,7 @@ namespace CTP.Web.Areas.Ambassador.Controllers
             report.ReadinessScore = readiness;
             report.AdoptionScore = adoption;
 
-            // ─── فحص الجودة عند Submit ───
-            if (model.ActionType == "Submit")
-            {
-                var qualityResult = _qualityService.CheckForSubmission(report);
-                if (!qualityResult.IsValid)
-                {
-                    ViewBag.QualityIssues = qualityResult.Issues;
-                    ViewBag.QualityScore = qualityResult.QualityPercent;
-                    TempData["Error"] = $"لا يمكن إعادة الإرسال — {qualityResult.CriticalIssues.Count} عنصر يحتاج استكمالاً.";
-                    return View(model);
-                }
-                report.Status = ReportStatus.Submitted;
-                report.SubmittedDate = DateTime.Now;
-            }
+            
 
             await _reportService.UpdateReportAsync(report);
 

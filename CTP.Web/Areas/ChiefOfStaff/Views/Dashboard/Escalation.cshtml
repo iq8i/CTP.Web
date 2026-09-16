@@ -1,13 +1,315 @@
-﻿@{
+﻿@model CTP.Web.Areas.ChiefOfStaff.Models.ChiefDashboardViewModel
+@using CTP.Domain.Enums
+@{
     Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .recommendation-row {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .recommendation-row::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                inset-inline-start: 0;
+                width: 4px;
+                height: 100%;
+                background: #C9A227;
+            }
+
+            .recommendation-row.approved::before {
+                background: #C9A227;
+            }
+
+            .recommendation-row.escalated-deputy::before {
+                background: #B07A1E;
+            }
+
+            .recommendation-row.escalated-leader::before {
+                background: #9C3D2E;
+            }
+
+            .recommendation-row.rejected::before {
+                background: #94A3B8;
+            }
+
+            .recommendation-row:hover {
+                box-shadow: 0 6px 20px rgba(7, 59, 73, 0.08);
+                border-color: #CBD5E1;
+            }
+
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .rec-number {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #8A6A12;
+            background: #FDF9EC;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            white-space: nowrap;
+        }
+
+        .rec-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #073B49;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .rec-action {
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .rec-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed #E2E8F0;
+            font-size: 0.78rem;
+            color: #64748B;
+        }
+
+        .rec-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+            .rec-meta-item i {
+                color: #106981;
+            }
+
+        .rec-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #F1F5F9;
+        }
+
+        .btn-decision {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #073B49;
+            background: linear-gradient(145deg, #F3E7C2, #C9A227);
+            border: 1px solid #C9A227;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(201, 162, 39, 0.2);
+        }
+
+            .btn-decision:hover {
+                background: linear-gradient(145deg, #C9A227, #A98418);
+                color: #FFFFFF;
+                transform: translateY(-1px);
+                box-shadow: 0 5px 15px rgba(201, 162, 39, 0.35);
+                text-decoration: none;
+            }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-approved {
+            background: #EAF2E0;
+            color: #3E7C3E;
+            border: 1px solid #CBDDB6;
+        }
+
+        .status-deputy {
+            background: #FDF6DE;
+            color: #8A6A12;
+            border: 1px solid rgba(201, 162, 39, 0.4);
+        }
+
+        .status-leader {
+            background: #F8E7E2;
+            color: #9C3D2E;
+            border: 1px solid #E5C2B8;
+        }
+
+        .status-rejected {
+            background: #F1F5F9;
+            color: #64748B;
+            border: 1px solid #E2E8F0;
+        }
+    </style>
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    <div class="moda-card border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-send-check" style="font-size: 72px; color: #2E86A0;"></i>
-        <h3 class="fw-bold mt-3">الرفع القيادي</h3>
-        <p class="text-muted mt-2 mb-4">قيد الإنشاء — المرحلة (ب)</p>
+
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> عودة للوحة
+        </a>
     </div>
+
+    <!-- ما يُرفع للنائب -->
+    <div class="moda-card border-0 shadow-sm mb-4" style="border-right: 4px solid #C9A227 !important;">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-person-badge me-2"></i> ما يُرفع لسعادة النائب
+            </h5>
+        </div>
+        <div class="moda-card-body p-4">
+            <ul class="mb-0" style="line-height: 2; font-size: 0.9rem;">
+                <li>الملخص التنفيذي الشهري المعتمد.</li>
+                <li>قرارات الدعم المطلوبة من التوصيات المصعدة.</li>
+                <li>الأثر المتحقق على مستوى المنظومة.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ما يُرفع للقائد -->
+    <div class="moda-card border-0 shadow-sm mb-4" style="border-right: 4px solid #9C3D2E !important;">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-award me-2"></i> ما يُرفع لمعالي القائد
+            </h5>
+        </div>
+        <div class="moda-card-body p-4">
+            <ul class="mb-0" style="line-height: 2; font-size: 0.9rem;">
+                <li>موجز حالة البرنامج والأثر المتحقق — عند الحاجة.</li>
+                <li>قرارات استراتيجية تحتاج توجيهاً من معالي القائد.</li>
+                <li>تقارير المخاطر الحرجة — عند الحاجة.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- التوصيات -->
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-journal-check me-2"></i> كل التوصيات
+            </h5>
+            <span class="badge bg-secondary px-3 py-2">@Model.ReadyRecommendations.Count توصية</span>
+        </div>
+        <div class="moda-card-body p-4">
+            @if (Model.ReadyRecommendations.Any())
+            {
+                foreach (var rec in Model.ReadyRecommendations)
+                {
+                    var rowClass = rec.Status switch
+                    {
+                        RecommendationStatus.Approved => "approved",
+                        RecommendationStatus.EscalatedToDeputy => "escalated-deputy",
+                        RecommendationStatus.EscalatedToLeader => "escalated-leader",
+                        _ => "rejected"
+                    };
+
+                    <div class="recommendation-row @rowClass">
+
+                        <!-- Header: Badge + رقم التوصية -->
+                        <div class="rec-header">
+                            @if (rec.Status == RecommendationStatus.Approved)
+                            {
+                                <span class="status-badge status-approved">
+                                    <i class="bi bi-check-circle-fill"></i> معتمدة
+                                </span>
+                            }
+                            else if (rec.Status == RecommendationStatus.EscalatedToDeputy)
+                            {
+                                <span class="status-badge status-deputy">
+                                    <i class="bi bi-arrow-up-circle-fill"></i> مُصعدة لسعادة النائب
+                                </span>
+                            }
+                            else if (rec.Status == RecommendationStatus.EscalatedToLeader)
+                            {
+                                <span class="status-badge status-leader">
+                                    <i class="bi bi-arrow-up-circle-fill"></i> مُصعدة لمعالي القائد
+                                </span>
+                            }
+                            else if (rec.Status == RecommendationStatus.Rejected)
+                            {
+                                <span class="status-badge status-rejected">
+                                    <i class="bi bi-arrow-return-left"></i> أعيدت للجنة
+                                </span>
+                            }
+                            <span class="rec-number">@rec.RecommendationNumber</span>
+                        </div>
+
+                        <!-- الجهة -->
+                        <div class="rec-title">
+                            <i class="bi bi-building me-2" style="color: #106981;"></i>@rec.EntityName
+                        </div>
+
+                        <!-- الإجراء المقترح -->
+                        <div class="rec-action">
+                            @rec.SuggestedAction
+                        </div>
+
+                        <!-- معلومات -->
+                        <div class="rec-meta">
+                            <div class="rec-meta-item">
+                                <i class="bi bi-person-fill"></i>
+                                <span>@rec.ActionOwner</span>
+                            </div>
+                            <div class="rec-meta-item">
+                                <i class="bi bi-arrow-up-circle"></i>
+                                <span>@rec.Escalation</span>
+                            </div>
+                        </div>
+
+                        <!-- زر — يظهر فقط للمعتمدة -->
+                        @if (rec.Status == RecommendationStatus.Approved)
+                        {
+                            <div class="rec-footer">
+                                <a asp-action="Review"
+                                   asp-route-recommendationId="@rec.Id"
+                                   class="btn-decision">
+                                    <i class="bi bi-shield-check"></i>
+                                    مراجعة واتخاذ قرار
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    <small>لا توجد توصيات</small>
+                </div>
+            }
+        </div>
+    </div>
+
 </div>

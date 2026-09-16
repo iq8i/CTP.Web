@@ -1,13 +1,61 @@
-﻿@{
+﻿@model CTP.Web.Areas.ChiefOfStaff.Models.ChiefDashboardViewModel
+@{
     Layout = "_Layout";
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    <div class="moda-card border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-file-earmark-check" style="font-size: 72px; color: #2E86A0;"></i>
-        <h3 class="fw-bold mt-3">التقارير المعتمدة</h3>
-        <p class="text-muted mt-2 mb-4">قيد الإنشاء — المرحلة (ب)</p>
+
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> عودة للمتابعة
+        </a>
     </div>
+
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header d-flex justify-content-between align-items-center">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-file-earmark-check me-2"></i> التقارير المعتمدة
+            </h5>
+            <span class="badge bg-success px-3 py-2">@Model.ApprovedReports تقرير</span>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>التقرير</th>
+                            <th>الجهة</th>
+                            <th>التغيير</th>
+                            <th>تاريخ الاعتماد</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentApprovedReports.Any())
+                        {
+                            foreach (var r in Model.RecentApprovedReports)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@r.ReportNumber</td>
+                                    <td>@r.EntityName</td>
+                                    <td class="text-start">@r.ChangeName</td>
+                                    <td class="text-muted small">@r.ApprovedDate</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="py-5 text-muted">
+                                    لا توجد تقارير معتمدة
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>

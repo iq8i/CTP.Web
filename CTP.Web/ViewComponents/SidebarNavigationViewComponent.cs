@@ -14,23 +14,30 @@ namespace CTP.Web.ViewComponents
 
             var menu = new List<MenuSection>();
 
-            // ==========================================
-            // 1. القائمة الأساسية (للجميع)
-            // ==========================================
-            var mainSection = new MenuSection { Title = "الرئيسية" };
-            mainSection.Items.Add(new MenuItem
+            // ═══════════════════════════════════════════════════════
+            // القسم العام — يظهر فقط للأدوار التشغيلية
+            // (لا يظهر للقيادة ولا للأدوار التحليلية)
+            // ═══════════════════════════════════════════════════════
+            var publicRoles = new[]
             {
-                Title = "لوحة القياس",
-                IconClass = "bi-speedometer2",
-                Url = "/Home/Index"
-            });
-            mainSection.Items.Add(new MenuItem
+        AppRoles.Staff,           // المنسوب
+        AppRoles.Manager,         // المدير المباشر
+        AppRoles.Ambassador,      // السفير
+        AppRoles.UnitLeader,      // قائد الوحدة
+        AppRoles.CorporateComms   // الاتصال المؤسسي
+    };
+
+            if (publicRoles.Contains(role))
             {
-                Title = "لوحة التغييرات",
-                IconClass = "bi-kanban",
-                Url = "/ChangeBoard/Index"
-            });
-            menu.Add(mainSection);
+                var mainSection = new MenuSection { Title = "عام" };
+                mainSection.Items.Add(new MenuItem
+                {
+                    Title = "التغييرات المعتمدة",
+                    IconClass = "bi-kanban",
+                    Url = "/ChangeBoard/Index"
+                });
+                menu.Add(mainSection);
+            }
 
             // ==========================================
             // 2. مساحة سفير التغيير
@@ -208,20 +215,46 @@ namespace CTP.Web.ViewComponents
                     IconClass = "bi-megaphone",
                     Url = "/CorporateComms/Dashboard/Announcements"
                 });
+                section.Items.Add(new MenuItem
+                {
+                    Title = "لوحة المساحة",
+                    IconClass = "bi-speedometer2",
+                    Url = "/CorporateComms/Dashboard/Index"
+                });
                 menu.Add(section);
             }
-
-            // ==========================================
-            // 9. مساحة المنسوبون (STAFF)
-            // ==========================================
-            else if (role == AppRoles.Staff || role == AppRoles.Manager)
+            // ═══════════════════════════════════════════════════════
+            // مساحة المنسوب
+            // ═══════════════════════════════════════════════════════
+            else if (role == AppRoles.Staff)
             {
                 var section = new MenuSection { Title = "مساحتي" };
                 section.Items.Add(new MenuItem
                 {
+                    Title = "الصفحة الرئيسية",
+                    IconClass = "bi-speedometer2",
+                    Url = "/Staff/Dashboard/Index"
+                });
+                section.Items.Add(new MenuItem
+                {
                     Title = "التغييرات الجارية",
                     IconClass = "bi-kanban",
-                    Url = "/ChangeBoard/Index"
+                    Url = "/Staff/Dashboard/Changes"
+                });
+                menu.Add(section);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // مساحة المدير المباشر
+            // ═══════════════════════════════════════════════════════
+            else if (role == AppRoles.Manager)
+            {
+                var section = new MenuSection { Title = "مساحة القيادة المباشرة" };
+                section.Items.Add(new MenuItem
+                {
+                    Title = "لوحة المساحة",
+                    IconClass = "bi-people",
+                    Url = "/Manager/Dashboard/Index"
                 });
                 menu.Add(section);
             }

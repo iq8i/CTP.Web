@@ -1,0 +1,72 @@
+﻿@model CTP.Web.Areas.Staff.Models.StaffDashboardViewModel
+@{
+    Layout = "_Layout";
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> عودة للمساحة
+        </a>
+    </div>
+
+    @if (Model.ActiveChanges.Any())
+    {
+        foreach (var change in Model.ActiveChanges)
+        {
+            <div class="moda-card border-0 shadow-sm p-4 mb-3" style="border-right: 4px solid #C9A227 !important;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color: #073B49;">@change.ChangeName</h5>
+                        <div class="small text-muted">
+                            <i class="bi bi-building me-1"></i>@change.EntityName
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-diagram-3 me-1"></i>@change.ChangeType
+                        </div>
+                    </div>
+                    <span class="badge bg-primary">@change.CurrentStage</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="small fw-bold mb-1" style="color: #106981;">ما التغيير؟</div>
+                            <p class="mb-0 small">@change.Summary</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="small fw-bold mb-1" style="color: #106981;">ماذا سيتغير؟</div>
+                            <p class="mb-0 small">@change.WhatWillChange</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="small fw-bold mb-1" style="color: #106981;">ماذا لن يتغير؟</div>
+                            <p class="mb-0 small">@change.WhatWillNotChange</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="small fw-bold mb-1" style="color: #106981;">قناة التواصل</div>
+                            <p class="mb-0 small">
+                                <i class="bi bi-person-badge me-1"></i>@change.AmbassadorName
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="moda-card p-5 text-center text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            لا توجد تغييرات معتمدة حالياً
+        </div>
+    }
+
+</div>

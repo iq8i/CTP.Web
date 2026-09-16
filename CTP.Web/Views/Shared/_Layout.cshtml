@@ -82,13 +82,19 @@
                         var actionName = ViewContext.RouteData.Values["action"]?.ToString();
 
                         var areaDisplayNames = new Dictionary<string, string>
-                        {
-                            { "Core", "الرئيسية" },
-                            { "Committee", "مركز الأعمال" },
-                            { "Ambassador", "مساحة السفير" },
-                            { "UnitLeader", "مساحة القيادة" },
-                            { "Administration", "إدارة النظام" }
-                        };
+{
+    { "Core", "الرئيسية" },
+    { "Committee", "مركز أعمال اللجنة" },
+    { "Ambassador", "مساحة السفير" },
+    { "UnitLeader", "مساحة القيادة" },
+    { "Administration", "إدارة النظام" },
+    { "Leader", "معالي القائد" },
+    { "DeputyLeader", "نائب القائد" },
+    { "ChiefOfStaff", "رئيس فريق العمل" },
+    { "CorporateComms", "الاتصال المؤسسي" },
+    { "Staff", "المنسوبون" },
+    { "Manager", "المدراء المباشرون" }
+};
 
                         var areaDisplay = areaName != null && areaDisplayNames.ContainsKey(areaName)
                             ? areaDisplayNames[areaName]

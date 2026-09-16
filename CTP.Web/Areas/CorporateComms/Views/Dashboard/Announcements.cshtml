@@ -1,13 +1,83 @@
-﻿@{
+﻿@model CTP.Web.Areas.CorporateComms.Models.CommsDashboardViewModel
+@{
     Layout = "_Layout";
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    <div class="moda-card border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-megaphone" style="font-size: 72px; color: #C9A227;"></i>
-        <h3 class="fw-bold mt-3">إعلانات التغيير</h3>
-        <p class="text-muted mt-2 mb-4">قيد الإنشاء — المرحلة (ب)</p>
+
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> عودة للمساحة
+        </a>
     </div>
+
+    <!-- KPIs صغيرة -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-card text-center">
+                <div class="fw-bold fs-3" style="color: #3E7C3E;">@Model.PublishedAnnouncements</div>
+                <small class="text-muted">منشور</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card text-center">
+                <div class="fw-bold fs-3" style="color: #B07A1E;">@Model.DraftMessages</div>
+                <small class="text-muted">مسودة</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card text-center">
+                <div class="fw-bold fs-3" style="color: #106981;">@Model.ActiveChanges</div>
+                <small class="text-muted">تغيير جارٍ</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول الإعلانات -->
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-megaphone me-2"></i> سجل الإعلانات المنشورة
+            </h5>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>النوع</th>
+                            <th>الجمهور</th>
+                            <th>تاريخ النشر</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.PublishedAnnouncementsList.Any())
+                        {
+                            @foreach (var ann in Model.PublishedAnnouncementsList)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark text-start">@ann.Title</td>
+                                    <td><span class="badge bg-secondary">@ann.Type</span></td>
+                                    <td>@ann.Audience</td>
+                                    <td class="text-muted small">@ann.Date</td>
+                                    <td><span class="badge @ann.StatusBadge">منشور</span></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="py-5 text-muted">لا توجد إعلانات منشورة</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>

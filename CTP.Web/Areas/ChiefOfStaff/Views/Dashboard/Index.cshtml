@@ -1,13 +1,563 @@
-﻿@{
+﻿@model CTP.Web.Areas.ChiefOfStaff.Models.ChiefDashboardViewModel
+@using CTP.Domain.Enums
+
+@{
     Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, #0B4F61 0%, #106981 50%, #2E86A0 100%);
+            color: white;
+            padding: 32px 36px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(11, 79, 97, 0.25);
+        }
+
+            .hero-banner::after {
+                content: "";
+                position: absolute;
+                top: -50px;
+                inset-inline-end: -50px;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, rgba(201, 162, 39, 0.18), transparent 70%);
+                pointer-events: none;
+            }
+
+            .hero-banner h1 {
+                font-size: 1.8rem;
+                font-weight: 800;
+                margin-bottom: 8px;
+            }
+
+            .hero-banner .hero-sub {
+                opacity: 0.9;
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+            .hero-stat .hero-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.12);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.3rem;
+                color: #E6D39A;
+            }
+
+            .hero-stat .hero-num {
+                font-size: 1.6rem;
+                font-weight: 800;
+                line-height: 1.1;
+            }
+
+            .hero-stat .hero-lbl {
+                font-size: 0.75rem;
+                opacity: 0.8;
+            }
+
+        .kpi-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+            box-shadow: 0 4px 12px rgba(7, 59, 73, 0.06);
+            transition: transform 0.2s;
+        }
+
+            .kpi-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(7, 59, 73, 0.1);
+            }
+
+        .progress-hero {
+            background: linear-gradient(135deg, #FEFCF3 0%, #FFFFFF 100%);
+            border: 1px solid rgba(201, 162, 39, 0.4);
+            border-right: 4px solid #C9A227;
+            border-radius: 14px;
+            padding: 24px;
+        }
+
+            .progress-hero .progress {
+                height: 16px;
+                border-radius: 10px;
+                background: #EAF2F4;
+                margin-top: 12px;
+            }
+
+            .progress-hero .progress-bar {
+                background: linear-gradient(90deg, #A98418, #C9A227, #E6D39A);
+                border-radius: 10px;
+            }
+
+        .entity-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.85rem;
+        }
+
+            .entity-row:last-child {
+                border-bottom: none;
+            }
+
+        .late-item {
+            background: #FEF2F2;
+            border-right: 4px solid #9C3D2E;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .summary-item {
+            background: #F8FAFC;
+            border-right: 3px solid #106981;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .ready-rec {
+            background: #FDF9EC;
+            border-right: 3px solid #C9A227;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+        }
+
+            .ready-rec .rec-num {
+                font-size: 0.72rem;
+                color: #8A6A12;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+
+            .ready-rec .rec-action {
+                font-size: 0.82rem;
+                color: #073B49;
+                line-height: 1.5;
+            }
+
+            .ready-rec .rec-meta {
+                font-size: 0.7rem;
+                color: #537382;
+                margin-top: 4px;
+            }
+
+        .log-item {
+            font-size: 0.82rem;
+            padding: 8px 0;
+            border-bottom: 1px dashed #E2E8F0;
+            color: #475569;
+        }
+
+            .log-item:last-child {
+                border-bottom: none;
+            }
+
+        .view-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #0B4F61;
+            background: linear-gradient(145deg, #F8FAFC, #EAF2F4);
+            border: 1px solid #D6E5EA;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+            .view-all-btn:hover {
+                background: linear-gradient(145deg, #EAF2F4, #D6E5EA);
+                border-color: #106981;
+                color: #106981;
+                transform: translateY(-1px);
+            }
+
+        .recommendation-card-clean {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-right: 4px solid #C9A227;
+            border-radius: 12px;
+            padding: 18px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(7, 59, 73, 0.04);
+        }
+
+            .recommendation-card-clean:hover {
+                box-shadow: 0 6px 16px rgba(7, 59, 73, 0.08);
+                border-right-color: #A98418;
+                transform: translateY(-1px);
+            }
+
+        .btn-action-decision {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #073B49;
+            background: linear-gradient(145deg, #F3E7C2, #C9A227);
+            border: 1px solid #C9A227;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(201, 162, 39, 0.25);
+        }
+
+            .btn-action-decision:hover {
+                background: linear-gradient(145deg, #C9A227, #A98418);
+                color: #FFFFFF;
+                transform: translateY(-1px);
+                box-shadow: 0 5px 15px rgba(201, 162, 39, 0.35);
+                text-decoration: none;
+            }
+    </style>
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    <div class="moda-card border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-list-check" style="font-size: 72px; color: #2E86A0;"></i>
-        <h3 class="fw-bold mt-3">متابعة الرفع — رئيس فريق عمل القائد</h3>
-        <p class="text-muted mt-2 mb-4">قيد الإنشاء — المرحلة (ب)</p>
+
+    <!-- Hero -->
+    <div class="hero-banner">
+        <h1>مرحباً رئيس فريق عمل القائد</h1>
+        <p class="hero-sub">متابعة اكتمال الرفع والملخصات والرفع القيادي</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-building"></i></div>
+                <div>
+                    <div class="hero-num">@Model.TotalEntities</div>
+                    <div class="hero-lbl">إجمالي الجهات</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-check2-circle"></i></div>
+                <div>
+                    <div class="hero-num">@Model.ApprovedReports</div>
+                    <div class="hero-lbl">تقرير معتمد</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div>
+                    <div class="hero-num">@Model.PendingApprovalReports</div>
+                    <div class="hero-lbl">بانتظار الاعتماد</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                <div>
+                    <div class="hero-num">@Model.EntitiesLate</div>
+                    <div class="hero-lbl">جهة متأخرة</div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- نسبة الرفع الكلية -->
+    <div class="progress-hero mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                <i class="bi bi-graph-up me-2"></i> نسبة اكتمال الرفع على مستوى المنظومة
+            </h6>
+            <span class="fw-bold" style="color: #A98418; font-size: 1.4rem;">@Model.CompletionPercent%</span>
+        </div>
+        <div class="progress">
+            <div class="progress-bar" style="width: @Model.CompletionPercent%"></div>
+        </div>
+        <div class="d-flex justify-content-between mt-2 small text-muted">
+            <span><strong>@Model.ApprovedReports</strong> تقرير معتمد</span>
+            <span><strong>@Model.PendingApprovalReports</strong> بانتظار الاعتماد</span>
+            <span><strong>@Model.EntitiesPending</strong> جهة لم تكتمل</span>
+        </div>
+    </div>
+
+    <!-- Row 1: حالة الجهات + المتأخرة -->
+    <div class="row g-4 mb-4">
+
+        <!-- حالة الجهات -->
+        <div class="col-lg-7">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-list-check me-2"></i> حالة رفع الجهات
+                </h6>
+
+                @if (Model.EntitiesStatus.Any())
+                {
+                    @foreach (var entity in Model.EntitiesStatus)
+                    {
+                        <div class="entity-row">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold" style="font-size: 0.85rem;">@entity.EntityName</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">
+                                    @entity.ApprovedReports / @entity.TotalReports تقرير معتمد
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (entity.IsComplete)
+                                {
+                                    <span class="badge bg-success-subtle text-success border">مكتمل</span>
+                                }
+                                else if (entity.IsLate)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border">متأخر</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-dark border">قيد الرفع</span>
+                                }
+                                <div class="progress" style="width: 60px; height: 6px;">
+                                    <div class="progress-bar @(entity.IsComplete ? "bg-success" : "bg-warning")"
+                                         style="width: @entity.CompletionPercent%"></div>
+                                </div>
+                                <span class="text-muted small" style="min-width: 35px; text-align: left;">
+                                    @entity.CompletionPercent%
+                                </span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <small>لا توجد بيانات</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- الجهات المتأخرة -->
+        <div class="col-lg-5">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3 text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i> الجهات المتأخرة
+                    <span class="badge bg-danger ms-2">@Model.EntitiesLate</span>
+                </h6>
+
+                @if (Model.LateEntities.Any())
+                {
+                    @foreach (var entity in Model.LateEntities)
+                    {
+                        <div class="late-item">
+                            <div class="fw-bold" style="color: #073B49;">@entity.EntityName</div>
+                            <div class="small text-muted">
+                                @entity.ApprovedReports / @entity.TotalReports تقرير معتمد
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
+                        <small>لا توجد جهات متأخرة</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: التقارير المعتمدة + ملخصات رئيس اللجنة -->
+    <div class="row g-4 mb-4">
+
+        <!-- التقارير المعتمدة -->
+        <div class="col-lg-7">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-file-earmark-check me-2"></i> التقارير المعتمدة الحديثة
+                    </h6>
+                    <a asp-action="ApprovedReports" class="view-all-btn">
+                        عرض الكل <i class="bi bi-arrow-left"></i>
+                    </a>
+                </div>
+
+                @if (Model.RecentApprovedReports.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr style="font-size: 0.78rem;">
+                                    <th>التقرير</th>
+                                    <th>الجهة</th>
+                                    <th>التغيير</th>
+                                    <th>الاعتماد</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in Model.RecentApprovedReports)
+                                {
+                                    <tr style="font-size: 0.82rem;">
+                                        <td class="fw-bold">@r.ReportNumber</td>
+                                        <td>@r.EntityName</td>
+                                        <td class="text-muted">@(r.ChangeName.Length > 30 ? r.ChangeName.Substring(0, 30) + "..." : r.ChangeName)</td>
+                                        <td class="text-muted small">@r.ApprovedDate</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <small>لا توجد تقارير معتمدة بعد</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ملخصات رئيس اللجنة -->
+        <div class="col-lg-5">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-chat-quote me-2"></i> ملخصات رئيس لجنة شركاء التغيير
+                </h6>
+
+                @foreach (var summary in Model.ChairSummaries)
+                {
+                    <div class="summary-item">@summary</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: التوصيات الجاهزة + سجل المتابعة -->
+    <div class="row g-4">
+
+        <!-- التوصيات الجاهزة للرفع -->
+        <div class="col-lg-7">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                        <i class="bi bi-send-check me-2"></i> التوصيات الجاهزة للرفع
+                    </h6>
+                    <a asp-action="Escalation" class="view-all-btn">
+                        عرض الكل <i class="bi bi-arrow-left"></i>
+                    </a>
+                </div>
+
+                @if (Model.ReadyRecommendations.Any())
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var rec in Model.ReadyRecommendations)
+                        {
+                            <div class="recommendation-card-clean">
+                                <!-- شريط علوي: badge + رقم التوصية -->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="badge bg-success-subtle text-success border px-3 py-1">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span class="status-badge status-approved">
+                                            <i class="bi bi-check-circle-fill"></i> معتمدة
+                                        </span>
+                                    </div>
+                                    <div class="text-muted small fw-bold">
+                                        @rec.RecommendationNumber
+                                    </div>
+                                </div>
+
+                                <!-- الجهة -->
+                                <div class="mb-2">
+                                    <div class="fw-bold" style="color: #073B49; font-size: 0.95rem;">
+                                        <i class="bi bi-building me-1"></i>@rec.EntityName
+                                    </div>
+                                </div>
+
+                                <!-- الإجراء المقترح -->
+                                <p class="mb-3" style="font-size: 0.88rem; line-height: 1.7; color: #334155;">
+                                    @(rec.SuggestedAction.Length > 130
+                                        ? rec.SuggestedAction.Substring(0, 130) + "..."
+                                        : rec.SuggestedAction)
+                                </p>
+
+                                <!-- معلومات إضافية -->
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center small text-muted">
+                                            <i class="bi bi-person me-1"></i>
+                                            <span>@rec.ActionOwner</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center small text-muted">
+                                            <i class="bi bi-arrow-up me-1"></i>
+                                            <span>@rec.Escalation</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- زر الإجراء -->
+                                <div class="d-flex justify-content-end pt-3 border-top">
+                                    <a asp-action="Review"
+                                       asp-route-recommendationId="@rec.Id"
+                                       class="btn-action-decision">
+                                        <i class="bi bi-shield-check me-1"></i>
+                                        مراجعة واتخاذ قرار
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <small>لا توجد توصيات معتمدة جاهزة للرفع</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- سجل المتابعة -->
+        <div class="col-lg-5">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-clock-history me-2"></i> سجل المتابعة القيادية
+                </h6>
+
+                @foreach (var log in Model.FollowUpLog)
+                {
+                    <div class="log-item">@log</div>
+                }
+            </div>
+        </div>
+    </div>
+
 </div>

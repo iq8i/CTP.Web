@@ -53,7 +53,6 @@ builder.Services.AddScoped<IPasswordHasher, CTP.Infrastructure.Security.BCryptPa
     builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
     builder.Services.AddScoped<IAnalysisToolService, AnalysisToolService>();
     builder.Services.AddScoped<IQualityGateService, QualityGateService>();
-    builder.Services.AddScoped<IReportQualityService, ReportQualityService>();
     builder.Services.AddScoped<IImpactMeasurementRepository, ImpactMeasurementRepository>();
     builder.Services.AddScoped<IImpactMeasurementService, ImpactMeasurementService>();
 

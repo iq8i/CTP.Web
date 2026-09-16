@@ -181,23 +181,23 @@
             <div class="ctp-form-grid">
                 <div class="ctp-form-group full-width">
                     <label asp-for="ChangeSummary">ملخص التغيير</label>
-                    <textarea asp-for="ChangeSummary" class="ctp-input" rows="2" placeholder="وصف موجز للمبادرة..."></textarea>
+                    <textarea asp-for="ChangeSummary" class="ctp-input" rows="2" placeholder="وصف موجز للمبادرة..." required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="WhyImportant">لماذا هذا التغيير مهم؟</label>
-                    <textarea asp-for="WhyImportant" class="ctp-input" rows="2" placeholder="الأثر والقيمة المضافة..."></textarea>
+                    <textarea asp-for="WhyImportant" class="ctp-input" rows="2" placeholder="الأثر والقيمة المضافة..." required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="WhatWillChange">ماذا سيتغير؟</label>
-                    <textarea asp-for="WhatWillChange" class="ctp-input" rows="2"></textarea>
+                    <textarea asp-for="WhatWillChange" class="ctp-input" rows="2" required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="WhatWillNotChange">ماذا لن يتغير؟</label>
-                    <textarea asp-for="WhatWillNotChange" class="ctp-input" rows="2"></textarea>
+                    <textarea asp-for="WhatWillNotChange" class="ctp-input" rows="2" required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="ExecutedActivities">الأنشطة المنفذة</label>
-                    <textarea asp-for="ExecutedActivities" class="ctp-input" rows="2" placeholder="أهم ما تم إنجازه خلال هذا الشهر..."></textarea>
+                    <textarea asp-for="ExecutedActivities" class="ctp-input" rows="2" placeholder="أهم ما تم إنجازه خلال هذا الشهر..." required></textarea>
                 </div>
             </div>
         </fieldset>
@@ -208,23 +208,23 @@
             <div class="ctp-form-grid mb-3">
                 <div class="ctp-form-group">
                     <label asp-for="AdkarAwareness">الوعي (A)</label>
-                    <input asp-for="AdkarAwareness" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarA" />
+                    <input asp-for="AdkarAwareness" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarA" value="@(Model.AdkarAwareness > 0 ? Model.AdkarAwareness : 0)" />
                 </div>
                 <div class="ctp-form-group">
                     <label asp-for="AdkarDesire">الرغبة (D)</label>
-                    <input asp-for="AdkarDesire" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarD" />
+                    <input asp-for="AdkarDesire" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarD" value="@(Model.AdkarDesire > 0 ? Model.AdkarDesire : 0)" />
                 </div>
                 <div class="ctp-form-group">
                     <label asp-for="AdkarKnowledge">المعرفة (K)</label>
-                    <input asp-for="AdkarKnowledge" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarK" />
+                    <input asp-for="AdkarKnowledge" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarK" value="@(Model.AdkarKnowledge > 0 ? Model.AdkarKnowledge : 0)" />
                 </div>
                 <div class="ctp-form-group">
                     <label asp-for="AdkarAbility">القدرة على التطبيق (A)</label>
-                    <input asp-for="AdkarAbility" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarAb" />
+                    <input asp-for="AdkarAbility" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarAb" value="@(Model.AdkarAbility > 0 ? Model.AdkarAbility : 0)" />
                 </div>
                 <div class="ctp-form-group">
                     <label asp-for="AdkarReinforcement">التعزيز والاستدامة (R)</label>
-                    <input asp-for="AdkarReinforcement" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarR" />
+                    <input asp-for="AdkarReinforcement" type="number" min="0" max="100" class="ctp-input adkar-calc" id="adkarR" value="@(Model.AdkarReinforcement > 0 ? Model.AdkarReinforcement : 0)" />
                 </div>
             </div>
 
@@ -251,27 +251,27 @@
             <div class="ctp-form-grid">
                 <div class="ctp-form-group full-width">
                     <label asp-for="Obstacles">العوائق والتحديات</label>
-                    <textarea asp-for="Obstacles" class="ctp-input" rows="2"></textarea>
+                    <textarea asp-for="Obstacles" class="ctp-input" rows="2" required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="AdoptionBarriers">عوائق التبني (ما الذي يبطئ انتقال الفئة المتأثرة إلى التطبيق؟)</label>
-                    <textarea asp-for="AdoptionBarriers" class="ctp-input" rows="2"></textarea>
+                    <textarea asp-for="AdoptionBarriers" class="ctp-input" rows="2" required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="RequiredSupport">الدعم المطلوب</label>
-                    <textarea asp-for="RequiredSupport" class="ctp-input" rows="2" placeholder="ما تحتاجه الجهة من اللجنة أو الإدارة العليا..."></textarea>
+                    <textarea asp-for="RequiredSupport" class="ctp-input" rows="2" placeholder="ما تحتاجه الجهة من اللجنة أو الإدارة العليا..." required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="Risks">المخاطر المتوقعة</label>
-                    <textarea asp-for="Risks" class="ctp-input" rows="2"></textarea>
+                    <textarea asp-for="Risks" class="ctp-input" rows="2" required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="ImprovementOpportunities">فرص التحسين</label>
-                    <textarea asp-for="ImprovementOpportunities" class="ctp-input" rows="2"></textarea>
+                    <textarea asp-for="ImprovementOpportunities" class="ctp-input" rows="2" required></textarea>
                 </div>
                 <div class="ctp-form-group full-width">
                     <label asp-for="SuccessStories">قصص النجاح المنجزة</label>
-                    <textarea asp-for="SuccessStories" class="ctp-input" rows="2"></textarea>
+                    <textarea asp-for="SuccessStories" class="ctp-input" rows="2" required></textarea>
                 </div>
             </div>
         </fieldset>
@@ -343,6 +343,38 @@
 
             inputs.forEach(input => input.addEventListener('input', recalculateScores));
             recalculateScores();
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.getElementById("monthlyReportForm");
+
+            form.addEventListener("submit", function(e) {
+                const requiredFields = [
+                    { id: 'ChangeName', name: 'اسم التغيير' },
+                    { id: 'ChangeSummary', name: 'ملخص التغيير' },
+                    { id: 'WhyImportant', name: 'أهمية التغيير' },
+                    { id: 'WhatWillChange', name: 'ماذا سيتغير' },
+                    { id: 'WhatWillNotChange', name: 'ماذا لن يتغير' },
+                    { id: 'ExecutedActivities', name: 'الأنشطة المنفذة' },
+                    { id: 'Obstacles', name: 'العوائق' },
+                    { id: 'RequiredSupport', name: 'الدعم المطلوب' },
+                    { id: 'InitialRecommendation', name: 'التوصية الأولية' }
+                ];
+
+                const missing = [];
+                requiredFields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (el && !el.value.trim()) {
+                        missing.push(f.name);
+                    }
+                });
+
+                if (missing.length > 0) {
+                    e.preventDefault();
+                    alert('يرجى استكمال الحقول الإلزامية:\n' + missing.join('\n'));
+                    return false;
+                }
+            });
         });
     </script>
 }

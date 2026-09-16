@@ -1,0 +1,403 @@
+﻿@model CTP.Web.Areas.Staff.Models.StaffDashboardViewModel
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, #0B4F61, #106981, #2E86A0);
+            color: white;
+            padding: 32px 36px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(11, 79, 97, 0.25);
+        }
+
+            .hero-banner::after {
+                content: "";
+                position: absolute;
+                top: -50px;
+                inset-inline-end: -50px;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, rgba(201, 162, 39, 0.18), transparent 70%);
+                pointer-events: none;
+            }
+
+            .hero-banner h1 {
+                font-size: 1.8rem;
+                font-weight: 800;
+                margin-bottom: 8px;
+            }
+
+            .hero-banner .hero-sub {
+                opacity: 0.9;
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+            .hero-stat .hero-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.12);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.3rem;
+                color: #E6D39A;
+            }
+
+            .hero-stat .hero-num {
+                font-size: 1.6rem;
+                font-weight: 800;
+                line-height: 1.1;
+            }
+
+            .hero-stat .hero-lbl {
+                font-size: 0.75rem;
+                opacity: 0.8;
+            }
+
+        .kpi-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+            box-shadow: 0 4px 12px rgba(7, 59, 73, 0.06);
+            transition: transform 0.2s;
+        }
+
+            .kpi-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(7, 59, 73, 0.1);
+            }
+
+        .change-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-right: 4px solid #C9A227;
+            transition: all 0.2s;
+        }
+
+            .change-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(201, 162, 39, 0.15);
+                border-right-color: #A98418;
+            }
+
+            .change-card .chg-title {
+                font-size: 1.05rem;
+                font-weight: 800;
+                color: #073B49;
+                margin-bottom: 8px;
+            }
+
+        .q-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .q-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+            .q-box .q-label {
+                font-size: 0.72rem;
+                color: #106981;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+
+            .q-box .q-answer {
+                font-size: 0.83rem;
+                color: #334155;
+                line-height: 1.6;
+                margin: 0;
+            }
+
+        .material-card {
+            background: #FFFFFF;
+            border: 1px solid #D6E5EA;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+
+            .material-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                inset-inline: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #C9A227, #E6D39A);
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+
+            .material-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 12px 28px rgba(201, 162, 39, 0.18);
+                border-color: #C9A227;
+                color: inherit;
+            }
+
+                .material-card:hover::before {
+                    opacity: 1;
+                }
+
+            .material-card .mat-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                margin-bottom: 14px;
+            }
+
+            .material-card .mat-title {
+                font-weight: 800;
+                color: #073B49;
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+
+            .material-card .mat-desc {
+                font-size: 0.82rem;
+                color: #537382;
+                line-height: 1.6;
+                margin-bottom: 12px;
+                min-height: 40px;
+            }
+
+        .channel-card {
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+            .channel-card .ch-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                background: #EAF2F4;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #106981;
+                font-size: 1.1rem;
+                flex-shrink: 0;
+            }
+    </style>
+}
+
+<partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
+
+<div class="container-fluid mt-4 mb-5">
+
+    <!-- Hero -->
+    <div class="hero-banner">
+        <h1>مرحباً بك</h1>
+        <p class="hero-sub">هنا تفهم ما يتغير، وماذا يعني لك، وما الدعم المتاح</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-kanban"></i></div>
+                <div>
+                    <div class="hero-num">@Model.ActiveChangesCount</div>
+                    <div class="hero-lbl">تغيير جارٍ</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-book"></i></div>
+                <div>
+                    <div class="hero-num">@Model.EducationalMaterialsCount</div>
+                    <div class="hero-lbl">مادة تعليمية</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-icon"><i class="bi bi-chat-dots"></i></div>
+                <div>
+                    <div class="hero-num">@Model.InquiryChannelsCount</div>
+                    <div class="hero-lbl">قناة استفسار</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 1: المواد التعليمية -->
+    <h5 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+        <i class="bi bi-book-half me-2"></i> المواد التعليمية
+    </h5>
+    <div class="row g-4 mb-4">
+        @foreach (var mat in Model.Materials)
+        {
+            <div class="col-md-4">
+                <a href="@mat.Url" class="material-card">
+                    <div class="mat-icon bg-@mat.Color-subtle text-@mat.Color">
+                        <i class="bi @mat.Icon"></i>
+                    </div>
+                    <div class="mat-title">@mat.Title</div>
+                    <div class="mat-desc">@mat.Description</div>
+                    <span class="badge @mat.StatusClass">@mat.StatusBadge</span>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Row 2: التغييرات الجارية + قنوات الاستفسار -->
+    <div class="row g-4">
+
+        <!-- التغييرات الجارية -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-arrow-repeat me-2"></i> التغييرات الجارية
+                </h5>
+                <a asp-action="Changes" class="view-all-btn">
+                    عرض الكل <i class="bi bi-arrow-left"></i>
+                </a>
+            </div>
+
+            @if (Model.ActiveChanges.Any())
+            {
+                foreach (var change in Model.ActiveChanges)
+                {
+                    <div class="change-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="chg-title">@change.ChangeName</div>
+                            <div>
+                                <span class="badge bg-secondary me-1">@change.ChangeType</span>
+                                <span class="badge bg-primary">@change.CurrentStage</span>
+                            </div>
+                        </div>
+
+                        <div class="q-grid">
+                            <div class="q-box">
+                                <div class="q-label"><i class="bi bi-info-circle me-1"></i> ما التغيير؟</div>
+                                <p class="q-answer">@change.Summary</p>
+                            </div>
+                            <div class="q-box">
+                                <div class="q-label"><i class="bi bi-arrow-right me-1"></i> ماذا سيتغير؟</div>
+                                <p class="q-answer">@change.WhatWillChange</p>
+                            </div>
+                            <div class="q-box">
+                                <div class="q-label"><i class="bi bi-shield-check me-1"></i> ماذا لن يتغير؟</div>
+                                <p class="q-answer">@change.WhatWillNotChange</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 pt-3 border-top small text-muted">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <strong>سفير التغيير:</strong> @change.AmbassadorName
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="kpi-card text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    <small>لا توجد تغييرات معتمدة حالياً</small>
+                </div>
+            }
+        </div>
+
+        <!-- قنوات الاستفسار -->
+        <div class="col-lg-4">
+            <div class="kpi-card">
+                <h6 class="fw-bold mb-3" style="color: var(--ctp-primary-olive);">
+                    <i class="bi bi-chat-dots me-2"></i> قنوات الاستفسار والدعم
+                </h6>
+
+                @foreach (var ch in Model.Channels)
+                {
+                    <div class="channel-card">
+                        <div class="ch-icon"><i class="bi @ch.Icon"></i></div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 0.88rem; color: #073B49;">
+                                @ch.Title
+                            </div>
+                            <div class="small text-muted mt-1">@ch.Description</div>
+                            <div class="small mt-1" style="color: #106981; font-weight: 600;">
+                                @ch.Contact
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="alert alert-info small border-0 mt-3 mb-0" style="background: #F8FAFC;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    رأيك يهمنا: يمكنك تقييم تجربتك من صفحة التغييرات الجارية بشكل اختياري.
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Styles {
+    <style>
+        .view-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #0B4F61;
+            background: linear-gradient(145deg, #F8FAFC, #EAF2F4);
+            border: 1px solid #D6E5EA;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+            .view-all-btn:hover {
+                background: linear-gradient(145deg, #EAF2F4, #D6E5EA);
+                border-color: #106981;
+                color: #106981;
+                transform: translateY(-1px);
+            }
+    </style>
+}

@@ -352,8 +352,8 @@ namespace CTP.Web.Areas.Committee.Controllers
                 : "لا يتطلب قرار دعم إضافي";
 
             var escalation = RequiresSupport
-                ? "سعادة النائب عند الحاجة"
-                : "سعادة رئيس فريق عمل القائد";
+    ? "سعادة رئيس فريق عمل القائد"    // ← دائماً لرئيس الفريق أولاً
+    : "سعادة رئيس فريق عمل القائد";
 
             string recNumber = await _recommendationService.CreateFullRecommendationAsync(
                 MonthlyReportId,

@@ -1,13 +1,101 @@
-﻿@{
+﻿@model CTP.Application.Interfaces.Services.ImpactSummaryResult
+@{
     Layout = "_Layout";
 }
 
 <partial name="~/Views/Shared/_EntityDashboardHeader.cshtml" />
 
 <div class="container-fluid mt-4 mb-5">
-    <div class="moda-card border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-graph-up-arrow" style="font-size: 72px; color: #073B49;"></i>
-        <h3 class="fw-bold mt-3">الأثر المتحقق</h3>
-        <p class="text-muted mt-2 mb-4">قيد الإنشاء — المرحلة (ب)</p>
+
+    <div class="mb-3">
+        <a asp-action="Index" class="moda-btn moda-btn-outline">
+            <i class="bi bi-arrow-right me-1"></i> عودة للموجز الاستراتيجي
+        </a>
+    </div>
+
+    <!-- KPIs الأثر -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center h-100">
+                <i class="bi bi-bullseye fs-2" style="color: #106981;"></i>
+                <div class="fw-bold fs-3 mt-2" style="color: #106981;">@Model.TotalMeasurements</div>
+                <small class="text-muted">إجمالي القياسات</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center h-100">
+                <i class="bi bi-check-circle-fill fs-2 text-success"></i>
+                <div class="fw-bold fs-3 mt-2" style="color: #3E7C3E;">@Model.VerifiedCount</div>
+                <small class="text-muted">تحقق كامل</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center h-100">
+                <i class="bi bi-hourglass-split fs-2 text-warning"></i>
+                <div class="fw-bold fs-3 mt-2" style="color: #B07A1E;">@Model.PartialCount</div>
+                <small class="text-muted">تحقق جزئي</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-white rounded border text-center h-100">
+                <i class="bi bi-graph-up-arrow fs-2" style="color: #A98418;"></i>
+                <div class="fw-bold fs-3 mt-2" style="color: #A98418;">+@Model.AvgDelta</div>
+                <small class="text-muted">متوسط التحسن</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول الأثر الكامل -->
+    <div class="moda-card border-0 shadow-sm">
+        <div class="moda-card-header">
+            <h5 class="moda-card-title mb-0">
+                <i class="bi bi-graph-up me-2"></i> قياسات الأثر الكاملة
+            </h5>
+        </div>
+        <div class="moda-card-body p-0">
+            <div class="table-responsive">
+                <table class="moda-table text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>المؤشر</th>
+                            <th>قبل</th>
+                            <th>بعد</th>
+                            <th>الفرق</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.AllMeasurements.Any())
+                        {
+                            foreach (var m in Model.AllMeasurements.OrderByDescending(x => x.Delta))
+                            {
+                                var badge = m.Status == "تحقق" ? "bg-success"
+                                          : m.Status == "جزئي" ? "bg-warning text-dark"
+                                          : "bg-secondary";
+                                var sign = m.Delta > 0 ? "+" : "";
+                                <tr>
+                                    <td class="text-start">@m.IndicatorName</td>
+                                    <td>@m.BeforeValue%</td>
+                                    <td class="fw-bold" style="color: #106981;">@m.AfterValue%</td>
+                                    <td class="fw-bold" style="color: @(m.Delta > 0 ? "#3E7C3E" : "#9C3D2E");">
+                                        @sign@m.Delta
+                                    </td>
+                                    <td><span class="badge @badge">@m.Status</span></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="py-5 text-muted">
+                                    <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                                    لا توجد قياسات أثر بعد
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
